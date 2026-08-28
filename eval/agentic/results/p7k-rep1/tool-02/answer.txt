@@ -1,0 +1,7 @@
+
+
+The "round half up" discount rounding rule was decided after a customer complaint about a 1-cent difference on invoice 88213 (entry dated 2026-05-02).
+
+- What I did: read `docs/decisions.md` and pulled the line mentioning invoice 88213.
+- Why it was broken: not a bug, just a lookup request.
+- What it means: the doc records that invoice 88213's 1-cent error motivated the "round half up" rule.

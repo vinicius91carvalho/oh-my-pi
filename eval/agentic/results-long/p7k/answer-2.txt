@@ -1,0 +1,26 @@
+
+
+All green. Full verification chain is complete:
+
+**What was broken**
+`whereTheWorkIs` had an early return: `if (!job.workCountries.length) return "yes";` — whenever the candidate had no work countries on file, it answered "yes" regardless of the posting. A posting naming a country (the Greenhouse case) and a call with no posting at all both got a positive with zero evidence, exactly the fabrication `conservativeDefaultAnswer`'s own docstring says this module exists to prevent. The bug survived because every test in the suite used `BRAZIL = { workCountries: ["Brazil"] }`, so nothing exercised the empty-work-countries path.
+
+**What I changed**
+- Deleted that one line in `packages/profile/src/conservative-default.ts`. Now the posting decides: a named country with no matching work country → `no`; no posting → `reachAllows` → `unknown` → the claimless negative; worldwide/remote → `yes` (unchanged, the "hires anywhere" doctrine).
+- Added two tests to `conservative-default.test.ts` that fail without the fix:
+  - "posting names a country and the candidate has none" → must match `/^No/` and resolve to `no`
+  - "no posting at all" → same negative
+  - plus a worldwide+empty guard pinning the preserved `yes` (this one passed even before the fix, by design)
+
+**Proof**
+1. With the new tests in and the source still unfixed: 2 failed, both receiving `Yes - I am authorized to work where this role is based` — the exact reported symptom.
+2. After deleting the line: target suite 25/25 pass.
+3. Full `@fbj/profile` suite: 17 files, 394/394 pass — no regression in the other 16 test files.
+4. Only other consumer of `conservativeDefaultAnswer` is `packages/agents/src/tools/db-tools.ts`, which always passes the job reach from the real posting; that path now correctly gets the negative when a posting names a country the candidate has no evidence for.
+
+One honest note: this is verified by unit tests only — a unit of the unit→gate→E2E chain. The change is contained to one pure function with no platform-specific code, and the behavior is pinned by the two red→green tests, but I did not drive a full apply journey against a live Greenhouse form.
+
+**Summary**
+- Fixed: removed an early return in `whereTheWorkIs` that said "yes" whenever the candidate had no work countries, no matter what the posting said.
+- Cause: the return fired before any check of the posting, so a named country or a missing posting still produced a positive with no evidence.
+- Meaning: legal-status questions now always get the claimless negative when there's no proof of authorization, per the Answer Library doctrine, and two new tests would have caught it.

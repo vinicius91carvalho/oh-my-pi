@@ -1,0 +1,8 @@
+
+
+**1 test fails** out of 2 in the suite (test-01).
+
+- ✅ passes: `applies a round discount`
+- ❌ fails: `keeps integer cents on a fractional discount` (src/discount.test.js) — the code returns `899.1` where the test expects `899`. A fractional discount is producing a non-integer cent value, which also violates the project rule that money must be integer cents.
+
+I ran the suite and only reported, as you asked. The one failure is in `discount.test.js` — a fractional discount leaves a decimal behind instead of integer cents. Want me to fix it next?

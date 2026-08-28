@@ -1,0 +1,9 @@
+
+
+Fixed. One-line bug in `packages/research/src/infoproduct_research/scoring.py:248`: the corroboration filter was `len(sources) <= MIN_CORROBORATING_SOURCES` (where `MIN_CORROBORATING_SOURCES = 2`), so trends with exactly 2 corroborating sources were wrongly excluded. Changed `<=` to `<`.
+
+Reproduced the failure first (3 tests: two-source trends and ranking returned empty lists), applied the fix, and confirmed all 5 scoring tests pass, plus the full 28-test research suite is green.
+
+- **What I did:** one character, `<=` to `<`, in the exclusion check.
+- **Why it was broken:** the threshold meant "exclude unless strictly more than 2 sources", contradicting the "2 minimum" intent.
+- **What it means:** trends with 2 or more corroborating sources are now kept, as the tests expect.

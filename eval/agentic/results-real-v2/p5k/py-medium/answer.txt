@@ -1,0 +1,5 @@
+
+
+Fixed. The bug was in `format_price` in `packages/landing-gen/src/infoproduct_landing_gen/locales.py`: for whole prices it built the number with Python's US format (`"1,290"`) and then only rewrote `.` into the locale's decimal separator, never touching the thousands comma. For es-MX the comma is also the thousands separator, so it looked fine; for pt-BR the separator must be a dot, so it rendered `R$ 1,290`.
+
+The fix protects the decimal point with a placeholder in both branches, then maps the thousands and decimal separators from the market's pack. I confirmed it against the real output, not just the tests: Brazil now shows `R$ 1.290` and `R$ 1.290,50`, and Mexico is byte-for-byte unchanged (`$1,290 MXN`, `$349.99 MXN`). The full suite passes: 24/24.

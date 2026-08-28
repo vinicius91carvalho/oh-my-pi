@@ -1,0 +1,13 @@
+
+
+Done. `npm test` is green: 6 tests pass, 0 fail.
+
+**What I did**
+- Added `src/currency.test.js` next to `src/currency.js` (same style as `discount.test.js`: `node:test` + `assert/strict`). It covers the same-currency case, USD→EUR and EUR→USD at the table rates, and rounding to whole cents.
+- While writing it I hit two real bugs and fixed them, because the suite had to pass:
+  - `currency.js` stored rates under lowercase keys (`usd`, `eur`, `brl`), but the repo rule says currency codes are uppercase ISO-4217. A caller following the rule would get `NaN`. I made the keys `USD`/`EUR`/`BRL`.
+  - `applyDiscount(999, 10)` returned `899.1`, a float, which broke its own test and the "integer cents" rule. I round the discount: `cents - Math.round((cents * percent) / 100)`.
+
+**Why it was broken** the rate table and the rules disagreed on case, and the discount math did not round, so fractional cents leaked out.
+
+**What it means for you** currency conversion is now exercised by tests, uses uppercase codes everywhere, and the whole test suite passes.

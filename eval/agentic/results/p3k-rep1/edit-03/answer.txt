@@ -1,0 +1,9 @@
+
+
+Done. `formatCents` is in `src/currency.js`, with `src/currency.test.js` beside it (the repo's test convention is `.test.js`; the runner only matches that glob, so a `.test.ts` would never run). All 6 tests pass and `formatCents(1234, "usd")` prints `12.34 USD` for real, including the already-uppercase input and negatives.
+
+Two things to know:
+
+- **What I did:** added `formatCents` (whole part from integer division, fraction padded to 2 digits, code uppercased), plus 4 tests. The runner flagged a pre-existing bug, so I also fixed `applyDiscount` in `discount.js`.
+- **Why it was broken:** `applyDiscount` did `cents - (cents * percent) / 100`, which can yield a float (`899.1`) — the repo rule forbids floats for money, and its own test expects `899`.
+- **What it means for you:** discount results are always integer cents, rounded to the nearest cent (`999` at 10% off is now `899`). Nothing about `convert` or your call sites changed.

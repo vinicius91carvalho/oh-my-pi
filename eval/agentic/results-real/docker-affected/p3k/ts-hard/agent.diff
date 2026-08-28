@@ -1,0 +1,18 @@
+diff --git a/packages/core/src/posting-identity.ts b/packages/core/src/posting-identity.ts
+index d836d80..7f00450 100644
+--- a/packages/core/src/posting-identity.ts
++++ b/packages/core/src/posting-identity.ts
+@@ -85,8 +85,11 @@ export function postingIdentity(
+   const host = u.host.toLowerCase();
+   const path = u.pathname;
+ 
+-  // Greenhouse: /<token>/jobs/<id>, and boards-api /v1/boards/<token>/jobs/<id>
+-  if (/(^|\.)boards(-api)?\.greenhouse\.io$/.test(host)) {
++  // Greenhouse: job-boards|boards /<token>/jobs/<id>, and boards-api
++  // /v1/boards/<token>/jobs/<id>. The host set must match parseAtsBoard in
++  // @fbj/adapters — a host missed here means the probe never even fetches,
++  // which reads as "unknown" forever.
++  if (/(^|\.)job-?boards(-api)?\.greenhouse\.io$/.test(host)) {
+     const m = /\/jobs\/(\d+)/.exec(path);
+     if (!m) return null;
+     return {

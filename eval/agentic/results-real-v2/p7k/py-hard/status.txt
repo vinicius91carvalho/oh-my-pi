@@ -1,0 +1,1 @@
+ M packages/campaign/src/infoproduct_campaign/models.py

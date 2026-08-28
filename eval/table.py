@@ -1,81 +1,30 @@
 #!/usr/bin/env python3
-"""Join the token measurements with the task scores into one table."""
-import json, glob, os, sys, collections
+"""Print every measured configuration side by side."""
+import glob, json, os
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-LABEL = {
-    "base": "full (default)",
-    "settings-only": "settings only",
-    "p7k": "compact, 6 tools",
-    "p5k": "compact, 4 tools",
-    "p3k": "compact, 3 tools",
-}
-ORDER = ["base", "settings-only", "p7k", "p5k", "p3k"]
+rows = []
+for f in sorted(glob.glob(os.path.expanduser("~/tools/qwen3.8-27b/eval/results-*.json"))):
+    d = json.load(open(f))
+    by = {r["what"]: r for r in d["runs"]}
+    rows.append((d["config"], by, d.get("mem_after", {})))
 
-
-def tokens(profile):
-    # The benchmark ran inside `fixture/`, so its token column must come from
-    # the same place. `runs/` is the real-project ladder and belongs elsewhere.
-    f = os.path.join(HERE, "runs-fixture", profile, "tokens.json")
-    return json.load(open(f)) if os.path.exists(f) else None
-
-
-def scores(profile, suite="main"):
-    """Rows for one suite only.
-
-    `results/<profile>-rep<N>` holds the 12-task suite; `-repprobe` the xd://
-    probes; `-repg<N>` the grounding repeats. A glob over `-rep*` silently
-    merged all three and inflated the totals, so each caller names its suite.
-    """
-    pat = {"main": "-rep[0-9]*", "probe": "-repprobe", "grounding": "-repg[0-9]*"}[suite]
-    rows = []
-    for f in sorted(glob.glob(os.path.join(HERE, "results", f"{profile}{pat}", "scores.jsonl"))):
-        rows += [json.loads(l) for l in open(f)]
-    return rows
-
-
-def main():
-    print(f"| profile | prompt tokens | tool schemas | rest | tasks passed | median s |")
-    print(f"|---|---:|---:|---:|---:|---:|")
-    for p in ORDER:
-        t, s = tokens(p), scores(p)
-        if not t and not s:
-            continue
-        tok = f"{t['total']:,}" if t else "-"
-        tl = f"{t['tools_tokens']:,}" if t else "-"
-        rest = f"{t['without_tools']:,}" if t else "-"
-        if s:
-            ok = sum(r["pass"] for r in s)
-            secs = sorted(r["seconds"] for r in s)
-            med = f"{secs[len(secs) // 2]:.0f}"
-            passed = f"{ok}/{len(s)}"
-        else:
-            passed, med = "-", "-"
-        print(f"| {LABEL.get(p, p)} | {tok} | {tl} | {rest} | {passed} | {med} |")
-
-    print("\nPer axis:\n")
-    axes = ["tool choice", "edit", "run tests", "stop", "ask", "rules"]
-    print("| profile | " + " | ".join(axes) + " |")
-    print("|---" * (len(axes) + 1) + "|")
-    for p in ORDER:
-        s = scores(p)
-        if not s:
-            continue
-        by = collections.defaultdict(list)
-        for r in s:
-            by[r["axis"]].append(r["pass"])
-        cells = []
-        for a in axes:
-            v = by.get(a)
-            cells.append(f"{sum(v)}/{len(v)}" if v else "-")
-        print(f"| {LABEL.get(p, p)} | " + " | ".join(cells) + " |")
-
-    print("\nFailures:\n")
-    for p in ORDER:
-        for r in scores(p):
-            if not r["pass"]:
-                print(f"  {LABEL.get(p, p):18s} {r['id']:9s} {r['axis']}")
-
-
-if __name__ == "__main__":
-    main()
+hdr = f"{'config':<16}{'escrita':>10}{'4k leitura':>13}{'12k leitura':>13}{'12k TTFT':>11}{'cache quente':>14}"
+print(hdr); print("-" * len(hdr))
+for name, by, mem in rows:
+    def pf(k):
+        r = by.get(k)
+        if not r: return "-"
+        if r.get("rejected"): return "INUTIL"
+        return f"{r['prefill_tok_s']:.0f} t/s" if r.get("prefill_tok_s") else "-"
+    def ttft(k):
+        r = by.get(k)
+        if not r or r.get("rejected") or not r.get("ttft_s"): return "-"
+        s = r["ttft_s"]
+        return f"{s/60:.0f} min" if s >= 90 else f"{s:.1f}s"
+    dec = by.get("prefill_4k", {}).get("decode_tok_s") or by.get("decode", {}).get("decode_tok_s") or 0
+    print(f"{name:<16}{dec:>7.1f} t/s{pf('prefill_4k'):>13}{pf('prefill_12k'):>13}"
+          f"{ttft('prefill_12k'):>11}{ttft('cache_warm'):>14}")
+    if mem.get("swap"):
+        used = [p for p in mem["swap"].split() if p.endswith("M")]
+        print(f"{'':<16}swap: {mem['swap'].split('used =')[1].split()[0] if 'used =' in mem['swap'] else '?'}"
+              f"   memoria livre: {mem.get('free','?')}")

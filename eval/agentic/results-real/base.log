@@ -1,0 +1,11 @@
+{"id": "py-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 714.3, "requests": 19, "max_prompt_tokens": 26829}
+{"id": "py-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 220.2, "requests": 8, "max_prompt_tokens": 24864}
+{"id": "py-hard", "level": "hard", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 22.6, "requests": 2, "max_prompt_tokens": 19228}
+{"id": "py-veryhard", "level": "veryhard", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 863.8, "requests": 18, "max_prompt_tokens": 29497}
+{"id": "ts-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 368.3, "requests": 6, "max_prompt_tokens": 24917}
+{"id": "ts-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 815.2, "requests": 12, "max_prompt_tokens": 29117}
+{"id": "ts-hard", "level": "hard", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 25.6, "requests": 2, "max_prompt_tokens": 21446}
+./run-real.sh: line 42: 87565 Alarm clock: 14            perl -e "alarm ${TASK_TIMEOUT:-1800}; exec @ARGV" "$BUN" "$OMP_SRC/packages/coding-agent/src/cli.ts" -p --model omlxtap/Qwen3.8-27B-AWQ-5.0bpw --no-session --auto-approve --config "$CFG" "$PROMPT" < /dev/null > "$RUN/answer.txt" 2> "$RUN/stderr.txt"
+{"id": "ts-veryhard", "level": "veryhard", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 1800.3, "requests": 11, "max_prompt_tokens": 39526}
+./run-real.sh: line 65: syntax error near unexpected token `start'
+./run-real.sh: line 65: `t(start),1), "requests": int(reqs),'

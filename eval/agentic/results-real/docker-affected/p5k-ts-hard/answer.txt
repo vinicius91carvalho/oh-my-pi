@@ -1,0 +1,31 @@
+
+
+Done. The user's exact command now passes: build green, 10/10 tests green.
+
+## What was broken
+
+`checkPostingLive` answers `unknown` and never calls fetch when the URL cannot be parsed into a board + job id. That parse lives in `postingIdentity` (`packages/core/src/posting-identity.ts`), and its host regex only matched `boards.greenhouse.io` and `boards-api.greenhouse.io`. Greenhouse migrated postings to the **`job-boards.greenhouse.io`** domain, so every live job URL there failed to parse, the probe saw "no board, no id", and correctly refused to ask - landing on `unknown` with zero fetch calls. The adapters side already knew about `job-boards` (the convention at `board.ts:75`); the core copy of the regex had never been updated to match.
+
+## What I changed
+
+One line, `posting-identity.ts:89`. The host regex now reads:
+
+```
+/(^|\.)(job-)?boards(-api)?\.greenhouse\.io$/
+```
+
+that is, the exact convention the adapters already use, reused verbatim. No test was touched, no new logic.
+
+## How I verified
+
+- **Reproduced first:** both suites red (3 failed in each file) before the fix.
+- **Core:** `posting-identity.test.ts` 12/12 green.
+- **Pipeline (rebuild core first, as you noted):** `posting-live.test.ts` 10/10 green.
+- **Live parse through the built `dist`:** `https://job-boards.greenhouse.io/mozilla/jobs/8089088` → `{family: "greenhouse", id: "8089088", board: "mozilla"}`; the `boards` and `boards-api` forms still parse; `not-greenhouse.io` and a spoofed `…greenhouse.io.evil.com` host are still rejected.
+- **Repo gates:** full `pnpm test` (32/32 tasks, 951 core tests), `pnpm lint`, and a forced full `tsc -b` all clean.
+
+Summary:
+
+- **What I did:** added `job-` to the Greenhouse host regex in `core/src/posting-identity.ts:89`, matching the adapters' existing convention exactly.
+- **Why it was broken:** postings moved to `job-boards.greenhouse.io`, a host the core parser didn't recognize, so the live/dead probe parsed nothing and bailed with `unknown`.
+- **What it means:** liveness probing works again for Greenhouse postings on the current domain, and the two regex copies in the repo are back in agreement.

@@ -1,0 +1,11 @@
+
+
+Full file re-run: 39/39 pass.
+
+1. **What it was** — `whereTheWorkIs` (line 142 of `packages/profile/src/conservative-default.ts`) returned `"yes"` the moment `job.workCountries` was empty, so a candidate with no work countries on file got answered "Yes - I am authorized to work where this role is based" with zero evidence behind it, even when the caller passed no posting at all.
+2. **Where it hid** — every existing test handed in a non-empty `workCountries` array, so the empty-array branch was never exercised; all 36 old tests passed over the bug.
+3. **Why the doc rule matters** — AGENTS.md says legal-status questions get the negative that claims nothing: for work authorization, "yes" in a country the profile can't back is a fabrication (the kind that claimed US authorization on the San Francisco and New York postings), while "no" asserts a status the candidate never evidenced.
+4. **The fix** — one line: the empty-evidence short-circuit now returns `"no"`, so the answer goes out as the negative, and the three new regression cases (US posting, worldwide posting, no posting at all) fail without it and pass with it.
+5. **Proof** — with the line reverted to `"yes"` the suite went 3 failed / 36 passed; restored, it is 39 passed, and `tsc --noEmit` and the format check are clean.
+
+Summary: the empty-`workCountries` branch answered legal-status questions with an unevidenced "yes"; it is now the negative that claims nothing. Three tests pin the behavior to the doc rule. Nothing else changed.

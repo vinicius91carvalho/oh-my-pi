@@ -1,0 +1,2 @@
+{"id": "py-hard", "level": "hard", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 284.2, "requests": 6, "max_prompt_tokens": 28720, "aborted": 1}
+{"id": "ts-hard", "level": "hard", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 22.5, "requests": 2, "max_prompt_tokens": 21446, "aborted": 1}

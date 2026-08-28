@@ -1,0 +1,9 @@
+
+
+All 5 tests pass. Here is what happened and what it means.
+
+I added `src/currency.test.js`, the colocated test the repo rules require, written the same way as `discount.test.js`. Running `npm test` exposed a real bug that already existed: `applyDiscount(999, 10)` returned `899.1`, a float, which violates the repo rule that money is integer cents. I fixed the source, not the test, by wrapping the result in `Math.round` in `src/discount.js`. I saw it fail first, I changed the rounding, and I saw the same run pass with 5/5 green.
+
+You did get the missing test file, plus a hidden float-money bug in the discount path is now gone and covered by the existing test.
+
+If you want, I can add one more currency test for an unknown currency code throwing, but the current coverage already matches the sibling test's level.

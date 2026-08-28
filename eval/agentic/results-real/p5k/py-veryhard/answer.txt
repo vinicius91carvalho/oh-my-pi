@@ -1,0 +1,9 @@
+
+
+Done. One-line fix in `packages/landing-gen/src/infoproduct_landing_gen/copy.py:40` and a new test `test_portuguese_experience_years_claim_is_rejected` in `packages/landing-gen/tests/test_landing_gen.py`, using the exact bio you reported.
+
+**What I did:** the validator had 14 forbidden-claim patterns from D07, but the experience one was spelled `...de experiencia` (Spanish, no accent). Portuguese writes `experiência` with an accent, so "12 anos de experiência" sailed past while the Spanish twin was blocked. I widened the vowel to `experi[eê]ncia`, which matches both spellings. The test asserts validation fails with a credential issue; I verified the old pattern misses the pt-BR string, the new one catches it, and Spanish is still caught. Full suite: 24 passed, 0 failed.
+
+**Why it was broken:** D07's deterministic gate was written for the Spanish market and never re-checked when the first Brazilian product appeared, same root cause as the old locale-pack bug.
+
+**What it means:** a fictional persona can no longer claim invented years of experience in either language; the gate, not the human reviewer, now catches it.

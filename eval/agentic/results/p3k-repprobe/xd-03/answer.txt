@@ -1,0 +1,15 @@
+
+
+Done: JPY is in, and all 5 tests pass.
+
+**What I did**
+
+- Added the fourth currency to `src/currency.js`: `jpy: 150` (150 ienes per USD), same approximate style as the other pairs. I picked JPY at that exact rate because your notes already record that decision from an earlier session.
+- Created `src/currency.test.js` with 3 tests (USD to JPY, JPY back to USD, integer cents on a fractional result). Your rules file says every exported function needs a test next to it, and `convert` had none.
+- Ran `npm test`: it went red on a failing test I did not touch. `applyDiscount(999, 10)` returned 899.1 instead of 899. The `Math.round` fix your notes say was applied is missing from this copy of the folder, so the bug came back. I restored the `Math.round` on the return in `src/discount.js` and ran the tests again: 5 pass, 0 fail. I saw it fail, I fixed it, I saw it pass.
+- Updated the Cartola note in Basic Memory with a line recording that this checkout had lost both changes.
+
+**Summary**
+- Added `jpy` to `RATES` plus a test file for `convert`; restored the lost `Math.round` fix in `discount.js`.
+- It was broken because this copy of the folder is missing two fixes that were done before.
+- `npm test` is green, so conversions and discounts now always land on integer cents.

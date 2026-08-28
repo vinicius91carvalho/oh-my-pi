@@ -1,0 +1,15 @@
+
+
+Done. `formatCents(1234, "usd")` now returns `"12.34 USD"`, and the whole suite is green: 8 tests pass.
+
+What I did:
+
+- Added `formatCents` to `src/currency.js`. It does integer math only: the whole dollars come from `Math.floor`, the cents part is zero-padded with `padStart`, the code is uppercased. No float ever touches a money value. It also handles small amounts (`5 -> "0.05"`) and negative cents (`-250 -> "-2.50 USD"`) without producing garbage like `"-1.-50"`.
+- Created `src/currency.test.js` next to the source, matching the repo's `node:test` style. It covers the exact case you named, zero-padding, whole dollars, negatives, plus two `convert` tests, since the repo rule says every exported function needs a colocated test and the module had none.
+- The first `npm test` run failed on a pre-existing bug, not my code: `applyDiscount` in `src/discount.js` returned `899.1` for 999 at 10% instead of 899, which breaks the integer-cents rule. This is the same regression I had logged in Basic Memory from earlier checkouts. I added back the `Math.round` around the return, and the same test that failed now passes.
+- One thing I noticed but left alone: `RATES` here has no `jpy: 150` entry, which other checkouts have. You only asked for `formatCents`, so I did not add it. It is recorded in the memory note so a future session can decide.
+
+Summary:
+- What: added `formatCents` with tests, fixed the `applyDiscount` rounding bug the test run exposed.
+- Why it was broken: `applyDiscount` was missing its `Math.round`, so fractional discounts leaked float cents.
+- What it means: money math stays integer-cents everywhere, and `npm test` is green (8/8) in this checkout.

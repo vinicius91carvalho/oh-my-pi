@@ -1,0 +1,20 @@
+diff --git a/packages/core/src/timezone.ts b/packages/core/src/timezone.ts
+index 0a63eb4..54762a1 100644
+--- a/packages/core/src/timezone.ts
++++ b/packages/core/src/timezone.ts
+@@ -34,10 +34,13 @@ export function isUsableTimeZone(tz: string | null | undefined): boolean {
+   }
+ }
+ 
+-/** The zone if the runtime can format in it, else `fallback`. */
++/** The zone if the runtime can format in it, else `fallback` — trimmed, since
++ * the check already accepts surrounding whitespace and a caller passing the
++ * result straight to `Intl` gets no second look. */
+ export function usableTimeZone(
+   tz: string | null | undefined,
+   fallback: string,
+ ): string {
+-  return isUsableTimeZone(tz) ? (tz as string) : fallback;
++  const value = (tz ?? "").trim();
++  return isUsableTimeZone(value) ? value : fallback;
+ }

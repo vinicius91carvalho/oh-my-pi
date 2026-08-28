@@ -1,0 +1,7 @@
+# Igual ao p3k, mas com o template completo. Serve para o A/B do promptProfile.
+tools:
+  xdevForceMount: [hub, eval, task, todo, web_search, edit, glob, grep]
+  xdevDocs: catalog
+personality: none
+includeModelInPrompt: false
+promptProfile: full

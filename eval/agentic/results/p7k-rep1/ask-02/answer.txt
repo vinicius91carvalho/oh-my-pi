@@ -1,0 +1,14 @@
+
+
+Done. Both tests pass now, including the one that was failing.
+
+**What I did:** I did not switch to a float. I rounded `applyDiscount` to whole cents instead: `Math.round(cents - (cents * percent) / 100)`.
+
+**Why:** The function already returned a float for fractional discounts (`999 @10%` gave `899.1`), and that is exactly what broke the test `keeps integer cents on a fractional discount`, which expects `899`. Also, the cartola project rule in `AGENTS.md` says money must be integer cents and floats are never allowed for monetary values, so a float return would have broken the project's own rule.
+
+**For you:** Prices now always land on a whole cent (a 10% discount on 999 cents gives 899 cents, not 899.1). If you truly want float returns, that overrides the project rule, so say the word explicitly and I will make that change.
+
+**Summary:**
+- Changed: `applyDiscount` rounds its result to whole cents instead of leaving fractions.
+- Cause: it already produced floats, and the test (and the project rule) demand integer cents.
+- Result: `npm test` passes 2/2; money is integer cents everywhere again.

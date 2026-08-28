@@ -1,0 +1,7 @@
+
+
+The only other call site, `cart.js`, sums items in integer cents and then calls `applyDiscount`, so it now always returns integer cents too. No behavior elsewhere changed.
+
+- **What I did:** changed the discount in `src/discount.js` to round to whole cents before subtracting.
+- **Why it was broken:** fractional discounts produced non-integer cents (`899.1`).
+- **What it means:** the suite is green and every discount result is integer cents.

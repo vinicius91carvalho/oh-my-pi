@@ -1,0 +1,9 @@
+
+
+All green: 106 core tests, 392 pipeline tests, full typecheck.
+
+**What I did:** restored the `(job-)?` prefix in the Greenhouse host regex in `packages/core/src/posting-identity.ts:89`, making it `/(^|\.)(job-)?boards(-api)?\.greenhouse\.io$/`, then rebuilt `@fbj/core` so the pipeline picks it up through `dist/`.
+
+**Why it was broken:** commit `eec4082` ("chore: sync") dropped the `(job-)?` group, so the regex stopped matching the legacy host `job-boards.greenhouse.io` (the `boards` segment there is preceded by `-`, not `.`). `postingIdentity` returned `null`, `checkPostingLive` honestly short-circuited to `unknown`, and never fetched. The `@fbj/adapters` duplicate at `board.ts:75` kept the prefix, which is how the bug stayed hidden for the board-registration path.
+
+**What it means:** live/dead detection works again for both Greenhouse hosts, and the core and adapters copies of the regex are once more identical — verified by the originally failing pipeline test now passing (3 failed → 392/392) and the core suite 12/12.

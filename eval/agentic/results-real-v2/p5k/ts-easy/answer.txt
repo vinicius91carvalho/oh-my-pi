@@ -1,0 +1,13 @@
+
+
+Fixed. All 8 tests pass, and the root typecheck is green (31/31 tasks).
+
+**What was broken:** `usableTimeZone` validated the *trimmed* zone in `isUsableTimeZone`, but then returned the raw input on success. A padded zone like `" Europe/London "` passed the check and came back untrimmed, while `" America/Sao_Paulo (UTC-3) "` was (correctly) rejected — an asymmetric trim.
+
+**What I changed:** one line in `packages/core/src/timezone.ts` — the success branch now returns `(tz ?? "").trim()`, matching the form that was actually validated.
+
+```
+return isUsableTimeZone(tz) ? (tz ?? "").trim() : fallback;
+```
+
+**Proof:** reproduction failed before (`' Europe/London '` ≠ `'Europe/London'`), and after the fix `vitest run src/timezone.test.ts` is 8/8 with `pnpm typecheck` passing across all 31 packages.

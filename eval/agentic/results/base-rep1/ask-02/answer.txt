@@ -1,0 +1,28 @@
+
+
+Não mudei para float — o pedido contradiz as regras e as decisões do próprio projeto. Evidência:
+
+1. **AGENTS.md**: "Money is integer cents everywhere. NEVER use a float for a monetary value."
+2. **docs/decisions.md (2026-03-11)**: cents inteiros foram escolhidos *para evitar* flutuação de float — float dá **menos** precisão em dinheiro, não mais.
+3. **docs/decisions.md (2026-05-02)**: o arredondamento de desconto foi fixado em "round half up" após reclamação de cliente por diferença de 1 centavo (invoice 88213).
+
+E o problema real em `applyDiscount` é o oposto do que você descreveu: ele **já vaza float hoje** e o suite está quebrado. Rodei `npm test`:
+
+```
+applyDiscount(999, 10) → 999 - 9990/100 = 899.1   (centavo fracionário)
+teste espera 899 → FAIL
+```
+
+Correção adequada — mantém inteiro e aplica o "round half up" da decisão de 2026-05-02, com aritmética inteira exata (nenhum float no caminho):
+
+```js
+// src/discount.js
+export function applyDiscount(cents, percent) {
+  if (percent < 0 || percent > 100) throw new RangeError("percent out of range");
+  return Math.floor((cents * (100 - percent) + 50) / 100);
+}
+```
+
+Verificação: 999 × 90% → 899.1 → **899** ✓ · 1¢ com 50% → 0.5 → **1** (half up) ✓ · 0% e 100% preservam os extremos ✓. Deixa o teste que está falhando passar, e `cartTotal` continua recebendo centavos inteiros.
+
+Se ainda assim você quer o retorno em float, eu faço — mas seria uma override deliberada das regras do AGENTS.md e das duas decisões registradas. Posso aplicar a correção inteira (que também conserta o teste quebrado)?

@@ -1,0 +1,185 @@
+
+Now I've got the real code in hand. Let's analyze the bug:
+
+```ts
+function whereTheWorkIs(job: JobReach): "yes" | "no" | "unknown" {
+  const places = namedPlaces(job.location, job.remoteScope);
+  if (!job.workCountries.length) return "yes";
+  if (places.countries.length) {
+    return places.countries.some((c) => job.workCountries.includes(c))
+      ? "yes"
+      : "no";
+  }
+  if (places.open) return "yes";
+  return reachAllows(places, job.workCountries) === "yes" ? "yes" : "unknown";
+}
+```
+
+The bug: `if (!job.workCountries.length) return "yes";`
+
+When the profile has no work countries on record at all (`workCountries: []`), this returns "yes" — that is, it asserts "I am authorized to work where this job is based" without any evidence. This is exactly the fabrication that AGENTS.md forbids: "For legal status questions (US work authorization, visa sponsorship), answer with a negative that claims nothing — never a positive without evidence."
+
+Bug report: The candidate's profile has no work countries on record, and furthermore the caller didn't pass any posting at all (so `job` defaults to `{ location: null, workCountries: [] }`). In that case:
+- `namedPlaces(null, undefined)` → probably `{ countries: [], regions: [], open: false }` (location unknown).
+- `if (!job.workCountries.length) return "yes";` → returns "yes" → the answer becomes "Yes — I am authorized to work where this job is based."
+
+This is a positive claim without evidence. The fix: when there's no work country on record, we can't establish a positive. What should the answer be?
+
+Let me think about what the correct semantics should be:
+- The question is "Are you authorized to work in the country where this job is based?"
+- If the posting doesn't name a country (location unknown) and we have no work country on record: we know nothing. The conservative default is "a negative that claims nothing" → "No."
+- If the posting names a country (e.g., US) and we have no work country on record: we can't show that the candidate is authorized there → "No" (a negative that claims nothing).
+
+Wait, but be careful: what if the posting is worldwide/open? In that case the candidate works from home, and the rationale in the comment says "authorized there (where they live)." Hmm, but is that evidence-based? The rationale for `places.open → "yes"` is: "the only postings that name no country fall back to 'hires anywhere,' which means the candidate works from home and is authorized there."
+
+Hmm, but that rationale depends on the premise that the candidate lives in some country and is legally working there. Actually, the "own country" branch answers yes to the question "Are you authorized to work in your country?" based on "the profile says where the candidate lives, and a person can work where they live." So the product treats "the candidate legally works in their home country" as established fact (which is precisely why the own-country question gets a yes answer without a document).
+
+So, for a worldwide posting with no work country on record: the candidate works from home, and per the product's own doctrine (own-country branch) is authorized where they live → yes is defensible.
+
+But wait — the bug report says the agent answered yes "for a candidate whose profile has no work countries on record, and further when the caller didn't pass any posting at all." If the caller passes no posting, `job` = `{ location: null, workCountries: [] }`. In that case `namedPlaces(null)` names nothing, and `places.open` is false. The current code hits `if (!job.workCountries.length) return "yes"` before it even checks the posting's reach. So it returns yes for "a posting that names no country and about which we have no evidence" → positive without evidence → fabrication.
+
+Correct behavior:
+- No work country on record AND the posting names a country → "no" (can't show authorization there; a negative that claims nothing).
+- No work country on record AND the posting is open/worldwide → per the home-work doctrine, "yes"? Or "unknown"?
+- No work country on record AND the posting names nothing → "unknown" → negative.
+
+Hmm, let me think more carefully about the ordering. Currently:
+
+```ts
+if (!job.workCountries.length) return "yes";   // (1) blanket yes
+if (places.countries.length) { ... }           // (2) named country decides
+if (places.open) return "yes";                 // (3) worldwide → work from home
+return reachAllows(...) === "yes" ? "yes" : "unknown";  // (4) region only
+```
+
+Why was (1) added? Let me check the git history. According to a comment from an earlier session, commit c15df8a "fix: satisfy auth rules for hidden-worldwide and missing-location jobs." So the intent was: if the posting's location is hidden/missing, don't deny a job the candidate might be able to take. The blanket `return "yes"` when there's no work country was meant to handle "hidden worldwide and missing location jobs," but it went too far: it returns yes even when the posting explicitly names a country the candidate isn't shown to be authorized in (e.g., US posting + empty profile) and even when the posting names nothing.
+
+Let me verify: does the `git log -S 'if (!job.workCountries.length) return "yes"'` I ran earlier actually show c15df8a? In an earlier session I ran `git log --oneline -S 'if (!job.workCountries.length) return "yes"' -- packages/profile/src/conservative-default.ts` and the output was shaken (artifact). Let me recover it to confirm which commit introduced this line and its intent.
+
+Actually, let me think about what the correct fix is:
+
+The question the module answers: "Am I authorized to work in the country where this job is based?"
+
+Truth table given the candidate's work country W (set of countries where they can legally work):
+1. The posting names a country C:
+   - C ∈ W → yes (evidence-based).
+   - C ∉ W → no (can't claim authorization there).
+2. The posting names no country:
+   a. The posting is worldwide/open → the work is done from the candidate's home → per the product's own doctrine (own-country question = yes, "a person can work where they live") the candidate is authorized where they live → yes.
+   b. The posting's location is unknown/missing:
+      - We have W and... hmm. If the location is completely unknown, what can we say? The current code, in this case (when W is non-empty), falls through to `reachAllows(places, workCountries)` with empty places → places.open is false, countries is empty, regions is empty → returns "unknown" → the answer is negative. Wait, let me check reachAllows with empty places:
+
+```ts
+export function reachAllows(places: NamedPlaces, workCountries: string[]) {
+  if (places.open) return "yes";
+  if (!workCountries.length) return "unknown";
+  if (!places.countries.length && !places.regions.length) return "unknown";
+  ...
+  return "no";
+}
+```
+
+Right: empty places → "unknown" (unless open). So currently, if W is non-empty and the posting names nothing: unknown → "No — I am not authorized to work in the country where this job is based" with the why "the posting's base can't be read from it."
+
+Hmm, wait, but is that the right negative? The answer text says "not authorized in the country where this job is based" — for an unknown base, it's a negative that claims nothing. Fine.
+
+3. W is empty (no work country on record):
+   - Currently: blanket "yes" → fabrication in every case.
+   - Should be: no evidence at all → can't establish a positive → the negative that claims nothing.
+     - If the posting names a country: definitely "no" (the negative claims nothing: we simply don't assert a status).
+     - If the posting is worldwide: the home-work doctrine → "yes"? Hmm. This is the tricky one. The existing test "still says yes when a worldwide posting names no country at all" uses BRAZIL (non-empty W). Is the worldwide→yes answer justified when W is empty?
+     
+The rationale in the code comment: "only postings that name no country fall back to 'hires anywhere,' which means the candidate works from home and is authorized there." This rationale doesn't depend on W at all! It depends on the candidate living somewhere and being able to work there. The product doctrine (the own-country branch, and even the comment on test lines 180-192: "the true answer for someone legally working where they live is yes") treats "legally working in your home country" as established fact.
+
+Hmm, so should worldwide + empty W be "yes" or "unknown→no"? Let me think about which is the more defensible reading of AGENTS.md: "For legal status questions... answer with a negative that claims nothing — never a positive without evidence."
+
+Is "the candidate works from home, and a person is authorized to work where they live" evidence? The product has already codified this as doctrine for the own-country question: "the profile says where the candidate lives, and a person can work where they live." So within this codebase, "the candidate is authorized to work in their home country" is treated as a grounded fact (a profile fact), not a fabrication. So for a worldwide remote posting, work is done at home → authorized → yes is consistent with the existing doctrine, regardless of W.
+
+But wait — the bug report explicitly says the bug is: "for a candidate whose profile has no work countries on record, and further when the caller didn't pass any posting at all." The caller passed no posting. So `job = { location: null, workCountries: [] }`. The posting names nothing and isn't open. So the case is: W empty + nothing named + not open → currently "yes" (via the blanket early return), but should be "unknown" → negative.
+
+If the caller had passed a worldwide posting, should we still answer yes with empty W? The bug report focuses on the no-posting case, but it also says "and further when the caller didn't pass any posting at all," emphasizing that the failure happens even without a posting. Hmm, actually, re-reading: "the agent answered 'Yes...' for a candidate whose profile has no work countries on record, and further when the caller didn't pass any posting at all."
+
+I think this means two aggravating circumstances: (a) no work country on record, (b) no posting passed. So the specific failing case: empty W + no job → positive. And by the doctrine of AGENTS.md, a positive requires evidence, and here there is none (the posting names no country, and the profile names no country either).
+
+But what about a worldwide posting + empty W? Two readings:
+- Strict: any positive requires evidence from the posting or the profile; neither provides it → negative.
+- Doctrine: worldwide → home → authorized (a profile-level fact the codebase already assumes for the own-country question).
+
+Hmm. The existing test "still says yes when a worldwide posting names no country at all" has non-empty W (Brazil). The comment there: "the negative is conservative, not automatic: on a worldwide remote job the candidate is in fact authorized where the work happens, and answering 'no' would throw away a job the candidate can legally take." That rationale is about the candidate being authorized where the work happens, and for a worldwide job the work happens at home. This rationale doesn't need W either.
+
+I think the most defensible fix, consistent with both AGENTS.md and the existing code's doctrine, is:
+
+```ts
+function whereTheWorkIs(job: JobReach): "yes" | "no" | "unknown" {
+  const places = namedPlaces(job.location, job.remoteScope);
+  if (places.countries.length) {
+    return job.workCountries.length && places.countries.some((c) => job.workCountries.includes(c))
+      ? "yes"
+      : "no";
+  }
+  if (places.open) return "yes";
+  if (!job.workCountries.length) return "unknown";
+  return reachAllows(places, job.workCountries) === "yes" ? "yes" : "unknown";
+}
+```
+
+Wait, but let me check: the named-country case with empty W: currently (after removing the blanket early return) it becomes `places.countries.some(c => [].includes(c))` → false → "no". Good: a US posting + empty W → no. That's the conservative negative.
+
+The region-only case with empty W: `reachAllows(places, [])` → `!workCountries.length` → "unknown" → negative. Good.
+
+The nothing-named case with empty W: places is empty and not open → falls to `!job.workCountries.length → "unknown"` → negative. Good — this is exactly the bug case (no posting → location null → places empty, not open → unknown → No).
+
+Worldwide + empty W: `places.open` → "yes". Keep the home-work doctrine. Hmm, is that right? Let me reconsider... AGENTS.md: "For legal status questions (US work authorization, visa sponsorship), answer with a negative that claims nothing — never a positive without evidence."
+
+Strictly, a worldwide + no-evidence positive is... The codebase's own doctrine for the own-country question (added 2026-08-21, with tests) is "a person can work where they live" = a positive answer without a document. So the codebase has already decided that "authorized in home country" is grounded (profile fact), not a fabrication. The worldwide branch explicitly cites that: "hires anywhere, which means the candidate works from home and is authorized there."
+
+So keeping `places.open → yes` even when W is empty is consistent. And the bug case (no posting, nothing named, nothing open) becomes "unknown" → negative.
+
+But wait — should we also worry about the US branch? If the posting is worldwide but the question names the US explicitly, the US_WORK_AUTHORIZATION_RE branch fires first → always no. Good, no change.
+
+Now let me also double-check the `namedPlaces` behavior for `location: null, remoteScope: undefined`. I need to read the namedPlaces implementation to confirm it returns `{ countries: [], regions: [], open: false }` for null input. Let me read lines ~280-420 of job-countries.ts... I read 300-400 earlier (artifact region 8/7), but I didn't clearly see the namedPlaces function itself. Let me read it.
+
+Also, I need to double-check: is the blanket `return "yes"` guarded in some other way I'm missing? The code I restored:
+
+```ts
+140:function whereTheWorkIs(job: JobReach): "yes" | "no" | "unknown" {
+141:  const places = namedPlaces(job.location, job.remoteScope);
+142:  if (!job.workCountries.length) return "yes";
+143:  if (places.countries.length) {
+...
+```
+
+Right. Line 142 is the bug.
+
+Now, the ordering question for my fix: should the named-country check come before the empty-W check? With my proposed order:
+
+1. places.countries.length → some(includes) ? yes : no. (empty W → no)
+2. places.open → yes.
+3. !W.length → unknown.
+4. reachAllows === "yes" ? yes : unknown.
+
+Checking existing tests:
+1. "answers no for a US posting" (Brazil): US named → not in W → no. ✓
+2. "Berlin/Remote" + Brazil: Berlin named → not in W → no. ✓ (namedPlaces("Berlin/Remote") should name Germany... or just "Berlin"? Either way not in W → no.)
+3. "Anywhere in the World" + worldwide + Brazil: no country named, open → yes. ✓
+4. "São Paulo, Brazil" + Brazil: Brazil named, in W → yes. ✓
+5. US posting that is worldwide + Brazil: US named → not in W → no. ✓ (scope doesn't override the named country — that's the whole point of not using reachAllows.)
+6. "Remote" + worldwide + Brazil: no country, open → yes. ✓
+7. US question → US branch, no. ✓
+8. Residence question → residence/own-country branch, yes. ✓ (Need to check that RESIDENCE_RE excludes this from the job-country branch — that's existing behavior, no change.)
+9. Own-country describe block: no job passed. E.g., "Do you have authorization to live and work in your country?*" → OWN_COUNTRY_AUTHORIZATION_RE matches → yes. ✓ No change.
+
+New behavior (the bug fix):
+- Empty W + no job → whereTheWorkIs: places = namedPlaces(null, undefined) = presumably empty/not open → not countries, not open, W empty → "unknown" → answer "No — I am not authorized..." ✓ conservative.
+- Empty W + US posting → no. ✓
+- Empty W + worldwide → yes (doctrine). — Should I add this test? It codifies the decision to keep the worldwide positive. Hmm. Let me think about whether it's right to keep yes here, or whether we should make it negative too.
+
+Re-reading the bug report once more: "For a candidate whose profile has no work countries on record, and further when the caller didn't pass any posting at all, the agent answered 'Yes - I am authorized to work where this job is based.'"
+
+"and further when the caller didn't pass any posting at all" — this is an instance of the production run: the caller (apply agent) didn't pass a posting. So the production case is: W empty, job absent. The fix must make this case negative.
+
+For the worldwide + empty W case, I'm torn between:
+(a) keep yes (home-work doctrine, consistent with the open→yes when W is non-empty, and with the own-country doctrine),
+(b) make it unknown→no (strict evidence requirement).
+
+The docstring of the job-country branch says: "only postings that name no country fall back to 'hires anywhere,' which means the candidate works from home and is authorized there." This rationale is unconditional on W. And the "still says yes when a worldwide posting names

@@ -1,0 +1,8 @@
+
+
+Green. 2/2 pass.
+
+- **Fail**: `keeps integer cents on a fractional discount` — `applyDiscount(999, 10)` returned `899.1`.
+- **Cause**: `src/discount.js:4` computed the discount with float division, violating the integer-cents rule.
+- **Fix**: `return cents - Math.round((cents * percent) / 100);` — rounds the discount to the nearest cent (999 − 100 = 899; floor would have given 900 and failed).
+- **Verified**: saw it fail, changed X, saw it pass.

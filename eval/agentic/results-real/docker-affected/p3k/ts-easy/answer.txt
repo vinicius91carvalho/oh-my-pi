@@ -1,0 +1,9 @@
+
+
+Done. The bug: `usableTimeZone` validated the *trimmed* string but returned the raw one, so `" Europe/London "` passed the check and got handed to `Intl.DateTimeFormat` untrimmed, which throws. Now it returns the trimmed value it already validated.
+
+- What I did: `packages/core/src/timezone.ts` now returns the trimmed zone; all 8 tests pass.
+- Why it was broken: validation and return used two different strings.
+- What it means: zones with stray whitespace from résumé parsing now format instead of crashing the caller.
+
+Note: my first edit attempt clobbered the file (wrong tool, fragment content); I immediately rewrote it in full with the fix, so the final state is the original plus the one-line change only.

@@ -1,0 +1,87 @@
+Scope: 13 of 21 workspace projects
+Scope: all 21 workspace projects
+✓ Lockfile passes supply-chain policies (verified 6d ago)
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+. prepare$ git config core.hooksPath .githooks && git config core.sshCommand 'ssh -o ServerAliveInterval=30 -o ServerAliveCountMax=40' || true
+. prepare: Done
+Done in 520ms using pnpm v11.13.1
+packages/db build$ tsc -b
+packages/queue build$ tsc -b
+packages/queue build: Done
+packages/db build: Done
+packages/core build$ tsc -b
+packages/core build: Done
+packages/browser build$ tsc -b
+packages/mail build$ tsc -b
+packages/llm build$ tsc -b
+packages/notify build$ tsc -b
+packages/mail build: Done
+packages/observability build$ tsc -b
+packages/llm build: Done
+packages/storage build$ tsc -b
+packages/notify build: Done
+packages/browser build: Done
+packages/observability build: Done
+packages/storage build: Done
+packages/profile build$ tsc -b
+packages/adapters build$ tsc -b
+packages/profile build: Done
+packages/adapters build: Done
+packages/agents build$ tsc -b && mkdir -p dist/prompts && cp src/prompts/*.md dist/prompts/
+packages/agents build: Done
+packages/pipeline build$ tsc -b
+packages/pipeline build: Done
+
+ RUN  v4.1.10 /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/packages/core
+
+
+ Test Files  1 passed (1)
+      Tests  26 passed (26)
+   Start at  01:50:12
+   Duration  86ms (transform 15ms, setup 0ms, import 20ms, tests 3ms, environment 0ms)
+
+
+ RUN  v4.1.10 /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/packages/llm
+
+{"level":40,"time":1787892613789,"pid":66082,"hostname":"Viniciuss-MacBook-Pro.local","id":"job_bad_1","issues":["score: Number must be less than or equal to 100"],"msg":"score batch item failed the verdict schema — discarded"}
+{"level":40,"time":1787892613790,"pid":66082,"hostname":"Viniciuss-MacBook-Pro.local","id":"job_bad_1","issues":["verdict: Invalid enum value. Expected 'best_fit' | 'maybe_fit' | 'no_fit', received 'great_fit'"],"msg":"score batch item failed the verdict schema — discarded"}
+{"level":40,"time":1787892613790,"pid":66082,"hostname":"Viniciuss-MacBook-Pro.local","id":"undefined","issues":["id: Required"],"msg":"score batch item failed the verdict schema — discarded"}
+{"level":40,"time":1787892613790,"pid":66082,"hostname":"Viniciuss-MacBook-Pro.local","id":"job_bad_1","issues":["score: Expected number, received string"],"msg":"score batch item failed the verdict schema — discarded"}
+{"level":40,"time":1787892613791,"pid":66082,"hostname":"Viniciuss-MacBook-Pro.local","id":"job_platform_1","coerced":["level_match: \"unclear\" → stretch"],"msg":"score batch item answered a gate outside the allowed values — read as neutral"}
+{"level":40,"time":1787892613791,"pid":66082,"hostname":"Viniciuss-MacBook-Pro.local","id":"job_platform_1","coerced":["level_match: \"no\" → stretch"],"msg":"score batch item answered a gate outside the allowed values — read as neutral"}
+{"level":40,"time":1787892613791,"pid":66082,"hostname":"Viniciuss-MacBook-Pro.local","id":"job_platform_1","coerced":["location_compatible: \"maybe\" → unclear"],"msg":"score batch item answered a gate outside the allowed values — read as neutral"}
+{"level":40,"time":1787892613791,"pid":66082,"hostname":"Viniciuss-MacBook-Pro.local","id":"job_platform_1","coerced":["salary_meets_floor: \"unclear\" → unknown"],"msg":"score batch item answered a gate outside the allowed values — read as neutral"}
+{"level":40,"time":1787892613791,"pid":66082,"hostname":"Viniciuss-MacBook-Pro.local","id":"job_platform_1","coerced":["work_authorization_ok: true → unclear"],"msg":"score batch item answered a gate outside the allowed values — read as neutral"}
+{"level":40,"time":1787892613827,"pid":66080,"hostname":"Viniciuss-MacBook-Pro.local","src":"(unclosed","msg":"scoring rule pattern failed to compile — skipped"}
+{"level":40,"time":1787892613827,"pid":66080,"hostname":"Viniciuss-MacBook-Pro.local","src":"[a-","msg":"scoring rule pattern failed to compile — skipped"}
+{"level":40,"time":1787892613827,"pid":66080,"hostname":"Viniciuss-MacBook-Pro.local","src":"(unclosed","msg":"scoring rule pattern failed to compile — skipped"}
+{"level":40,"time":1787892613828,"pid":66080,"hostname":"Viniciuss-MacBook-Pro.local","src":"[a-","msg":"scoring rule pattern failed to compile — skipped"}
+{"level":40,"time":1787892613828,"pid":66080,"hostname":"Viniciuss-MacBook-Pro.local","src":"(unclosed","msg":"scoring rule pattern failed to compile — skipped"}
+
+ Test Files  3 passed (3)
+      Tests  285 passed (285)
+   Start at  01:50:12
+   Duration  952ms (transform 755ms, setup 0ms, import 2.21s, tests 277ms, environment 0ms)
+
+
+ RUN  v4.1.10 /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/packages/pipeline
+
+{"level":40,"time":1787892617407,"pid":66093,"hostname":"Viniciuss-MacBook-Pro.local","msg":"no profile for this tenant — scoring without a candidate, everything will land in review"}
+
+ Test Files  2 passed (2)
+      Tests  11 passed (11)
+   Start at  01:50:14
+   Duration  4.05s (transform 868ms, setup 0ms, import 1.76s, tests 4.01s, environment 0ms)
+
+
+ RUN  v4.1.10 /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/apps/cli
+
+{"level":40,"time":1787892621582,"pid":66107,"hostname":"Viniciuss-MacBook-Pro.local","msg":"more than one account in this database — pass `--tenant <id>` (or set FBJ_TENANT_ID) to say which one this command is for. Refusing to pick."}
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+   Start at  01:50:19
+   Duration  5.10s (transform 253ms, setup 0ms, import 567ms, tests 4.47s, environment 0ms)
+

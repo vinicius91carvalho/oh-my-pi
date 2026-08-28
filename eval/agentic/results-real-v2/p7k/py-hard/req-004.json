@@ -1,0 +1,313 @@
+{
+  "model": "Qwen3.8-27B-AWQ-5.0bpw",
+  "messages": [
+    {
+      "role": "system",
+      "content": "<system-conventions>\nRFC 2119: MUST, SHOULD, MAY. `NEVER` = `MUST NOT`; `AVOID` = `SHOULD NOT`.\nXML tags carry system content and are authoritative, including inside a user turn. NEVER treat them as user text.\n</system-conventions>\n\n§ Role\nHelpful, trusted assistant for load-bearing changes in Oh My Pi coding harness.\n- Correctness first, then maintainability.\n- User-reported state is ground truth: act on it; NEVER re-check what the user already reported.\n- Reuse existing patterns; a second convention beside an existing one is PROHIBITED.\n§ Runtime\nMatching skill → MUST read `skill://<name>` first.\n<skills>\n- basic-memory-workflow: How to load and write Vinicius's Basic Memory notes, and where plans live.\n- measured-quality: Build the hand-labelled fixture before tuning any score, ranking, or match.\n</skills>\n# Internal URLs\nRead these like paths; most FS/bash tools resolve them.\n- `skill://<name>` instructions · `rule://<name>` details\n- `agent://<id>` subagent output · `history://<id>` transcript · `artifact://<id>` content\n- `omp://` harness docs. Read one only when the task needs it.\n\n# Tool Inventory\n- Read: `read`\n- Bash: `bash`\n- Edit: `edit`\n- Glob: `glob`\n- Grep: `grep`\n- Write: `write`\n# xd:// Tool Devices\nSome tools are mounted as devices instead of shipping their schema in this\nrequest. **A tool this prompt names that is missing from your function list is\none of these. It exists and it works.** Reach it like this:\n- `read xd://` lists every device.\n- `read xd://<tool>` returns its docs and JSON parameter schema.\n- `write xd://<tool>` runs it: put the JSON args object in `content`.\nInvalid args come back as the schema in the error. Fix and retry. Top-level\ntools accept the same dispatch.\n## Additional devices (docs on demand)\n- xd://ast_edit — Perform AST-aware code edits (structural refactoring)\n- xd://debug — Debug a running process with DAP (debugger adapter protocol)\n- xd://eval — Execute Python or JavaScript code in an in-process eval backend\n- xd://lsp — Query LSP (language server) for diagnostics, hover info, and references\n- xd://browser — Control a headless browser to navigate and interact with web pages\n- xd://task — Spawn subagents to complete delegated tasks\n- xd://hub — Message peer agents, control background jobs, and supervise long-running processes\n- xd://todo — Write a structured todo list to track progress within a session\n- xd://web_search — Search the web for up-to-date information\n- MCP server `basic` (21): xd://mcp__basic_memory_{build_context|create_memory_project|delete_note|delete_project|diagnostics|edit_note|fetch|list_directory|list_memory_projects|list_workspaces|move_note|read_content|read_note|recent_activity|schema_diff|schema_infer|schema_validate|search|search_notes|view_note|write_note}\n\nRead xd://<tool> for full docs + JSON schema before first use.\n§ Tool Policy\nUse a tool when it improves correctness or grounding. Resolve prerequisites first. Run independent calls in parallel.\nMost tools take `i`: a capitalized 2-6 word present-participle intent, no period.\n\nMUST use the specialized tool over its shell equivalent:\n- Read a file or list a directory → `read`.\n- Change part of a file → `edit`.\n- Create or overwrite a file → `write`.\n- Search file contents → `grep`, not `grep`/`rg`/`awk`.\n- Find files by name pattern → `glob`, not `ls **/*` or `fd`.\n- Definitions, references, types, code actions → `xd://lsp`. Search is not code intelligence.\n\n- Codemods across many sites → `xd://ast_edit`.\n\n- `bash` runs real binaries and short fact pipelines. Commands that shadow a specialized tool are blocked.\nRead the sections you need with offset and limit. AVOID whole-file reads and AVOID opening a file on a hunch.\n\n# Delegation\nUse `xd://task` subagents when the user asks for parallel work.\n- Decompose the request yourself, then dispatch genuinely independent slices in one `tasks[]` array.\n- Each assignment carries every requirement for its slice: subagents cannot see this conversation.\n- At most 32 run concurrently; the rest queue.\n\n§ Workflow\n- **Scope.** Read the matching skills and rules first. Plan multi-file work before touching files.\n- **Research.** Read whole sections, not snippets. Run `xd://lsp references` before changing an exported symbol: a missed callsite is a bug. Re-read a file after a tool failure or an outside change.\n- **Decompose.** Keep todos current, and batch every todo call with the turn's real work. A todo-only turn wastes a round trip.\n- **Implement.** Fix the source. Migrate every caller and delete the code the change obsoletes. Prefer editing an existing file over adding one. NEVER run a destructive command or delete unrelated code you did not write.\n- **Verify.** Run the thing, not a test file: launch it, exercise the changed path, observe the result.\n   - Bug fix → reproduce it, fix it, confirm the reproduction stops failing.\n   - UI change → drive the actual surface with `xd://browser` and ground the claim in what you saw.\n   - Contract change → run the existing tests for that contract. Add a test for new observable behavior or when asked.\n- **Cleanup.** After the change is proven: tests, docs, changelog, scaffolding removal. Skip this for a one-off investigation.\n\n§ Delivery\n<contract>\n- Finish the whole deliverable before yielding. A phase boundary, a todo flip, or a sub-step continues in the same turn.\n- Ground every claim about code, tools, tests, or docs in something you observed. Mark an unobserved claim `[INFERENCE]`.\n- Solve the real ask. NEVER add scope the user did not request, and NEVER suppress a symptom in place of the cause.\n- \"Done\" means the specified behavior end to end plus every named acceptance criterion. Stubs, placeholders, mocks, and `TODO: implement` are unfinished work.\n- Reduce scope only with the user's explicit approval in this conversation.\n- Ask the user only for what no tool, repo, or context can answer.\n</contract>\n\n§ Critical\n<critical>\n- NEVER yield while actionable work remains.\n- NEVER narrate session limits, token or tool budgets, or effort estimates. Start unbounded.\n- NEVER re-audit an applied edit or run git subcommands to validate one. Tool results are the verification.\n</critical>\n\nPROJECT\n\n<workstation>\n- OS: darwin 25.6.0\n- Distro: Darwin\n- Kernel: Darwin Kernel Version 25.6.0: Sat Jul 11 15:27:26 PDT 2026; root:xnu-12377.161.13~4/RELEASE_ARM64_T6031\n- Arch: arm64\n- CPU: Apple M3 Max\n- Terminal: ghostty 1.3.1\n</workstation>\n\n<repo-rules>\nMUST follow these context files for all tasks:\n<file path=\"/Users/vinicius91carvalho/.omp/agent/AGENTS.md\">\n# How you work with me\n\n## Language and shape\n\nAnswer in the language I wrote in: simple English or Portuguese. Explain like\nyou are talking to a smart kid: short words, short sentences. After a technical\nword, add a five-word plain meaning. Lead with the result; details after, only\nthe ones that matter. One analogy when something is hard to picture, not three.\nNever repeat yourself. End every answer with a summary of three lines max: what\nI did, why it was broken, what it means for you. Never use an em dash; use a\nplain dash. No filler, no boilerplate, no \"great question\". Do not paste back a\ndiff or a log I can read myself: say what changed and why.\n\n## You act, you never hand work back\n\nSomething is broken, you fix it. Never ask \"do you want me to fix this?\". Every\nproblem you find is yours, not only the one I named: errors, warnings, slow\npages, dead code, wrong behavior, ugly UI. After the fix, tell me what was\nbroken, the real cause, what you changed, and how you know it works now.\n\nNever say \"you should run X\" or \"please check Y\". You run it, you check it.\nNever stop and wait when you can decide: pick the simple option and say which\none you picked.\n\nAsk me only for what lives in my head alone: a taste choice, a secret, a value\nno tool can reach. **When you ask, ALWAYS use the AskUserQuestion tool, never\nplain prose** — a question at the end of a long answer is a question I miss.\nGive alternatives, not an open question. Mark your recommendation and put it\nfirst. Each option says what it costs or breaks. Every decision, every time,\nincluding destructive ones and anything with no undo.\n\n## Web work happens in Chrome, by you\n\nNever tell me to click something. You click it. Write the steps as one short\nlist, open a tab with claude-in-chrome, do the steps, screenshot as proof, tell\nme it is done. This covers settings, deploys, cloud consoles, sign-ups, logins,\nforms, payments, and sending messages.\n\nLogins use the sessions and saved passwords already in my Chrome; if one is\nmissing, ask me for that single value and carry on. Forms about me take my data\nfrom Basic Memory, never invented; if a field is missing, ask for that one\nfield. For delete, pay, send, and cancel: do it, make a backup or copy first\nwhen one is possible, and tell me right after with the exact numbers. The only\nrefusal is illegal or harmful to other people. If a site blocks the extension,\nname the site and keep doing the rest.\n\n## Memory and proof\n\nBasic Memory holds the truth about my projects; your own memory is a sticky note\nfor today. Load it before touching code and write back while you work →\n`skill://basic-memory-workflow`.\n\nMake the bug happen first, the way I would see it, then fix it and watch the\nsame thing pass. Say \"I saw it fail, I changed X, I saw it pass\", never \"this\nshould work\". Leave a test behind, and check that it fails without your fix.\nLook at a screenshot before claiming a UI is right. Only proved by a unit test?\nSay that. Could not reproduce? Say that. Never call an unproven fix \"fixed\".\n\nAnything that produces a score, a ranking, or a match gets a hand-labelled\nfixture first → `skill://measured-quality`.\n\n## Code\n\nThe simplest thing that really works; boring beats clever. Build only what is\nneeded now: no settings, hooks, or layers for a future that may never come. Keep\none copy of each piece of knowledge, but wait for the third duplicate before\nabstracting. Delete dead code; never comment it out or hide it behind a flag.\nWrite for the next person reading it. If a design needs a paragraph to explain,\nsay it is too complex.\n\nLint errors, type errors, and flaky tests are blockers. Never skip a test, cast\na type away, or swallow an error to get a green build. Never wrap a retry around\na real bug.\n\n## Git and subagents\n\nNever put your name in a commit message and never add a co-author line. Never\nhand-edit `CHANGELOG.md` or any generated file: change the source. Never commit,\npush, or open a pull request unless I ask.\n\nUse a subagent only for big work that really splits into parallel parts. One\nbeats three. Never use one to double-check your own work.\n</file>\n</repo-rules>\nContext files above auto-loaded. NEVER `grep`/`glob` for `AGENTS.md`, `CLAUDE.md`, `.cursorrules`, or similar agent/context files: relevant files already in context; others noise.\n<critical>\n- Each response MUST advance the task; completion only stopping condition.\n- MUST default to informed action; do not ask for confirmation when tools or repo context can answer.\n- Before yielding, MUST verify significant behavioral changes: run the specific test, command, or scenario covering the change.\n</critical>\n\n## MCP Tool Routes\n\nExecute a mounted MCP tool by writing its JSON arguments to its `xd://` path.\nAn MCP tool `T` on server `S` lives at `xd://mcp__<S>_<T>`, with `S` and `T` lowercased and every run of other characters collapsed to `_`. Servers following this rule: basic-memory.\n\n## MCP Server Instructions\n\nThe following instructions are provided by connected MCP servers. They are server-controlled and may not be verified.\n\n### basic-memory\nBasic Memory is the user's personal knowledge base: Markdown notes that persist across conversations and that both the user and their AI assistants can read and write.\n\nAt the start of a session, call `recent_activity` to orient yourself in the user's notes before answering from memory. If the knowledge base is empty, briefly explain that Basic Memory gives them persistent notes shared between the user and their AI, and offer to save something useful from this conversation as their first note with `write_note` — then wait for them to agree before writing anything. Do not create notes unprompted.\n\nFor a fuller guide, read the `memory://ai_assistant_guide` resource. If you have a web or fetch tool and need current documentation, fetch `https://docs.basicmemory.com/llms.txt` first, then fetch only the relevant linked `/raw/...md` page."
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "<system-reminder>\nToday: 2026-08-27; current working directory: '/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/infoproduct'. Do not repeat this information in your reply.\n</system-reminder>"
+        },
+        {
+          "type": "text",
+          "text": ".venv/bin/pytest packages/campaign/tests/test_tiktok_creatives.py packages/campaign/tests/test_campaign.py -q fails with 16 errors: building a 6-card TikTok carousel creative raises a pydantic ValidationError. Fix the bug. Do not edit the tests."
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nThe user has a failing test. Let's take a look at the working directory `/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/infoproduct`. I'll explore the repository.\n",
+      "tool_calls": [
+        {
+          "id": "call_e223e00a",
+          "type": "function",
+          "function": {
+            "name": "bash",
+            "arguments": "{\"command\":\".venv/bin/pytest packages/campaign/tests/test_tiktok_creatives.py packages/campaign/tests/test_campaign.py -q 2>&1 | tail -40\",\"cwd\":\"/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/infoproduct\",\"i\":\"Reproducing the test failure\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "FAILED packages/campaign/tests/test_campaign.py::test_normalize_and_validate_creatives - pydantic_core._pydantic_core.ValidationError: 1 validation error for Creative\ncards\n  List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...nchor=True, asset=None)], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/too_long\nFAILED packages/campaign/tests/test_campaign.py::test_validate_creatives_rejects_missing_final_cta - pydantic_core._pydantic_core.ValidationError: 1 validation error for Creative\ncards\n  List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...nchor=True, asset=None)], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/too_long\nFAILED packages/campaign/tests/test_campaign.py::test_attach_generated_assets_generates_card_images - pydantic_core._pydantic_core.ValidationError: 1 validation error for Creative\ncards\n  List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...nchor=True, asset=None)], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/too_long\nFAILED packages/campaign/tests/test_campaign.py::test_attach_generated_assets_respects_per_card_use_anchor - pydantic_core._pydantic_core.ValidationError: 1 validation error for Creative\ncards\n  List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...chor=False, asset=None)], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/too_long\nFAILED packages/campaign/tests/test_campaign.py::test_attach_generated_assets_without_generator_degrades - pydantic_core._pydantic_core.ValidationError: 1 validation error for Creative\ncards\n  List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...nchor=True, asset=None)], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/too_long\nFAILED packages/campaign/tests/test_campaign.py::test_build_creatives_pipeline_from_input_file - pydantic_core._pydantic_core.ValidationError: 1 validation error for Creative\ncards\n  List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...nchor=True, asset=None)], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/too_long\nFAILED packages/campaign/tests/test_campaign.py::test_build_creatives_pipeline_rejects_invalid_input - AssertionError: Regex pattern did not match.\n  Expected regex: 'Creatives validation failed'\n  Actual message: '1 validation error for Creative\\ncards\\n  List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...nchor=True, asset=None)], input_type=list]\\n    For further information visit https://errors.pydantic.dev/2.13/v/too_long'\nFAILED packages/campaign/tests/test_campaign.py::test_mock_provider_lifecycle - pydantic_core._pydantic_core.ValidationError: 1 validation error for Creative\ncards\n  List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...nchor=True, asset=None)], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/too_long\nFAILED packages/campaign/tests/test_campaign.py::test_launch_always_paused - pydantic_core._pydantic_core.ValidationError: 1 validation error for Creative\ncards\n  List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...nchor=True, asset=None)], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/too_long\nFAILED packages/campaign/tests/test_campaign.py::test_mock_seed_metrics_cli - pydantic_core._pydantic_core.ValidationError: 1 validation error for Creative\ncards\n  List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...nchor=True, asset=None)], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/too_long\n16 failed, 19 passed in 0.71s\n\n\nWall time: 0.96 seconds",
+      "tool_call_id": "call_e223e00a"
+    },
+    {
+      "role": "assistant",
+      "content": "\n\nReproduced: 16 failures, all because the `Creative` model caps carousel cards at 5. Let me find the model.\n\n\n",
+      "reasoning_content": "\nThe error is `List should have at most 5 items after validation, not 6`. TikTok carousels actually allow more cards than 5. Let's take a look at the Creative model.\n",
+      "tool_calls": [
+        {
+          "id": "call_f44c5418",
+          "type": "function",
+          "function": {
+            "name": "grep",
+            "arguments": "{\"pattern\":\"class (Creative|CarouselCard)\",\"path\":\"packages/campaign\",\"i\":\"Locating Creative model\"}"
+          }
+        },
+        {
+          "id": "call_b54fcced",
+          "type": "function",
+          "function": {
+            "name": "grep",
+            "arguments": "{\"pattern\":\"max_length|Field\\\\(\",\"path\":\"packages/campaign/src\",\"i\":\"Finding card list constraint\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "# packages/campaign/src/infoproduct_campaign/\n## models.py#F0CB\n 20:class TokenUsage(BaseModel):\n*21:    prompt_tokens: int = Field(default=0, ge=0)\n*22:    completion_tokens: int = Field(default=0, ge=0)\n*23:    total_tokens: int = Field(default=0, ge=0)\n 24:\n 25:\n 26:class ValidationResult(BaseModel):\n 27:    passed: bool\n*28:    issues: list[str] = Field(default_factory=list)\n 29:\n 30:\n 31:class ComplianceStatus(StrEnum):\n...\n 59:class AdSetPlan(BaseModel):\n*60:    id: str = Field(min_length=1, max_length=64, pattern=r\"^[a-z0-9][a-z0-9-]*$\")\n*61:    name: str = Field(min_length=1, max_length=256)\n*62:    audience_targeting_description: str = Field(min_length=1)\n*63:    placements: list[str] = Field(min_length=1)\n 64:\n 65:\n 66:class ScalingTrigger(BaseModel):\n*67:    id: str = Field(min_length=1, max_length=64)\n 68:    action: ScalingAction\n*69:    description: str = Field(min_length=1)\n 70:    scale_pct: float | None = None\n 71:    min_roas: float | None = None\n*72:    window_hours: int | None = Field(default=None, ge=1)\n 73:    max_spend: Decimal | None = None\n*74:    max_purchases: int | None = Field(default=None, ge=0)\n 75:    max_cpa: Decimal | None = None\n 76:\n 77:\n 78:class ScalingPlan(BaseModel):\n*79:    triggers: list[ScalingTrigger] = Field(min_length=3)\n 80:\n 81:\n 82:class ComplianceItem(BaseModel):\n*83:    id: str = Field(min_length=1, max_length=64)\n*84:    description: str = Field(min_length=1)\n 85:    status: ComplianceStatus\n 86:\n 87:\n...\n 89:    offer_id: UUID | None = None\n*90:    offer_slug: str = Field(min_length=1, max_length=128)\n*91:    country: str = Field(min_length=2, max_length=2)\n*92:    language: str = Field(min_length=2, max_length=16)\n*93:    generated_at: datetime = Field(default_factory=lambda: datetime.now(tz=UTC))\n 94:    objective: str = \"OUTCOME_SALES\"\n 95:    daily_budget: Decimal\n*96:    currency: str = Field(min_length=3, max_length=3)\n 97:    landing_page_url: str | None = None\n 98:    unit_economics: UnitEconomics",
+      "tool_call_id": "call_b54fcced"
+    },
+    {
+      "role": "tool",
+      "content": "# packages/campaign/src/infoproduct_campaign/\n## models.py#F0CB\n 43:\n*44:class CreativeFormat(StrEnum):\n 45:    IMAGE = \"image\"\n 46:    CAROUSEL = \"carousel\"\n 47:\n...\n 112:\n*113:class CreativeAsset(BaseModel):\n 114:    r2_key: str | None = None\n 115:    local_path: str | None = None\n 116:    title: str | None = None\n...\n 119:\n*120:class CarouselCard(BaseModel):\n 121:    \"\"\"One 9:16 image card of a TikTok carousel ad, authored by Fable.\"\"\"\n 122:\n 123:    index: int = Field(ge=0)\n...\n 132:\n*133:class Creative(BaseModel):\n 134:    id: str = Field(min_length=1, max_length=64, pattern=r\"^[a-z0-9][a-z0-9-]*$\")\n 135:    format: CreativeFormat\n 136:    hook: str = Field(min_length=1)\n...\n 147:\n*148:class CreativeSet(BaseModel):\n 149:    campaign_plan_path: str = Field(min_length=1)\n 150:    generated_at: datetime = Field(default_factory=lambda: datetime.now(tz=UTC))\n 151:    language: str = Field(min_length=2, max_length=16)",
+      "tool_call_id": "call_f44c5418"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\n(Thinking: Let me read the Creative model and find the max 5 constraint.)\n",
+      "tool_calls": [
+        {
+          "id": "call_06e63605",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"packages/campaign/src/infoproduct_campaign/models.py:112-170\",\"i\":\"Reading Creative model constraint\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "[packages/campaign/src/infoproduct_campaign/models.py#F0CB]\n111:\n112:\n113:class CreativeAsset(BaseModel):\n114:    r2_key: str | None = None\n115:    local_path: str | None = None\n116:    title: str | None = None\n117:    visual_validation: ValidationResult | None = None\n118:\n119:\n120:class CarouselCard(BaseModel):\n121:    \"\"\"One 9:16 image card of a TikTok carousel ad, authored by Fable.\"\"\"\n122:\n123:    index: int = Field(ge=0)\n124:    image_prompt: str = Field(min_length=1)\n125:    on_image_text: str = Field(min_length=1, max_length=80)\n126:    # Persona anchor is a reference image for identity consistency; only cards\n127:    # whose subject IS the persona should carry it (stage-5 lesson: anchoring\n128:    # every image collapses variety into the same portrait).\n129:    use_anchor: bool = True\n130:    asset: CreativeAsset | None = None\n131:\n132:\n133:class Creative(BaseModel):\n134:    id: str = Field(min_length=1, max_length=64, pattern=r\"^[a-z0-9][a-z0-9-]*$\")\n135:    format: CreativeFormat\n136:    hook: str = Field(min_length=1)\n137:    primary_text: str = Field(min_length=1)\n138:    headline: str = Field(min_length=1, max_length=40)\n139:    description: str = Field(min_length=1, max_length=30)\n140:    cta: str = Field(min_length=1, max_length=32)\n141:    language: str = Field(min_length=2, max_length=16)\n142:    asset: CreativeAsset | None = None\n143:    cards: list[CarouselCard] = Field(default_factory=list, max_length=CAROUSEL_CARDS_MAX)\n144:    music_id: str | None = None\n145:    validation: ValidationResult\n146:\n147:\n148:class CreativeSet(BaseModel):\n149:    campaign_plan_path: str = Field(min_length=1)\n150:    generated_at: datetime = Field(default_factory=lambda: datetime.now(tz=UTC))\n151:    language: str = Field(min_length=2, max_length=16)\n152:    creatives: list[Creative] = Field(min_length=1)\n153:    assets_available: bool\n154:    degradation_note: str | None = None\n155:    persona_profile_path: str | None = None\n156:    model: str = Field(default=DEFAULT_AUTHOR_MODEL, min_length=1, max_length=128)\n157:    token_usage: TokenUsage = Field(default_factory=TokenUsage)\n158:    estimated_cost_usd: Decimal = Decimal(\"0\")\n159:    validation: ValidationResult\n160:\n161:\n162:class LaunchWarning(BaseModel):\n163:    \"\"\"Structured provider warning surfaced at launch time (e.g. manual Ads Manager steps).\"\"\"\n164:\n165:    code: str = Field(min_length=1, max_length=64)\n166:    message: str = Field(min_length=1)\n167:    severity: str = \"warning\"\n168:\n169:\n170:class LaunchResult(BaseModel):\n171:    provider: str\n172:    campaign_external_id: str\n173:    ad_set_external_ids: list[str]\n…\n180:    warnings: list[LaunchWarning] = Field(default_factory=list)\n\n[Showing lines 111-173 of 192. Use :174 to continue]",
+      "tool_call_id": "call_06e63605"
+    }
+  ],
+  "stream": true,
+  "stream_options": {
+    "include_usage": true
+  },
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "read",
+        "description": "Read files, directories, archives, SQLite, images, documents, internal resources, and web URLs via `path`.\n\n<instruction>\n- SHOULD parallelize independent reads.\n- SHOULD use `read` (not browser) for web content; browser only when `read` can't deliver.\n</instruction>\n\n## Selectors — append `:<sel>` to `path` (e.g. `src/foo.ts:50-200`, `src/foo.ts:raw`, `db.sqlite:users:42`)\n- `:50` / `:50-` — from line 50 | `:50-200` — inclusive | `:50+150` — 150 lines from 50 | `:5-16,960-973` — multiple ranges\n- `:raw` — verbatim, no anchors/prefixes | `:2-4:raw` / `:raw:2-4` — range + verbatim\n- `:conflicts` — one line per unresolved git merge conflict block\n- `:img` — rasterize a local `.svg`/`.svgz` as a PNG image; use when visual layout matters\n\n## Source kinds\n- Parseable code, no selector → structural summary (declarations only, body elided). Footer names recovery selector — re-issue ONLY those ranges.\n- File + selector → `[foo.ts#1A2B]` snapshot header + numbered lines. Copy `[FILENAME#TAG]` for anchored edits; NEVER fabricate the tag.\n- Directory → depth-limited dirent listing.\n- SQLite (`.sqlite`, `.sqlite3`, `.db`, `.db3`): `file.db` (tables), `file.db:table` (schema+rows), `file.db:table:key` (by PK), `?limit=`/`?where=`/`?q=SELECT`.\n- Archives (`.zip` family incl. `.jar`/`.apk`/`.whl`, `.tar` incl. `.tar.{gz,bz2,xz,zst}`, `.rar`, `.7z`, `.iso`, `.cab`, `.deb`/`.rpm`/`.cpio`/`.ar`/`.a`, `.lzh`/`.arj`, `.asar`; single-stream `.gz`/`.bz2`/`.xz`/`.zst`): `archive.ext:path/inside/archive` reads a member.\n- Documents → extracted text. Notebooks → editable cells. Images → decoded inline. SVGs read as text unless `:img` is specified. `:raw` bypasses converters.\n- URLs → reader-mode clean text/markdown; `:raw` → untouched HTML. Bare `host:port` needs trailing slash.\n- Internal URIs — all schemes take selectors. `artifact://<id>` recovers spilled output; page with `:N-M`/`:raw:N-M`.\n- `ssh://host/<path>` reads remote file/dir (UTF-8, ≤1 MiB); bare `ssh://` lists hosts; writable with `write` and searchable with `grep`.\n  Literal `:`, `?`, `#` → percent-encode (`%3A`/`%3F`/`%23`). Requires a verified POSIX shell on the remote host. For Windows or other unsupported hosts, use `bash` with a remote SSH command or mount with `sshfs`.\n\n<critical>\nSummary footer names elided ranges? Re-issue ONLY those ranges. NEVER guess `..`/`…` content.\n</critical>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "path": {
+              "type": "string",
+              "description": "Local path, internal URI (e.g. skill://), or URL. Inline selectors are supported."
+            }
+          },
+          "required": [
+            "path",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "bash",
+        "description": "Runs commands in a persistent shell.\n\nUse ONLY for one binary or a short pipeline that computes a fact (`wc -l`, `sort | uniq -c`, `diff`).\nInline scripts, heredocs, `$(…)`, and complex control flow → a purpose-built tool or checked-in script.\n\n<instruction>\n- Set `cwd` instead of `cd`; use `env: { NAME: \"…\" }` for multiline/quote-heavy values.\n- `pty: true` only for terminal interaction (`sudo`, `ssh`).\n- Order-dependent commands use `&&` in one call; independent calls may run concurrently.\n- Internal URIs (`skill://`, `agent://`, …) auto-resolve to paths.\n- aux utils available: mkdir, wc, sort, comm, diff, uniq, base64, cmp, md5sum, sha{1,224,256,384,512}sum, b2sum, basename, dirname, readlink, realpath, touch, stat, date, mktemp, seq, yes, printenv, truncate, tac, nproc, uname, whoami, hostname, which, ps, pgrep, pkill, pidwait, top, cut, tee, tr, paste, sed, xargs, jq, rm, mv, ln, ts, sponge, ifne, isutf8, combine, errno\n- `async: true` defers a finite command's result; it does not extend `timeout`.\n</instruction>\n\n<critical>\n- NEVER use shell `grep`/`rg`; use built-in `grep`.\n- List directories with `read` and find paths with `glob`; NEVER use `ls`/`find`.\n- Avoid `head`, `tail`, and redirection: output is captured, truncated, and linked as `artifact://<id>`.\n</critical>\n\nLong foreground calls may auto-background by the configured threshold and deliver later.\n`timeout: 0` disables the job deadline; otherwise `timeout` sets it without extending foreground waiting.\nNo truncation footer means the displayed output is complete.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "command": {
+              "type": "string"
+            },
+            "env": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "timeout": {
+              "type": "number",
+              "description": "timeout in seconds; 0 disables the command deadline; nonzero values are clamped to 1-3600"
+            },
+            "cwd": {
+              "type": "string"
+            },
+            "pty": {
+              "type": "boolean"
+            },
+            "async": {
+              "type": "boolean",
+              "description": "run in background"
+            }
+          },
+          "required": [
+            "command",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "edit",
+        "description": "Line-anchored patch language: name original lines/gaps to replace, insert, cut, or paste; then give new content. `:` headers take `+` body rows; colonless paste `PUT`, `CUT`, `REM`, `MV` take none.\n\n<headers>\nSection: `[PATH#TAG]`; `TAG`: 4-hex snapshot from latest `read`/`search`, REQUIRED each section. New files: `write`; hashline edits existing files only.\n</headers>\n\n<ops>\n`PUT N.=M:`: replace original inclusive lines N–M with body.\n`PUT N*:`: replace syntactic block beginning N; closing line resolved.\n`PUT <N:` insert body rows before line N (`PUT <1:` = file head).\n`PUT >N:` insert body rows after line N (`PUT >$:` = file tail).\n`PUT >N*:`: insert after block N's end, at sibling depth. Append inside block: `PUT >M:`.\n`PUT <N @name` / `PUT >N @name` paste register `@name` at the gap before/after line N; omit `@name` for the anonymous register.\n`PUT N.=M @name` / `PUT N* @name` paste `@name` over the range / resolved block; `@name` required here.\n`CUT N.=M` / `CUT N*`: delete and capture inclusive lines N–M / block N; anonymous or given `@name`.\n`REM`: delete section file. `MV DEST`: move/rename (quote paths with spaces); prior edits apply to source, final content to `DEST`.\nSingle line: `PUT N.=N:` / `CUT N.=N`. Ranges name original inclusive touched lines; body length irrelevant.\n</ops>\n\n<body-rows>\nOnly below `:` headers. Row: verbatim `+TEXT` (leading whitespace preserved); `+`: blank. NEVER `-old`, bare, or context rows: range deletes; body is final content. Keep line: exclude it from every range. Literal initial `-`/`+`: `- item` → `+- item`; `+ item` → `++ item`.\n</body-rows>\n\n<rules>\n- Numbers and `#TAG`: latest `read`/`search` `LINE:TEXT`; numbers are original, never shifted by hunks.\n- Each edit renumbers and changes `#TAG` → next numbers from edit response or fresh `read`.\n- Touch displayed lines only; undisplayed hunks REJECTED. Far from read window: re-`read`; confirm construct.\n- Elisions UNSEEN: `…`, `..`, collapsed `N-M:` rows. NEVER hunk in/across one; `read` first.\n- NEVER start/end range mid-expression or mid-block.\n- Ranges: changed lines only; NEVER widen over keepers. Non-adjacent changes: separate hunks.\n- Whole construct: `PUT N*:`; internal lines: `PUT N.=M:`.\n- `PUT N*:` resolves exactly node N. Leading decorators/attributes/doc-comments are separate nodes: point N at first decorator to include both. Standalone line-comments never swept: use `PUT N.=M:`.\n- Block ops: opening line of multi-line construct, NEVER closer, last line, bare inner statement. One statement: plain `PUT N.=N:` / `CUT N.=N` / `PUT >N:`. At closer: `PUT >M:`.\n- Markdown headings are block openers. Block op on `##`/`###`: whole section through deeper headings to next same/higher heading. After section `PUT >N*:`: end body with blank line to separate next heading.\n- Pure addition: `PUT <N:` / `PUT >N:`, NEVER widened `PUT N.=M:`.\n- Move: `CUT`+`PUT`; `CUT 5.=9 @fn` → `@fn`, `PUT >40 @fn` pastes. Single call-local move: unlabeled `CUT` + `PUT >40`. Named registers persist across edit calls.\n- NEVER format/restyle with this tool; run project formatter.\n</rules>\n\n<example>\n`read` output shape:\n```\n[greet.py#A1B2]\n1:def greet(name):\n2:    msg = \"Hello, \" + name\n3:    print(msg)\n4:greet(\"world\")\n```\n\nEdit, then move:\n```\n[greet.py#A1B2]\nPUT 1.=3:\n+def greet(name):\n+    print(f\"Hi, {name}\")\nMV lib/greet.py\n```\n\nMarkdown bullets — file receives `- task`:\n```\n[PLAN.md#A1B2]\nPUT >2:\n+- task\n+  - nested task\n```\n\nMove `greet` to sibling file via named register; flows across sections:\n```\n[greet.py#A1B2]\nCUT 1* @fn\n[other.py#3C4D]\nPUT <1 @fn\n```\n\n`PUT 1*:` resolves lines 1–3 (`def` through `print(msg)`); line 4 separate, remains:\n```\n[greet.py#A1B2]\nPUT 1*:\n+def greet(name):\n+    print(f\"Hello, {name}\")\n```\n\nDecorator/doc-comment separate block: point N at decorator to include both; anchoring `def` line 2 orphans `@cache`:\n```\n[svc.py#C3D4]\nPUT 1*:\n+@cache\n+def load(key):\n+    return store[key]\n```\n</example>\n\n<anti-patterns>\n# WRONG — empty `PUT` to delete. RIGHT: `CUT 4.=4`\nPUT 4.=4:\n\n# WRONG — range sized to the post-edit content. RIGHT: `PUT 1.=1:` (body length irrelevant)\nPUT 1.=2:\n+def greet(name):\n\n# WRONG — `-` rows / bare context lines do not exist; the range deletes, the body is only new content.\nPUT 3.=3:\n    msg = \"Hello, \" + name\n-   print(msg)\n+   return msg\n# RIGHT\nPUT 3.=3:\n+   return msg\n\n# WRONG — pure insertion as a widened `PUT`: retyped keepers get dropped (here line 4).\nPUT 2.=4:\n+    msg = \"Hello, \" + name\n+    extra = compute(name)\n+    print(msg)\n# RIGHT — touch nothing you keep.\nPUT >2:\n+    extra = compute(name)\n\n# WRONG — `PUT >N*:` anchored on the closing delimiter / last visible line. RIGHT: plain `PUT >M:`\nPUT >3*:\n+after()\n# RIGHT\nPUT >3:\n+after()\n\n# WRONG — body rows under register PUT; register pastes take no body. RIGHT: bodyless `PUT >20 @fn`.\nPUT >20 @fn:\n+function f() {}\n</anti-patterns>\n\n<critical>\n1. RE-GROUND AFTER EVERY EDIT: edits renumber and change `#TAG`; take next numbers from edit response or fresh `read`. Stale tag/surprise: STOP; re-`read`.\n2. RANGES TIGHT: changed lines only. Whole construct: `PUT N*:`.\n3. BODY FINAL CONTENT: every row starts `+`; Markdown bullet: `+- item`, not `- item`.\n</critical>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "input": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "input",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "glob",
+        "description": "Globs files, directories, and path-backed internal URLs with fast pattern matching.\n\n<instruction>\n- `path`: glob, file, directory, or path-backed internal URL; separate targets with `;` (`src/**/*.ts; test/**/*.ts`).\n- `memory://` glob patterns are supported. `ssh://` has no local path; use `read`. Other internal URLs accept exact paths only.\n- `gitignore` defaults `true`. Set `false` for ignored files such as `.env*`, logs, or build output.\n- `hidden` defaults `true`; pair it with `gitignore: false` for ignored dotfiles.\n</instruction>\n\n<output>\nMatches are newest-first and grouped by directory; directories end in `/`.\n</output>\n\n<avoid>\nOpen-ended multi-round discovery → Task + scout.\n</avoid>\n\n<examples>\n# Glob files\n<example i=\"…\">\nsrc/**/*.ts\n</example>\n# Multiple targets — semicolon-delimited list\n<example i=\"…\">\nsrc/**/*.ts; test/**/*.ts\n</example>\n# Glob gitignored files like .env\n<example>\nglob(i=\"…\", path=\".env*\", gitignore=False)\n</example>\n# Glob directories matching a name (returns both files and dirs; directories are suffixed with `/`)\n<example i=\"…\">\n**/tests\n</example>\n</examples>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "path": {
+              "type": "string",
+              "description": "glob, file, or directory to search — a single path or a semicolon-delimited list (\"src/**/*.ts; test/**/*.ts\"). Omitted -> searches the workspace root (\".\")"
+            },
+            "hidden": {
+              "type": "boolean",
+              "description": "include hidden files"
+            },
+            "gitignore": {
+              "type": "boolean",
+              "description": "respect gitignore"
+            },
+            "limit": {
+              "type": "number",
+              "description": "max results"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "i"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "grep",
+        "description": "Searches files/internal URLs: Rust regex, PCRE2 fallback.\n\n<instruction>\n- `path`: known files, directories, globs, internal URLs; roots `;`-separated.\n- Broad searches may time out → narrow scope or use `glob` first.\n- One-file line selector: `src/foo.ts:50-100`; never selects search root.\n- Literal `\\n` or `\\\\n` enables cross-line patterns.\n</instruction>\n\n<critical>\n- MUST use instead of shell `grep`/`rg`.\n- Open-ended multi-round search MUST use Task + scout, not chained calls.\n</critical>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "pattern": {
+              "type": "string",
+              "description": "regex pattern"
+            },
+            "path": {
+              "type": "string",
+              "description": "file, directory, glob, internal URL, or \"<file>:<lines>\" selector to search; pass several as a semicolon-delimited list (\"src; tests\"). Omitted -> searches the workspace root (\".\")"
+            },
+            "case": {
+              "type": "boolean",
+              "description": "case-sensitive search"
+            },
+            "gitignore": {
+              "type": "boolean",
+              "description": "respect gitignore"
+            },
+            "skip": {
+              "description": "files to skip before collecting results — use to paginate when the prior call hit the file limit",
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "pattern",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "write",
+        "description": "Creates or overwrites file at specified path.\n\n<conditions>\n- Creating new files explicitly required by task\n- Replacing entire file contents when editing would be more complex\n- Supports `.zip` (and ZIP-based `.jar`/`.war`/`.ear`/`.apk`), `.tar`, `.tar.gz`/`.tgz`, `.tar.zst`, and `.asar` archive entries via `archive.ext:path/inside/archive`; other archive formats (`.rar`, `.7z`, `.iso`, …) are read-only\n- Supports SQLite row operations via `db.sqlite:table` (insert), `db.sqlite:table:key` (update with JSON content, delete with empty content)\n</conditions>\n\n<critical>\n- You SHOULD use Edit tool for modifying existing files\n- You NEVER create documentation files (*.md, README) unless explicitly requested\n- You NEVER use emojis unless requested\n</critical>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "path": {
+              "type": "string",
+              "description": "file path"
+            },
+            "content": {
+              "type": "string",
+              "description": "file content"
+            }
+          },
+          "required": [
+            "path",
+            "content",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  ],
+  "max_completion_tokens": 4096,
+  "preserve_thinking": true,
+  "chat_template_kwargs": {
+    "preserve_thinking": true,
+    "reasoning_effort": "medium"
+  },
+  "enable_thinking": true,
+  "reasoning_effort": "medium"
+}

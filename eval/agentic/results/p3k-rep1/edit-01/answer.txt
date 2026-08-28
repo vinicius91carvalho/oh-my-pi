@@ -1,0 +1,9 @@
+
+
+Done. The suite is green: 2 pass, 0 fail.
+
+- I saw it fail: `applyDiscount(999, 10)` returned `899.1` because `src/discount.js` divided in floating point, leaking a fractional cent.
+- Fix: the discount is now rounded to whole cents (`Math.round((cents * percent) / 100)`), so the result is always integer cents, per the repo rule.
+- I re-ran `npm test` and both tests pass, including the fractional-discount case.
+
+In three lines: I fixed the one failing test's source; it broke because a float slipped into money math; now prices stay whole cents.

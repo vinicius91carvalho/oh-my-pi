@@ -1,0 +1,15 @@
+
+
+Fixed. `checkPostingLive` answered `unknown` for `job-boards.greenhouse.io` URLs because the host regex in `postingIdentity` no longer matched that host, so the probe bailed before calling `fetch`.
+
+**What happened, in order:**
+
+1. **Reproduced** the failure: 3 of 10 tests in `posting-live.test.ts` failed, all because the probe never hit the API.
+2. **Found the root cause** with git history: commit `eec4082` ("chore: sync") changed the Greenhouse host check in `packages/core/src/posting-identity.ts:89` from `/(^|\.)(job-)?boards(-api)?\.greenhouse\.io$/` to `/(^|\.)boards(-api)?\.greenhouse\.io$/` — dropping the `job-` prefix. But `job-boards.greenhouse.io` is exactly the host Greenhouse uses for real posting pages (like the Mozilla one in the incident), while the API lives on `boards-api.greenhouse.io`. Every `job-boards` posting URL now returned `null` from `postingIdentity`, and `checkPostingLive` correctly treats "no id" as `unknown` — so live and dead postings were no longer distinguished.
+3. **Fixed** it by restoring the `(job-)?` prefix (the single changed character group, back to the pre-sync state).
+4. **Verified end to end**: rebuilt `@fbj/core` (so the pipeline sees the new dist), then re-ran the pipeline suite — all 10 tests pass, including the two that assert `fetch` is actually called with `boards-api.../boards/mozilla/jobs/...` and the "board 404" two-call case. Also ran `posting-identity.test.ts` in core: 12 passed (its own test already asserts `job-boards` must parse, so the sync commit had been breaking its contract too). Lint on the file passes.
+
+Summary:
+- What I did: restored the dropped `(job-)?` prefix in the Greenhouse host regex in `posting-identity.ts`, rebuilt `@fbj/core`, re-ran both test suites (10 + 12 passing) and lint.
+- Why it was broken: a "chore: sync" commit rewrote the regex and silently stopped matching `job-boards.greenhouse.io`, the host of every real posting URL.
+- What it means: the liveness probe is live again — dead postings get their API check and are closed as `dead`, and a wrong slug is still confirmed against the board before anything is declared gone.

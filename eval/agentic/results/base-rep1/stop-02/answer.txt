@@ -1,0 +1,11 @@
+
+
+`cartTotal([], percent)` returns **`0`** — when `0 ≤ percent ≤ 100`.
+
+Trace:
+- `items.reduce((sum, item) => sum + item.cents * item.qty, 0)` on an empty array never calls the callback and returns the initial value `0`.
+- `applyDiscount(0, percent)` returns `0 - (0 * percent) / 100 = 0`.
+
+One edge: if `percent` is outside `[0, 100]`, it throws `RangeError("percent out of range")` before any math — same as a non-empty cart.
+
+No changes made.

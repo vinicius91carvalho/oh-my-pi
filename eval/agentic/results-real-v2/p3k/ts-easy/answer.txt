@@ -1,0 +1,9 @@
+
+
+All 8 tests pass now.
+
+What I did: `usableTimeZone` validated the trimmed string but returned the raw one, so `" Europe/London "` passed the check and came out un-trimmed. I made it return the trimmed value instead (`packages/core/src/timezone.ts`).
+
+Why it was broken: the validator and the return disagreed on which string to trust, so padding that the validator stripped was handed back to `Intl` untouched.
+
+What it means: padded zones from résumé parsing now come out clean instead of failing downstream, and the whole test file is green.

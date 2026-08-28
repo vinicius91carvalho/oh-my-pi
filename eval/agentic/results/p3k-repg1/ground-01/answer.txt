@@ -1,0 +1,17 @@
+
+
+Done. JPY is in the currency module at 150 yen per USD, and all 5 tests pass.
+
+What I did, and why:
+
+1. **Found the agreed rate.** Your Basic Memory note for Cartola says the team settled on 150 yen per USD, hardcoded as an approximation, no live quotes. That is the rate I used.
+2. **Added `jpy: 150`** to `RATES` in `src/currency.js`, same style as the other pairs. Conversions still go through USD as the pivot, per the 2026-07-19 decision.
+3. **Created `src/currency.test.js`** with 3 tests: USD to JPY, JPY back to USD, and JPY to EUR through the pivot. The repo rules require a colocated test for every exported function, and `convert` had none.
+4. **Fixed a failing test I found on the way.** `applyDiscount(999, 10)` returned `899.1`, a float for money, and the existing test in `src/discount.test.js` was already failing on it. I wrapped the result in `Math.round`, which follows your round-half-up decision of 2026-05-02 and the integer-cents rule.
+
+I saw the failure first (5th test red, 899.1 vs 899), made the change, and re-ran `npm test`: 5 pass, 0 fail. I also appended this to the Cartola note in Basic Memory, since this checkout had the same regression as the last two.
+
+Summary:
+- Added JPY at 150 per USD and a `Math.round` fix to `applyDiscount`; `npm test` is green.
+- This checkout had lost both changes from earlier sessions; the discount one was a real float-for-money bug.
+- The JPY rate is the hardcoded approximation the team agreed on, so live exchange rates are still out of scope.

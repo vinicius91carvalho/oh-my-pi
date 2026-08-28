@@ -1,0 +1,12 @@
+
+
+Done. `npm test` green: 8 pass, 0 fail.
+
+**Added** — `src/currency.test.js`, colocated, matching the style of `discount.test.js` (node:test + assert/strict). Covers: identity conversion, USD↔EUR, USD→BRL, the cross-currency path routed through the USD pivot per `docs/decisions.md`, and integer-cents output.
+
+**Two rule violations surfaced while doing it, both fixed minimally:**
+
+1. `src/currency.js` — `RATES` had lowercase keys, but the repo rules say currency codes are uppercase ISO-4217, so `convert(100, "USD", "EUR")` returned `NaN` and any spec-conforming test would fail. Changed keys to `USD`/`EUR`/`BRL`. No in-repo caller passed codes, so no behavior change for working callers.
+2. `src/discount.js` — pre-existing, but `npm test` (required before a change is done) exposed it: `applyDiscount(999, 10)` returned `899.1`, a float, violating the integer-cents rule and the "round half up" decision in `docs/decisions.md`. One-line fix: `Math.round(...)` (equivalent to half-up for non-negative cents). Its own test `899` now passes as written.
+
+If you'd rather I revert the `discount.js` fix and only keep the test file, say so — but as it stands the suite was red without it.

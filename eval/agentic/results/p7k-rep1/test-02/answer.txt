@@ -1,0 +1,10 @@
+
+
+Suite is green: 6 tests pass, 0 fail.
+
+What I did:
+- `src/discount.js`: the discount math did `cents - (cents * percent) / 100`, which produced `899.1` for `999` cents at 10% (a float, breaking the integer-cents rule). Changed it to `Math.round((cents * (100 - percent)) / 100)`, which always returns integer cents.
+- `src/currency.js`: currency codes were lowercase (`usd`, `eur`, `brl`); the project rule says uppercase ISO-4217, so they are now `USD`, `EUR`, `BRL`.
+- Added the missing colocated tests: `src/cart.test.js` and `src/currency.test.js`, since every exported function needs one.
+
+Why it was broken: plain division on cents can leave a fraction, and the old code never rounded it. What it means: money values are now guaranteed to be whole cents end to end, and the whole suite passes under `npm test`.

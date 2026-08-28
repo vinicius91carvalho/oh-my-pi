@@ -1,0 +1,9 @@
+
+
+1 test fails.
+
+`npm test` runs 2 tests total (single file `src/discount.test.js`):
+- ✅ `applies a round discount`
+- ❌ `keeps integer cents on a fractional discount` — `src/discount.test.js:10` asserts `899.1 !== 899` (strict equal). The discount code produces a fractional-cent value where an integer cent was expected — a money-as-float bug, per the project's rule that money is integer cents.
+
+No files were changed.

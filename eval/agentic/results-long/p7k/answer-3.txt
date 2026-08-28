@@ -1,0 +1,13 @@
+
+
+The bug: `whereTheWorkIs` had one early return line - `if (!job.workCountries.length) return "yes"` - that fired before any check of the posting.
+
+It lived in `packages/profile/src/conservative-default.ts`, the function that answers "are you authorized to work in the country where this job is located".
+
+The trigger was the candidate: any profile with an empty work-countries list made the function answer "yes", no matter what the posting named or if there was a posting at all.
+
+That's why the Greenhouse run sent out "Yes - I am authorized to work where this role is based" with zero proof behind it.
+
+The docs rule (AGENTS.md, conservative default) says legal-status questions must get the negative that claims nothing, never a positive without evidence - because a wrong "yes" is a misrepresentation to a real employer, while a "no" costs only a missed job.
+
+Full test file re-run: **39/39 pass** (1 file, 668ms).

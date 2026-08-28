@@ -1,0 +1,12 @@
+
+
+Green: 2 tests, 0 failures.
+
+**What happened**
+- The bug: `applyDiscount(999, 10)` returned `899.1` because the subtraction kept a decimal. Money in this repo must stay in integer cents (per the project rules).
+- The fix: one line in `src/discount.js` - wrap the result in `Math.round(...)`, so the price is always a whole number of cents.
+
+**Summary**
+- What I did: ran `npm test`, fixed `src/discount.js` to round to integer cents, ran it again.
+- Why it was broken: the discount math left a decimal on a 10% discount of 999 cents.
+- What it means: `applyDiscount` now always returns integer cents, and the suite is fully green.

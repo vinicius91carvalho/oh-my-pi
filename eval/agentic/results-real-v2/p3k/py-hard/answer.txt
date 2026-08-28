@@ -1,0 +1,10 @@
+
+
+Fixed. The bug was a one-line constant: `CAROUSEL_CARDS_MAX = 5` in `packages/campaign/src/infoproduct_campaign/models.py`, which made the `Creative` model reject any 6-card carousel at construction time. The comment right above it (and the tests) say the project default is 6 cards and the TikTok API allows 2-35, and the compliance check reports "2-35 cards". I changed the constant to 35.
+
+Verified: the 16 failing tests now pass (35 passed in both files), and the whole campaign suite is green: 81 passed.
+
+Summary:
+- What I did: changed `CAROUSEL_CARDS_MAX` from 5 to 35, matching the documented API limit.
+- Why it was broken: the pydantic cap was one below the project default of 6, so every 6-card carousel failed validation before business logic even ran.
+- What it means: carousels from 2 to 35 cards build and validate; the 6-card default no longer crashes.

@@ -1,0 +1,44 @@
+Scope: all 21 workspace projects
+✓ Lockfile passes supply-chain policies (verified 6d ago)
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+. prepare$ git config core.hooksPath .githooks && git config core.sshCommand 'ssh -o ServerAliveInterval=30 -o ServerAliveCountMax=40' || true
+. prepare: Done
+Done in 596ms using pnpm v11.13.1
+
+ RUN  v4.1.10 /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/packages/profile
+
+ ❯ src/conservative-default.hidden.test.ts (5 tests | 1 failed) 32ms
+     × takes the negative when the profile lists no work countries 28ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/conservative-default.hidden.test.ts > authorization where the job is located: no evidence means the negative > takes the negative when the profile lists no work countries
+AssertionError: Anywhere in the World: expected 'Yes — I am authorized to work where t…' to match /^No/
+
+- Expected:
+/^No/
+
++ Received:
+"Yes — I am authorized to work where this role is based."
+
+ ❯ src/conservative-default.hidden.test.ts:43:40
+     41|     ]) {
+     42|       const d = conservativeDefaultAnswer(Q, { location, workCountries…
+     43|       expect(d?.answer, `${location}`).toMatch(/^No/);
+       |                                        ^
+     44|     }
+     45|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 43 passed (44)
+   Start at  18:41:08
+   Duration  693ms (transform 493ms, setup 0ms, import 1.17s, tests 64ms, environment 0ms)
+
+undefined
+/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/packages/profile:
+[ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command failed with exit code 1: vitest run src/conservative-default.test.ts src/conservative-default.hidden.test.ts

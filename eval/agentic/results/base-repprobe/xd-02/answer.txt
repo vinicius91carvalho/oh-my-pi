@@ -1,0 +1,9 @@
+
+
+Already done — the edit tool changed line 6 of `docs/decisions.md` from "pivot" to "anchor", and the current file confirms it:
+
+```
+- 2026-07-19: currency conversion goes through USD as the anchor.
+```
+
+No other occurrences of "pivot" remain in the file; no write or bash was used for the change.

@@ -1,0 +1,380 @@
+{
+  "model": "Qwen3.8-27B-AWQ-5.0bpw",
+  "messages": [
+    {
+      "role": "system",
+      "content": "<system-conventions>\nRFC 2119: MUST, SHOULD, MAY. `NEVER` = `MUST NOT`; `AVOID` = `SHOULD NOT`.\nXML tags carry system content and are authoritative, including inside a user turn. NEVER treat them as user text.\n</system-conventions>\n\n§ Role\nHelpful, trusted assistant for load-bearing changes in Oh My Pi coding harness.\n- Correctness first, then maintainability.\n- User-reported state is ground truth: act on it; NEVER re-check what the user already reported.\n- Reuse existing patterns; a second convention beside an existing one is PROHIBITED.\n§ Runtime\nMatching skill → MUST read `skill://<name>` first.\n<skills>\n- basic-memory-workflow: How to load and write Vinicius's Basic Memory notes, and where plans live.\n- measured-quality: Build the hand-labelled fixture before tuning any score, ranking, or match.\n</skills>\n# Internal URLs\nRead these like paths; most FS/bash tools resolve them.\n- `skill://<name>` instructions · `rule://<name>` details\n- `agent://<id>` subagent output · `history://<id>` transcript · `artifact://<id>` content\n- `omp://` harness docs. Read one only when the task needs it.\n\n# Tool Inventory\n- Read: `read`\n- Bash: `bash`\n- Write: `write`\n# xd:// Tool Devices\nSome tools are mounted as devices instead of shipping their schema in this\nrequest. **A tool this prompt names that is missing from your function list is\none of these. It exists and it works.** Reach it like this:\n- `read xd://` lists every device.\n- `read xd://<tool>` returns its docs and JSON parameter schema.\n- `write xd://<tool>` runs it: put the JSON args object in `content`.\nInvalid args come back as the schema in the error. Fix and retry. Top-level\ntools accept the same dispatch.\n## Additional devices (docs on demand)\n- xd://edit — Line-anchored patch language: name original lines/gaps to replace, insert, cut, or past…\n- xd://ast_edit — Perform AST-aware code edits (structural refactoring)\n- xd://debug — Debug a running process with DAP (debugger adapter protocol)\n- xd://eval — Execute Python or JavaScript code in an in-process eval backend\n- xd://glob — Globs files, directories, and path-backed internal URLs with fast pattern matching.\n- xd://grep — Grep file contents using ripgrep (fast regex search)\n- xd://lsp — Query LSP (language server) for diagnostics, hover info, and references\n- xd://browser — Control a headless browser to navigate and interact with web pages\n- xd://task — Spawn subagents to complete delegated tasks\n- xd://hub — Message peer agents, control background jobs, and supervise long-running processes\n- xd://todo — Write a structured todo list to track progress within a session\n- xd://web_search — Search the web for up-to-date information\n- MCP server `basic` (21): xd://mcp__basic_memory_{build_context|create_memory_project|delete_note|delete_project|diagnostics|edit_note|fetch|list_directory|list_memory_projects|list_workspaces|move_note|read_content|read_note|recent_activity|schema_diff|schema_infer|schema_validate|search|search_notes|view_note|write_note}\n\nRead xd://<tool> for full docs + JSON schema before first use.\n§ Tool Policy\nUse a tool when it improves correctness or grounding. Resolve prerequisites first. Run independent calls in parallel.\nMost tools take `i`: a capitalized 2-6 word present-participle intent, no period.\n\nMUST use the specialized tool over its shell equivalent:\n- Read a file or list a directory → `read`.\n- Change part of a file → `xd://edit`.\n- Create or overwrite a file → `write`.\n- Search file contents → `xd://grep`, not `grep`/`rg`/`awk`.\n- Find files by name pattern → `xd://glob`, not `ls **/*` or `fd`.\n- Definitions, references, types, code actions → `xd://lsp`. Search is not code intelligence.\n\n- Codemods across many sites → `xd://ast_edit`.\n\n- `bash` runs real binaries and short fact pipelines. Commands that shadow a specialized tool are blocked.\nRead the sections you need with offset and limit. AVOID whole-file reads and AVOID opening a file on a hunch.\n\n# Delegation\nUse `xd://task` subagents when the user asks for parallel work.\n- Decompose the request yourself, then dispatch genuinely independent slices in one `tasks[]` array.\n- Each assignment carries every requirement for its slice: subagents cannot see this conversation.\n- At most 32 run concurrently; the rest queue.\n\n§ Workflow\n- **Scope.** Read the matching skills and rules first. Plan multi-file work before touching files.\n- **Research.** Read whole sections, not snippets. Run `xd://lsp references` before changing an exported symbol: a missed callsite is a bug. Re-read a file after a tool failure or an outside change.\n- **Decompose.** Keep todos current, and batch every todo call with the turn's real work. A todo-only turn wastes a round trip.\n- **Implement.** Fix the source. Migrate every caller and delete the code the change obsoletes. Prefer editing an existing file over adding one. NEVER run a destructive command or delete unrelated code you did not write.\n- **Verify.** Run the thing, not a test file: launch it, exercise the changed path, observe the result.\n   - Bug fix → reproduce it, fix it, confirm the reproduction stops failing.\n   - UI change → drive the actual surface with `xd://browser` and ground the claim in what you saw.\n   - Contract change → run the existing tests for that contract. Add a test for new observable behavior or when asked.\n- **Cleanup.** After the change is proven: tests, docs, changelog, scaffolding removal. Skip this for a one-off investigation.\n\n§ Delivery\n<contract>\n- Finish the whole deliverable before yielding. A phase boundary, a todo flip, or a sub-step continues in the same turn.\n- Ground every claim about code, tools, tests, or docs in something you observed. Mark an unobserved claim `[INFERENCE]`.\n- Solve the real ask. NEVER add scope the user did not request, and NEVER suppress a symptom in place of the cause.\n- \"Done\" means the specified behavior end to end plus every named acceptance criterion. Stubs, placeholders, mocks, and `TODO: implement` are unfinished work.\n- Reduce scope only with the user's explicit approval in this conversation.\n- Ask the user only for what no tool, repo, or context can answer.\n</contract>\n\n§ Critical\n<critical>\n- NEVER yield while actionable work remains.\n- NEVER narrate session limits, token or tool budgets, or effort estimates. Start unbounded.\n- NEVER re-audit an applied edit or run git subcommands to validate one. Tool results are the verification.\n</critical>\n\nPROJECT\n\n<workstation>\n- OS: darwin 25.6.0\n- Distro: Darwin\n- Kernel: Darwin Kernel Version 25.6.0: Sat Jul 11 15:27:26 PDT 2026; root:xnu-12377.161.13~4/RELEASE_ARM64_T6031\n- Arch: arm64\n- CPU: Apple M3 Max\n- Terminal: ghostty 1.3.1\n</workstation>\n\n<repo-rules>\nMUST follow these context files for all tasks:\n<file path=\"/Users/vinicius91carvalho/.omp/agent/AGENTS.md\">\n# How you work with me\n\n## Language and shape\n\nAnswer in the language I wrote in: simple English or Portuguese. Explain like\nyou are talking to a smart kid: short words, short sentences. After a technical\nword, add a five-word plain meaning. Lead with the result; details after, only\nthe ones that matter. One analogy when something is hard to picture, not three.\nNever repeat yourself. End every answer with a summary of three lines max: what\nI did, why it was broken, what it means for you. Never use an em dash; use a\nplain dash. No filler, no boilerplate, no \"great question\". Do not paste back a\ndiff or a log I can read myself: say what changed and why.\n\n## You act, you never hand work back\n\nSomething is broken, you fix it. Never ask \"do you want me to fix this?\". Every\nproblem you find is yours, not only the one I named: errors, warnings, slow\npages, dead code, wrong behavior, ugly UI. After the fix, tell me what was\nbroken, the real cause, what you changed, and how you know it works now.\n\nNever say \"you should run X\" or \"please check Y\". You run it, you check it.\nNever stop and wait when you can decide: pick the simple option and say which\none you picked.\n\nAsk me only for what lives in my head alone: a taste choice, a secret, a value\nno tool can reach. **When you ask, ALWAYS use the AskUserQuestion tool, never\nplain prose** — a question at the end of a long answer is a question I miss.\nGive alternatives, not an open question. Mark your recommendation and put it\nfirst. Each option says what it costs or breaks. Every decision, every time,\nincluding destructive ones and anything with no undo.\n\n## Web work happens in Chrome, by you\n\nNever tell me to click something. You click it. Write the steps as one short\nlist, open a tab with claude-in-chrome, do the steps, screenshot as proof, tell\nme it is done. This covers settings, deploys, cloud consoles, sign-ups, logins,\nforms, payments, and sending messages.\n\nLogins use the sessions and saved passwords already in my Chrome; if one is\nmissing, ask me for that single value and carry on. Forms about me take my data\nfrom Basic Memory, never invented; if a field is missing, ask for that one\nfield. For delete, pay, send, and cancel: do it, make a backup or copy first\nwhen one is possible, and tell me right after with the exact numbers. The only\nrefusal is illegal or harmful to other people. If a site blocks the extension,\nname the site and keep doing the rest.\n\n## Memory and proof\n\nBasic Memory holds the truth about my projects; your own memory is a sticky note\nfor today. Load it before touching code and write back while you work →\n`skill://basic-memory-workflow`.\n\nMake the bug happen first, the way I would see it, then fix it and watch the\nsame thing pass. Say \"I saw it fail, I changed X, I saw it pass\", never \"this\nshould work\". Leave a test behind, and check that it fails without your fix.\nLook at a screenshot before claiming a UI is right. Only proved by a unit test?\nSay that. Could not reproduce? Say that. Never call an unproven fix \"fixed\".\n\nAnything that produces a score, a ranking, or a match gets a hand-labelled\nfixture first → `skill://measured-quality`.\n\n## Code\n\nThe simplest thing that really works; boring beats clever. Build only what is\nneeded now: no settings, hooks, or layers for a future that may never come. Keep\none copy of each piece of knowledge, but wait for the third duplicate before\nabstracting. Delete dead code; never comment it out or hide it behind a flag.\nWrite for the next person reading it. If a design needs a paragraph to explain,\nsay it is too complex.\n\nLint errors, type errors, and flaky tests are blockers. Never skip a test, cast\na type away, or swallow an error to get a green build. Never wrap a retry around\na real bug.\n\n## Git and subagents\n\nNever put your name in a commit message and never add a co-author line. Never\nhand-edit `CHANGELOG.md` or any generated file: change the source. Never commit,\npush, or open a pull request unless I ask.\n\nUse a subagent only for big work that really splits into parallel parts. One\nbeats three. Never use one to double-check your own work.\n</file>\n</repo-rules>\nContext files above auto-loaded. NEVER `grep`/`glob` for `AGENTS.md`, `CLAUDE.md`, `.cursorrules`, or similar agent/context files: relevant files already in context; others noise.\n<critical>\n- Each response MUST advance the task; completion only stopping condition.\n- MUST default to informed action; do not ask for confirmation when tools or repo context can answer.\n- Before yielding, MUST verify significant behavioral changes: run the specific test, command, or scenario covering the change.\n</critical>\n\n## MCP Tool Routes\n\nExecute a mounted MCP tool by writing its JSON arguments to its `xd://` path.\nAn MCP tool `T` on server `S` lives at `xd://mcp__<S>_<T>`, with `S` and `T` lowercased and every run of other characters collapsed to `_`. Servers following this rule: basic-memory.\n\n## MCP Server Instructions\n\nThe following instructions are provided by connected MCP servers. They are server-controlled and may not be verified.\n\n### basic-memory\nBasic Memory is the user's personal knowledge base: Markdown notes that persist across conversations and that both the user and their AI assistants can read and write.\n\nAt the start of a session, call `recent_activity` to orient yourself in the user's notes before answering from memory. If the knowledge base is empty, briefly explain that Basic Memory gives them persistent notes shared between the user and their AI, and offer to save something useful from this conversation as their first note with `write_note` — then wait for them to agree before writing anything. Do not create notes unprompted.\n\nFor a fuller guide, read the `memory://ai_assistant_guide` resource. If you have a web or fetch tool and need current documentation, fetch `https://docs.basicmemory.com/llms.txt` first, then fetch only the relevant linked `/raw/...md` page."
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "<system-reminder>\nToday: 2026-08-27; current working directory: '/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/infoproduct'. Do not repeat this information in your reply.\n</system-reminder>"
+        },
+        {
+          "type": "text",
+          "text": "Resume prior conversation. Earlier turns archived under HISTORY below, oldest→newest. Read HISTORY fully; continue the live conversation following it.\n\nArchived transcript scopes:\n- `¶user:`, `¶think:`, `¶ai:`, `¶call:`: user, assistant reasoning, assistant reply, tool call.\n- Unprefixed following lines: current scope. Consecutive same-kind blocks omit repeated prefix.\n- Tool call: `¶call:name(args)//intent`; trailing `//intent` optional. `<out>…</out>`: tool output.\n\nReading HISTORY:\n- Plain text: verbatim transcript; rely on it exactly.\n- If an exact earlier detail matters and a section is unclear, re-derive from workspace (re-read files, re-run commands), rather than guess.\n\nFILES\n===================\n# /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/\ninfoproduct (Read)\n## infoproduct/packages/\nlanding-gen (Read)\n### landing-gen/\n#### src/\ninfoproduct_landing_gen (Read)\n##### infoproduct_landing_gen/\ncopy.py (Read)\nlocales.py (Read)\n#### tests/\ntest_landing_gen.py (Read)\n\nHISTORY\n==================="
+        },
+        {
+          "type": "text",
+          "text": "¶user:A pt-BR landing copy whose persona_bio says 'Marina tem 12 anos de experiência organizando casamentos.' passes `validate_landing_copy` in packages/landing-gen, but docs/decisions.md D07 says the fictional persona may never claim years of experience and that deterministic validation must block it (it already does for Spanish). Fix this in the landing-gen package and add a pytest test in packages/landing-gen/tests/ that proves it. Existing tests (.venv/bin/pytest packages/landing-gen/tests -q) must keep passing.\n¶think:\nFirst, let's explore the repository structure to understand the codebase.\n¶call:read(path=\"/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/infoproduct\")//Listing project root\n<out>\n.\n- scripts/ 12h ago\n- __pycache__/ 12h ago\n- shoot_landing.py 2.2KB 15h ago\n- tighten_vsl.py 7.1KB 15h ago\n- verify_planilha.py 3.7KB 15h ago\n- meta_update_creatives_v3.py 3.8KB 15h ago\n- meta_update_creatives_v5.py 5.6KB 15h ago\n- money_rail_setup.py 7.2KB 15h ago\n- prove_money_rail.py 8.5KB 15h ago\n- qa_layout.py 19.1KB 15h ago\n- rebuild_illustration_manifests.py 3.6KB 15h ago\n- generate_meta_madura_pair.py 5.8KB 15h ago\n- ... 26 more\n- build_design_previews.py 20.0KB 15h ago\n- .pytest_cache/ 15h ago\n- v/ 15h ago\n- .gitignore 37B 15h ago\n- CACHEDIR.TAG 191B 15h ago\n- README.md 302B 15h ago\n- uv.lock 419.5KB 15h ago\n- state/ 15h ago\n[...3349ch elided...] 15h ago\n- design-system/ 15h ago\n- apps/ 15h ago\n- webapp/ 15h ago\n- oaktech-site/ 15h ago\n- landing/ 15h ago\n- .gitkeep 0B 15h ago\n- .gitignore 1.1KB 15h ago\n- .railwayignore 303B 15h ago\n- CLAUDE.md 10.7KB 15h ago\n- README.md 1.3KB 15h ago\n- .github/ 15h ago\n- workflows/ 15h ago\n[1 results limit reached. Use limit=2 for more]\n</out>\nread(path=\"/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/infoproduct/packages/landing-gen\")//Listing landing-gen package\n<out>\n.\n- tests/ just now\n- test_landing_gen.py 19.5KB just now\n- __pycache__/ 21m ago\n- .pytest_cache/ 15h ago\n- v/ 15h ago\n- .gitignore 37B 15h ago\n- CACHEDIR.TAG 191B 15h ago\n- README.md 302B 15h ago\n- pyproject.toml 759B 15h ago\n- src/ 15h ago\n- infoproduct_landing_gen/ just now\n</out>\n¶think:\nLet me take a look at the structure of the landing-gen package and D07 of docs/decisions.md.\n¶call:read(path=\"/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/infoproduct/packages/landing-gen/src/infoproduct_landing_gen\")//Listing landing-gen source\n<out>\n.\n- copy.py 4.1KB just now\n- locales.py 5.7KB 4m ago\n- __pycache__/ 14m ago\n- locales.cpython-313.pyc 6.4KB 14m ago\n- copy.cpython-313.pyc 6.4KB 22m ago\n- cli.cpython-313.pyc 6.3KB 15h ago\n- settings.cpython-313.pyc 1004B 15h ago\n- schema.cpython-313.pyc 2.5KB 15h ago\n- assemble.cpython-313.pyc 15.6KB 15h ago\n- __init__.cpython-313.pyc 302B 15h ago\n- schema.py 1.0KB 15h ago\n- settings.py 424B 15h ago\n- __init__.py 63B 15h ago\n- assemble.py 14.8KB 15h ago\n- cli.py 4.6KB 15h ago\n</out>\nbash(command=\"grep -n -A 40 \\\"D07\\\" /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/infoproduct/docs/decisions.md | head -80\")//Reading D07 decision entry\n<out>\n40:## D07 - Persona: personagem de marca fictícia e transparente\n41-\n42-A persona é um PERSONAGEM DE MARCA FICTÍCIO, nunca apresentado como profissional real. O perfil exige `fictional: true` e um `disclosure` (linha de transparência exibida na landing junto à bio). Proibido: credenciais ou títulos regulados (certificada, licenciada, médica, nutrióloga...), anos de experiência ou contagens de clientes inventados; validação determinística bloqueia esses termos. Aparência (decisão do humano, revisada 2026-08-15): existe UM prompt canônico de persona para todo o projeto, em `persona_portrait_prompt()` (`packages/persona/.../pipeline.py`) - fonte única, não derivado do perfil de cada persona. Ele fixa: mulher de 32 anos **bonita e magra**, da NACIONALIDADE DO MERCADO do produto (mapa `NATIONALITY_BY_COUNTRY`, B...\n43-\n44-## D08 - Contas reais\n45-\n46-Toda conta com dinheiro ou identidade (ads, pagamento, billing) fica no nome REAL do humano (Vinicius) ou de entidade dele. Gateway de pagamento (ex.: Vpago) é criado pelo humano; o agente só consome via API atrás do adapter `PaymentProvider`. Acesso a Ads Manager pelo Chrome com proxy residencial coerente com o país da conta quando aplicável [...9126ch elided...] im ao Altar\" (BR) / \"Del Si al Altar\" (MX)**. Posicionamento do humano, literal: \"Seu casamento dos sonhos do jeito certo. Planeje cada detalhe e invista conforme o seu budget. Tudo que voce precisa saber reunido em um conteudo simples, didatico. O guia definitivo.\" O nome organiza o produto em FASES (o Sim e o orcamento -> as grandes escolhas -> os detalhes -> a reta final). RESTRICAO D07 aplicada e comunicada: a clausula \"com anos de quem ja trabalha na area\" NAO pode ser usada (persona ficticia; credencial inventada e bloqueada); a autoridade honesta vem de dados reais do setor, faixas verificadas por regiao e fontes oficiais (informes, P...\n137-\n138-## D22 - Google APIs aposentadas; gate visual e do orquestrador + humano\n139-\nWall time: 0.01 seconds\n[Some lines truncated to 768 chars]\n</out>\n¶think:\nNext, let's take a look at the landing-gen source. `copy.py` was recently modified (just now). Let me read through the source files.\n¶call:read(path=\"/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/infoproduct/packages/landing-gen/src/infoproduct_landing_gen/copy.py\")//Reading copy.py source\n<out>\n[packages/landing-gen/src/infoproduct_landing_gen/copy.py#2B64]\n1:from __future__ import annotations\n2:\n3:import json\n4:import re\n5:from dataclasses import dataclass, field\n6:from typing import Any\n7:\n8:from infoproduct_landing_gen.schema import validate_against_schema\n9:\n10:MIN_FAQ_ITEMS = 7\n11:\n12:# Customer-facing copy must not disclose AI / machine generation in-body;\n13:# platform-level AI disclosure is handled where the platform provides a field.\n14-24:AI_DISCLOSURE_PATTERNS = [ ... ]\n25:\n26:# The page appends the price next to CTA buttons automatically; a price inside\n27:# the label would duplicate it.\n28:PRICE_IN_LABEL_RE = re.compile(r\"\\$\\s*\\d\")\n29:\n30:# The persona is a fictional brand character (D30 revised): copy must never\n31:# claim regulated credentials or fabricated track records.\n32-46:FORBIDDEN_CREDENTIAL_PATTERNS = [ ... ]\n47:\n48:\n49:@dataclass\n50:class ValidationResult:\n51: passed: bool\n52: issues: list[str] = field(default_factory=list)\n53:\n54:\n55:def scan_compliance(copy: dict[str, Any]) -> list[str]:\n56: serialized = json.dumps(copy, ensure_ascii=False)\n...\n61: return issues\n62:\n63:\n64:def _scan_credential_claims(copy: dict[str, Any]) -> list[str]:\n65: issues: list[str] = []\n...\n74: return issues\n75:\n76:\n77:def _scan_price_in_ctas(copy: dict[str, Any]) -> list[str]:\n78: issues: list[str] = []\n...\n87: return issues\n88:\n89:\n90:def validate_landing_copy(copy: dict[str, Any]) -> ValidationResult:\n91: \"\"\"Deterministic checks for Fable-authored landing copy.\n...\n107: return ValidationResult(passed=not issues, issues=issues)\n[...57ln elided; re-read needed ranges, e.g. packages/landing-gen/src/infoproduct_landing_gen/copy.py:14-24,32-46]\n</out>\nread(path=\"/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/infoproduct/packages/landing-gen/src/infoproduct_landing_gen/locales.py\")//Reading locales.py source\n<out>\n[packages/landing-gen/src/infoproduct_landing_gen/locales.py#8BE9]\n1:\"\"\"Per-market defaults for the landing manifest.\n2:\n3:Every string the generator fills in on its own used to be Spanish, hardcoded.\n4:That was invisible while every product was Mexican; the first Brazilian product\n5:would have shipped a page that says \"Estamos confirmando tu pago\" to a buyer\n6:paying with PIX. Defaults belong to a market, so they live here, keyed by the\n7:locale the persona profile already declares.\n8:\n9:The author's copy always wins. This is only what fills the gaps.\n10:\"\"\"\n11:\n12:from __future__ import annotations\n13:\n14:from dataclasses import dataclass\n15:\n16:\n17:@dataclass(frozen=True)\n18:class LocalePack:\n19: # Money, written the way the market writes it.\n20: price_prefix: str\n21: price_suffix: str\n22: thousands_separator: str\n23: decimal_separator: str\n24:\n25: # Routes. Renaming these breaks live links, so each market keeps its own.\n26: success_path: str\n27: terms_path: str\n28: privacy_path: str\n29:\n30: # Strings the generator supplies when the copy file stays quiet.\n31: checkout_heading: str\n32: email_label: str\n33: name_label: str\n34: pending_text [...330ch elided...] testimonials_heading: str\n46: sticky_label: str\n47: pay_button_template: str\n48: footer_lines: tuple[str, ...]\n49:\n50:\n51-88:_ES_MX = LocalePack( ... )\n89:\n90-129:_PT_BR = LocalePack( ... )\n130:\n131:_PACKS: dict[str, LocalePack] = {\"es-MX\": _ES_MX, \"pt-BR\": _PT_BR}\n132:_DEFAULT = _ES_MX\n133:\n134:\n135:def locale_pack(locale: str | None) -> LocalePack:\n136: \"\"\"Resolve a locale to its pack, falling back by language then to es-MX.\"\"\"\n...\n145: return _DEFAULT\n146:\n147:\n148:def format_price(amount: float | int, currency: str, pack: LocalePack) -> str:\n149: \"\"\"Write a price the way its market writes it.\n...\n161: return f\"{pack.price_prefix}{body}{pack.price_suffix}\"\n[...93ln elided; re-read needed ranges, e.g. packages/landing-gen/src/infoproduct_landing_gen/locales.py:51-88,90-129]\n</out>\n¶think:\nLet me read through the full text of copy.py.\n¶call:read(path=\"/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/infoproduct/packages/landing-gen/src/infoproduct_landing_gen/copy.py:1-110\")//Reading full copy.py\n<out>\n[packages/landing-gen/src/infoproduct_landing_gen/copy.py#2B64]\n1:from __future__ import annotations\n2:\n3:import json\n4:import re\n5:from dataclasses import dataclass, field\n6:from typing import Any\n7:\n8:from infoproduct_landing_gen.schema import validate_against_schema\n9:\n10:MIN_FAQ_ITEMS = 7\n11:\n12:# Customer-facing copy must not disclose AI / machine generation in-body;\n13:# platform-level AI disclosure is handled where the platform provides a field.\n14:AI_DISCLOSURE_PATTERNS = [\n15: re.compile(r\"inteligencia artificial\", re.IGNORECASE),\n16: re.compile(r\"artificial intelligence\", re.IGNORECASE),\n17: re.compile(r\"\\bgenerad[oa]\\s+por\\s+ia\\b\", re.IGNORECASE),\n18: re.compile(r\"\\bcread[oa]\\s+por\\s+ia\\b\", re.IGNORECASE),\n19: re.compile(r\"\\bai-generated\\b\", re.IGNORECASE),\n20: re.compile(r\"\\bgenerated\\s+by\\s+ai\\b\", re.IGNORECASE),\n21: re.compile(r\"\\b(?:generad[oa]|cread[oa]|hecho)\\s+(?:con|por)\\s+(?:ia|ai)\\b\", re.IGNORECASE),\n22: re.compile(r\"\\b(?:ia|ai)\\s+(?:generad[oa]|cread[oa])\\b\", re.IGNORECASE),\n23: re.compile(r\"\\bmachine[- ]generated\\b\", re.IGNORECASE),\n24:]\n25:\n26:# The page appends the price next to CTA buttons automatically; a price inside\n27:# the l [...2579ch elided...] ate_landing_copy(copy: dict[str, Any]) -> ValidationResult:\n91: \"\"\"Deterministic checks for Fable-authored landing copy.\n92:\n93: Structure is enforced by schemas/landing_copy.json; this adds the policy\n94: checks (no AI-disclosure phrasing in-body, no price inside CTA labels, no\n95: credential claims for the fictional persona). Persuasive quality is judged\n96: at the human gate.\n97: \"\"\"\n98: issues: list[str] = []\n99: try:\n100: validate_against_schema(copy, \"landing_copy.json\")\n101: except ValueError as exc:\n102: issues.append(str(exc))\n103:\n104: issues.extend(scan_compliance(copy))\n105: issues.extend(_scan_price_in_ctas(copy))\n106: issues.extend(_scan_credential_claims(copy))\n107: return ValidationResult(passed=not issues, issues=issues)\n</out>\n¶think:\nNow I get it. The existing Spanish pattern is `\\d+\\s*a[nñ]os de experiencia` - this matches \"5 años de experiencia\" but doesn't match \"12 anos de experiência\" (Portuguese). In pt-BR, \"anos de experiência\" has an accent on the \"e\". So I need to add a pt-BR pattern.\nLet me think about the pt-BR phrasing: \"12 anos de experiência\" (Portuguese, with accent). The pattern needs to match both \"años de experiencia\" (es) and \"anos de experiência\" (pt).\nCurrent pattern: `r\"\\d+\\s*a[nñ]os de experiencia\"` - \"experiencia\" (es, no accent on the \"e\"). Portuguese \"experiência\" has an \"ê\". So I need to add `r\"\\d+\\s*anos de experi[eê]ncia\"` or extend it.\nAlso, pt-BR variations: \"12 anos de experiência\". Could also consider plural/singular \"ano de experiência\" - \"1 ano de experiência\". Spanish pattern `\\d+\\s*a[nñ]os de experiencia` - only matches \"años\" (plural). What about \"5 ano de experiencia\"? Unlikely. In Portuguese: \"anos de experiência\", and also \"ano de experiência\" (singular). To be robust, use `anos? de experi[eê]ncia`.\nLet me also check the test file to see what the existing tests look like, and also check whether there are other language-specific credential patterns (the list already has Portuguese ones: \"advogad[oa]\", \"formad[oa] em\", \"noiv[oa]s\"). So the file already has some pt-BR patterns, but the \"anos de experiência\" pattern only covers Spanish. That's the bug: line 40 is `r\"\\d+\\s*a[nñ]os de experiencia\"`, which matches Spanish \"años de experiencia\" but not Portuguese \"anos de experiência\" (accent \"ê\" vs \"e\").\nWait: `a[nñ]os de experiencia` - \"a[nñ]os\" can match \"anos\" (a + n + os). Yes, it can match \"anos\"! The problem is \"experiencia\" vs \"experiência\" - Portuguese uses ê. So the Spanish pattern `experiencia` fails to match \"experiência\". That's exactly the bug.\nFix: change line 40 to something like `r\"\\d+\\s*anos? de experi[eê]ncia\"` - but I need to keep Spanish \"años de experiencia\" matching. `\\d+\\s*anos? de experi[eê]ncia` - Spanish \"años\" has an accent on the \"o\": \"años\". \"anos?\" doesn't match \"años\" because of the accent on the \"o\". So I need to combine: `r\"\\d+\\s*a[nñ]os? de experi[eê]ncia\"`.\nLet me verify: \"12 anos de experiência\" -> `\\d+` matches 12, `\\s*` matches \" \", `a[nñ]os?` matches \"anos\", ` de ` matches, `experi[eê]ncia` matches \"experiência\". Good.\n\"5 años de experiencia\" -> `a[nñ]os?` matches \"años\" (a, ñ, o, s), \"experiencia\" matches with [eê] = e. Good.\nAlso, should I worry about pt-BR \"10 anos de experiencia\" (misspelled without the accent)? Possible, but the pattern covers the correct spelling; a misspelling without the accent would match too since [eê] includes \"e\". Good.\nAlso, what about \"mais de 10 anos de experiência\"? The pattern requires a digit right before \"anos\". \"mais de 12 anos\" -> the digits \"12\" are followed by \" anos\", so it matches. Good.\nNow, is there also the issue of the order of the locale pack? Unrelated.\nAlso to check: the task says \"it's already being handled in Spanish\" - meaning the Spanish pattern is working, and I need to fix pt-BR. Let me also check the test file to see the conventions, then add a test.\nAlso, let me check whether there are other places where the credential scan is performed (assemble.py?) - the validator is in copy.py. Let me check the tests.\n¶call:read(path=\"/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/infoproduct/packages/landing-gen/tests/test_landing_gen.py\")//Reading landing-gen tests\n<out>\n[packages/landing-gen/tests/test_landing_gen.py#2C90]\n1:from __future__ import annotations\n...\n12:from infoproduct_landing_gen.schema import validate_against_schema\n13:\n14:runner = CliRunner()\n15:\n16:\n17:def _sample_copy() -> dict:\n18-87: return { ... }\n88:\n89:\n90:def _content_manifest() -> dict:\n91-99: return { ... }\n100:\n101:\n102:def _persona_profile() -> dict:\n103-116: return { ... }\n117:\n118:\n119:def _offer() -> dict:\n120-126: return { ... }\n127:\n128:\n129:def test_scan_compliance_rejects_ai_mention():\n130: copy = _sample_copy()\n...\n133: assert any(\"AI disclosure\" in issue for issue in issues)\n134:\n135:\n136:def test_validate_landing_copy_passes_sample():\n137: result = validate_landing_copy(_sample_copy())\n138: assert result.passed is True\n139: assert result.issues == []\n140:\n141:\n142:def test_validate_landing_copy_rejects_price_in_cta():\n143: copy = _sample_copy()\n...\n147: assert any(\"must not embed the price\" in issue for issue in result.issues)\n148:\n149:\n150:def test_validate_landing_copy_rejects_credential_claims_in_bio():\n151: copy = _sample_copy()\n...\n155: assert any(\"credential\" in issue for issue in result.issues)\n156:\n157:\n158:def test_validate_lan [...3092ch elided...] ever_invented():\n467: \"\"\"It used to be generated for every product, in Spanish, over a 21-day\n...\n477: assert \"daily_cost_line\" not in manifest[\"offer\"]\n478:\n479:\n480:def test_brazilian_thousands_use_a_dot():\n481: copy, content, persona, offer = _pt_br_inputs()\n...\n491: assert manifest[\"offer\"][\"compare_at_display\"] == \"R$ 2.480\"\n492:\n493:\n494:def test_funnel_and_cinematic_sections_survive_assembly():\n495: \"\"\"The two Etapa 6 landings are authored in the copy file; if the generator\n...\n546: validate_against_schema(manifest, \"landing_manifest.json\")\n547:\n548:\n549:def test_portuguese_profession_claim_is_rejected():\n550: copy = _sample_copy()\n...\n557: assert not result.passed\n[...407ln elided; re-read needed ranges, e.g. packages/landing-gen/tests/test_landing_gen.py:2-11,18-87]\n</out>\n¶think:\nThere's already a test `test_portuguese_profession_claim_is_rejected` at line 549. Let me read that part of the test file (lines 549-557) and also check the beginning (lines 1-16) to figure out the imports.\n¶call:read(path=\"/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/infoproduct/packages/landing-gen/tests/test_landing_gen.py:1-16,549-557\")//Reading test header and pt-BR test\n<out>\n[packages/landing-gen/tests/test_landing_gen.py#2C90]\n1:from __future__ import annotations\n2:\n3:import json\n4:\n5:from typer.testing import CliRunner\n6:\n7:from infoproduct_landing_gen.assemble import assemble_manifest, generate_landing_manifest\n8:from infoproduct_landing_gen.copy import (\n9: scan_compliance,\n10: validate_landing_copy,\n11:)\n12:from infoproduct_landing_gen.schema import validate_against_schema\n13:\n14:runner = CliRunner()\n15:\n16:\n...\n549:def test_portuguese_profession_claim_is_rejected():\n550: copy = _sample_copy()\n551: copy[\"persona_bio\"] = {\n552: \"heading\": \"Quem escreve\",\n553: \"paragraphs\": [\"Marina é cerimonialista e acompanha casais desde 2014.\"],\n554: \"signature_line\": \"- Marina\",\n555: }\n556: result = validate_landing_copy(copy)\n557: assert not result.passed\n</out>\n¶think:\nAlright, let's write the bug reproduction. The bio text \"Marina tem 12 anos de experiência organizando casamentos.\" should be rejected, but it's being passed.\nWhy? The Spanish pattern on line 40: `r\"\\d+\\s*a[nñ]os de experiencia\"` - \"experiência\" (pt) has an \"ê\", so `experiencia` doesn't match. Confirmed.\nFix: extend the pattern to cover both: `r\"\\d+\\s*a[nñ]os? de experi[eê]ncia\"`.\nWait, need to be careful: for the Spanish \"años\", the \"o\" is accented: \"años\". `a[nñ]os?` - a, then [nñ], then o, then optional s. For \"años\": a-ñ-o-s -> matches \"anos?\" with s. Good. For \"anos\": a-n-o-s -> matches. Good. \"ano\" (pt singular \"1 ano de experiência\") -> matches with the optional s. Good.\nHmm, one more consideration: should I also cover the case where \"anos\" is a distance away, like \"12 anos de experiencia\" without the accent (wrong spelling)? `experi[eê]ncia` covers both. No problem.\nNow, before the fix, let's confirm the reproduction with the actual validator. First, check the .venv and how to run the tests. The user said existing tests must continue to pass: `.venv/bin/pytest packages/landing-gen/tests -q`. Let's check where the .venv is - probably at the repo root or in packages/landing-gen.\n¶ai:\nNow let me reproduce the bug first.\n¶call:bash(command=\"ls /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/infoproduct/.venv/bin/pytest /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/infoproduct/packages/landing-gen/.venv 2>/dev/null; ls /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/infoproduct/packages/landing-gen\")//Locating pytest virtualenv\n<out>\n/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/infoproduct/.venv/bin/pytest\npyproject.toml\nsrc\ntests\nWall time: 0.01 seconds\n</out>\n¶think:\nThe `.venv` is at the repo root. Next, I'll write a small repro script to prove that the pt-BR bio passes through the validator.\n¶call:bash(command=\"cd /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/infoproduct && .venv/bin/python -c \\\"\\nfrom infoproduct_landing_gen.copy import validate_landing_copy\\ncopy = {\\n 'hero': {'cta_label': 'Quero o guia'},\\n 'persona_bio': {\\n 'heading': 'Quem escreve',\\n 'paragraphs [...243ch elided...] bio']['paragraphs'] = ['Marina tiene 12 años de experiencia organizando bodas.']\\nres2 = validate_landing_copy(copy)\\nprint('es-MX bio passed:', res2.passed)\\nfor i in res2.issues: print(' -', i)\\n\\\"\")//Reproducing pt-BR bio bypass\n<out>\npt-BR bio passed: False\n- Schema validation failed for landing_copy.json: <root>: 'pain_section' is a required property; <root>: 'mechanism' is a required property; <root>: 'promise_bullets' is a required property; <root>: 'volumes' is a required property; <root>: 'offer' is a required property; <root>: 'faq' is a required property; <root>: 'guarantee' is a required property; <root>: 'checkout' is a required property\nes-MX bio passed: False\n- Schema validation failed for landing_copy.json: <root>: 'pain_section' is a required property; <root>: 'mechanism' is a required property; <root>: 'promise_bullets' is a required property; <root>: 'volumes' is a required property; <root>: 'offer' is a required property; <root>: 'faq' is a required property; <root>: 'guarantee' is a required property; <root>: 'checkout' is a required property\n- persona_bio: credential/track-record claim not allowed for a fictional persona (\\d+\\s*a[nñ]os de experiencia)\nWall time: 0.15 seconds\n</out>"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": "\n\nBug confirmed and root cause identified:\n\n- pt-BR bio `12 anos de experiência` → the credential pattern does **not** fire (the only issue is an unrelated schema error due to my minimal repro code).\n- Spanish `12 años de experiencia` → the pattern **does** fire.\n\nLine 40 of `copy.py` has `r\"\\d+\\s*a[nñ]os de experiencia\"` — this only matches the Spanish spelling. Portuguese \"experiência\" has an **ê**, so `experiencia` will never match it. The fix is to make the pattern cover both languages.\n\n",
+      "reasoning_content": "\nReproduction confirmed:\n- pt-BR bio \"Marina tem 12 anos de experiência...\" → the credential pattern did not fire (only the schema failure due to my minimal copy, and that's a separate issue).\n- Spanish bio \"12 años de experiencia\" → credential pattern fired.\n\nThe root cause is exactly as I diagnosed: the pattern on line 40 of copy.py, `r\"\\d+\\s*a[nñ]os de experiencia\"`, only matches Spanish \"años de experiencia\" — Portuguese \"experiência\" has an ê, so `experiencia` does not match.\n\nFix: `r\"\\d+\\s*a[nñ]os? de experi[eê]ncia\"`.\n\nNow, to properly demonstrate the credential issue in a focused reproduction, I'll build a full sample copy. Actually, a test using the full `_sample_copy()` will handle that. First let me apply the fix.\n\nCurrent line 40:\n```python\n    re.compile(r\"\\d+\\s*a[nñ]os de experiencia\", re.IGNORECASE),\n```\n\nAfter fix:\n```python\n    re.compile(r\"\\d+\\s*a[nñ]os? de experi[eê]ncia\", re.IGNORECASE),\n```\n\nLet me verify the regex:\n- \"12 anos de experiência\": `\\d+`=12, `\\s*`=\" \", `a[nñ]os?` → \"anos\" (a,n,o,s — the ? on the optional s is satisfied by s), \" de \", `experi[eê]ncia` → \"experiência\" (e-x-p-e-r-i-ê-n-c-i-a: [eê] matches ê). ✓\n- \"12 años de experiencia\": a-ñ-o-s ✓, \"experiencia\" (e matches [eê]) ✓\n- \"1 ano de experiência\" (singular): a-n-o (s is optional) ✓\n- \"5 anos de experiencia\" (misspelled without accent): ✓\n\nGood. I'll use xd://edit. Let me check the edit tool's schema… I should read xd://edit first. Actually, I'm familiar with the general format, but I should follow the tool's docs. Let me read xd://edit.\n",
+      "tool_calls": [
+        {
+          "id": "call_666afe17",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"xd://edit\",\"i\":\"Reading edit tool docs\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "# edit — Edit\n\nLine-anchored patch language: name original lines/gaps to replace, insert, cut, or paste; then give new content. `:` headers take `+` body rows; colonless paste `PUT`, `CUT`, `REM`, `MV` take none.\n\n<headers>\nSection: `[PATH#TAG]`; `TAG`: 4-hex snapshot from latest `read`/`search`, REQUIRED each section. New files: `write`; hashline edits existing files only.\n</headers>\n\n<ops>\n`PUT N.=M:`: replace original inclusive lines N–M with body.\n`PUT N*:`: replace syntactic block beginning N; closing line resolved.\n`PUT <N:` insert body rows before line N (`PUT <1:` = file head).\n`PUT >N:` insert body rows after line N (`PUT >$:` = file tail).\n`PUT >N*:`: insert after block N's end, at sibling depth. Append inside block: `PUT >M:`.\n`PUT <N @name` / `PUT >N @name` paste register `@name` at the gap before/after line N; omit `@name` for the anonymous register.\n`PUT N.=M @name` / `PUT N* @name` paste `@name` over the range / resolved block; `@name` required here.\n`CUT N.=M` / `CUT N*`: delete and capture inclusive lines N–M / block N; anonymous or given `@name`.\n`REM`: delete section file. `MV DEST`: move/rename (quote paths with spaces); prior edits apply to source, final content to `DEST`.\nSingle line: `PUT N.=N:` / `CUT N.=N`. Ranges name original inclusive touched lines; body length irrelevant.\n</ops>\n\n<body-rows>\nOnly below `:` headers. Row: verbatim `+TEXT` (leading whitespace preserved); `+`: blank. NEVER `-old`, bare, or context rows: range deletes; body is final content. Keep line: exclude it from every range. Literal initial `-`/`+`: `- item` → `+- item`; `+ item` → `++ item`.\n</body-rows>\n\n<rules>\n- Numbers and `#TAG`: latest `read`/`search` `LINE:TEXT`; numbers are original, never shifted by hunks.\n- Each edit renumbers and changes `#TAG` → next numbers from edit response or fresh `read`.\n- Touch displayed lines only; undisplayed hunks REJECTED. Far from read window: re-`read`; confirm construct.\n- Elisions UNSEEN: `…`, `..`, collapsed `N-M:` rows. NEVER hunk in/across one; `read` first.\n- NEVER start/end range mid-expression or mid-block.\n- Ranges: changed lines only; NEVER widen over keepers. Non-adjacent changes: separate hunks.\n- Whole construct: `PUT N*:`; internal lines: `PUT N.=M:`.\n- `PUT N*:` resolves exactly node N. Leading decorators/attributes/doc-comments are separate nodes: point N at first decorator to include both. Standalone line-comments never swept: use `PUT N.=M:`.\n- Block ops: opening line of multi-line construct, NEVER closer, last line, bare inner statement. One statement: plain `PUT N.=N:` / `CUT N.=N` / `PUT >N:`. At closer: `PUT >M:`.\n- Markdown headings are block openers. Block op on `##`/`###`: whole section through deeper headings to next same/higher heading. After section `PUT >N*:`: end body with blank line to separate next heading.\n- Pure addition: `PUT <N:` / `PUT >N:`, NEVER widened `PUT N.=M:`.\n- Move: `CUT`+`PUT`; `CUT 5.=9 @fn` → `@fn`, `PUT >40 @fn` pastes. Single call-local move: unlabeled `CUT` + `PUT >40`. Named registers persist across edit calls.\n- NEVER format/restyle with this tool; run project formatter.\n</rules>\n\n<example>\n`read` output shape:\n```\n[greet.py#A1B2]\n1:def greet(name):\n2:    msg = \"Hello, \" + name\n3:    print(msg)\n4:greet(\"world\")\n```\n\nEdit, then move:\n```\n[greet.py#A1B2]\nPUT 1.=3:\n+def greet(name):\n+    print(f\"Hi, {name}\")\nMV lib/greet.py\n```\n\nMarkdown bullets — file receives `- task`:\n```\n[PLAN.md#A1B2]\nPUT >2:\n+- task\n+  - nested task\n```\n\nMove `greet` to sibling file via named register; flows across sections:\n```\n[greet.py#A1B2]\nCUT 1* @fn\n[other.py#3C4D]\nPUT <1 @fn\n```\n\n`PUT 1*:` resolves lines 1–3 (`def` through `print(msg)`); line 4 separate, remains:\n```\n[greet.py#A1B2]\nPUT 1*:\n+def greet(name):\n+    print(f\"Hello, {name}\")\n```\n\nDecorator/doc-comment separate block: point N at decorator to include both; anchoring `def` line 2 orphans `@cache`:\n```\n[svc.py#C3D4]\nPUT 1*:\n+@cache\n+def load(key):\n+    return store[key]\n```\n</example>\n\n<anti-patterns>\n# WRONG — empty `PUT` to delete. RIGHT: `CUT 4.=4`\nPUT 4.=4:\n\n# WRONG — range sized to the post-edit content. RIGHT: `PUT 1.=1:` (body length irrelevant)\nPUT 1.=2:\n+def greet(name):\n\n# WRONG — `-` rows / bare context lines do not exist; the range deletes, the body is only new content.\nPUT 3.=3:\n    msg = \"Hello, \" + name\n-   print(msg)\n+   return msg\n# RIGHT\nPUT 3.=3:\n+   return msg\n\n# WRONG — pure insertion as a widened `PUT`: retyped keepers get dropped (here line 4).\nPUT 2.=4:\n+    msg = \"Hello, \" + name\n+    extra = compute(name)\n+    print(msg)\n# RIGHT — touch nothing you keep.\nPUT >2:\n+    extra = compute(name)\n\n# WRONG — `PUT >N*:` anchored on the closing delimiter / last visible line. RIGHT: plain `PUT >M:`\nPUT >3*:\n+after()\n# RIGHT\nPUT >3:\n+after()\n\n# WRONG — body rows under register PUT; register pastes take no body. RIGHT: bodyless `PUT >20 @fn`.\nPUT >20 @fn:\n+function f() {}\n</anti-patterns>\n\n<critical>\n1. RE-GROUND AFTER EVERY EDIT: edits renumber and change `#TAG`; take next numbers from edit response or fresh `read`. Stale tag/surprise: STOP; re-`read`.\n2. RANGES TIGHT: changed lines only. Whole construct: `PUT N*:`.\n3. BODY FINAL CONTENT: every row starts `+`; Markdown bullet: `+- item`, not `- item`.\n</critical>\n\n## Schema\n```ts\ntype Args = {\n  input: string;\n};\n```\nExecute by writing JSON to xd://edit.\nExample: write(path=\"xd://edit\", content=\"{\\\"input\\\":\\\"[src/app.ts#1A2B]\\\\nPUT 3.=3:\\\\n+  return value;\\\"}\") — one JSON object, newlines inside strings as \\n.",
+      "tool_call_id": "call_666afe17"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nI need to re-read lines 30–46 of copy.py to obtain the exact content (in the earlier read, lines 32–46 were omitted). I'll read that range.\n",
+      "tool_calls": [
+        {
+          "id": "call_b46075f6",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"i\":\"Reading credential patterns in copy.py\",\"path\":\"/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/infoproduct/packages/landing-gen/src/infoproduct_landing_gen/copy.py:30-46\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "[packages/landing-gen/src/infoproduct_landing_gen/copy.py#2B64]\n29:\n30:# The persona is a fictional brand character (D30 revised): copy must never\n31:# claim regulated credentials or fabricated track records.\n32:FORBIDDEN_CREDENTIAL_PATTERNS = [\n33:    re.compile(r\"\\bcertificad\", re.IGNORECASE),\n34:    re.compile(r\"\\blicenciad\", re.IGNORECASE),\n35:    re.compile(r\"cedula profesional\", re.IGNORECASE),\n36:    re.compile(r\"cédula profesional\", re.IGNORECASE),\n37:    re.compile(r\"\\bdermat[oó]log\", re.IGNORECASE),\n38:    re.compile(r\"\\bnutri[oó]log\", re.IGNORECASE),\n39:    re.compile(r\"\\bm[eé]dic[oa]\", re.IGNORECASE),\n40:    re.compile(r\"\\d+\\s*a[nñ]os de experiencia\", re.IGNORECASE),\n41:    re.compile(r\"\\d+\\s*(?:clientas?|clientes?|pacientes?)\\b\", re.IGNORECASE),\n42:    re.compile(r\"\\bcerimonialista\\b\", re.IGNORECASE),\n43:    re.compile(r\"\\badvogad[oa]\\b\", re.IGNORECASE),\n44:    re.compile(r\"\\bformad[oa]\\s+em\\b\", re.IGNORECASE),\n45:    re.compile(r\"\\d+\\s*(?:noiv[oa]s?|casais|casamentos)\\b\", re.IGNORECASE),\n46:]\n47:\n48:\n49:@dataclass\n…\n52:    issues: list[str] = field(default_factory=list)\n\n[Showing lines 29-49 of 107. Use :50 to continue]",
+      "tool_call_id": "call_b46075f6"
+    },
+    {
+      "role": "assistant",
+      "content": "\n\nRoot cause confirmed at line 40: `a[nñ]os de experiencia` matches the Portuguese \"anos\" just fine, but the Portuguese word is **experiência** (ê), so `experiencia` will never match. That's why Spanish is blocked but pt-BR slips through.\n\n",
+      "reasoning_content": "\nNow I can see the exact pattern. Line 40: `re.compile(r\"\\d+\\s*a[nñ]os de experiencia\", re.IGNORECASE)`.\n\nWait — this is actually interesting. Let me re-verify: `a[nñ]os` — \"anos\" is a-n-o-s. This character class matches a single character: n or ñ. So \"anos\" = a + n + o + s → matches. \"años\" = a + ñ + o + s → matches. So both Spanish and Portuguese \"anos/años\" match the first part. The failure point is `experiencia` vs `experiência` (ê). Confirmed via reproduction: the pattern fires on Spanish but does not fire on Portuguese.\n\nFix: `re.compile(r\"\\d+\\s*a[nñ]os? de experi[eê]ncia\", re.IGNORECASE)`.\n\nThis covers the following:\n- \"12 anos de experiência\" ✓ (pt, with accent)\n- \"12 anos de experiencia\" ✓ (pt, misspelled)\n- \"12 años de experiencia\" ✓ (es)\n- \"1 ano de experiência\" ✓ (pt singular)\n- \"1 año de experiencia\" (es singular) ✓\n- \"años de experiencia\" with an accent ✓\n\nNote: line 41 `\\d+\\s*(?:clientas?|clientes?|pacientes?)` already covers pt/es clients. Line 45 covers pt/noivos/casais/casamentos. So it's only the \"years of experience\" pattern that was missing the pt accent.\n\nI'll apply the edit using tag #2B64.\n",
+      "tool_calls": [
+        {
+          "id": "call_6d721865",
+          "type": "function",
+          "function": {
+            "name": "write",
+            "arguments": "{\"path\":\"xd://edit\",\"content\":\"{\\\"input\\\":\\\"[packages/landing-gen/src/infoproduct_landing_gen/copy.py#2B64]\\\\nPUT 40.=40:\\\\n+    re.compile(r\\\\\\\"\\\\\\\\d+\\\\\\\\s*a[nñ]os? de experi[eê]ncia\\\\\\\", re.IGNORECASE),\\\"}\",\"i\":\"Fixing years-of-experience pattern\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "[packages/landing-gen/src/infoproduct_landing_gen/copy.py#F54F]\n38:    re.compile(r\"\\bnutri[oó]log\", re.IGNORECASE),\n39:    re.compile(r\"\\bm[eé]dic[oa]\", re.IGNORECASE),\n40:    re.compile(r\"\\d+\\s*a[nñ]os? de experi[eê]ncia\", re.IGNORECASE),\n41:    re.compile(r\"\\d+\\s*(?:clientas?|clientes?|pacientes?)\\b\", re.IGNORECASE),\n42:    re.compile(r\"\\bcerimonialista\\b\", re.IGNORECASE),",
+      "tool_call_id": "call_6d721865"
+    },
+    {
+      "role": "assistant",
+      "content": "\n\nFix applied. Now proving the reproduction stops failing, using the full test fixture so the schema passes cleanly:\n\n",
+      "reasoning_content": "\nThe fix has been applied. Next, to prove that the fix works, I'll verify the reproduction test again. This time using a complete sample copy, so that the schema passes. After that, I'll add a pytest test.\n\nLet me use the test file's `_sample_copy()` to quickly re-run the reproduction test. I can import the test module.\n",
+      "tool_calls": [
+        {
+          "id": "call_6521d398",
+          "type": "function",
+          "function": {
+            "name": "bash",
+            "arguments": "{\"command\":\"cd /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/infoproduct && .venv/bin/python -c \\\"\\nimport sys\\nsys.path.insert(0, 'packages/landing-gen/tests')\\nfrom test_landing_gen import _sample_copy\\nfrom infoproduct_landing_gen.copy import validate_landing_copy\\n\\nfor label, bio in [\\n    ('pt-BR 12 anos de experiência', 'Marina tem 12 anos de experiência organizando casamentos.'),\\n    ('pt-BR 1 ano de experiência', 'Marina tem 1 ano de experiência organizando casamentos.'),\\n    ('es-MX 12 años de experiencia', 'Marina tiene 12 años de experiencia organizando bodas.'),\\n    ('pt-BR clean bio', 'Marina é a autora do guia e organiza cada fase do casamento para você.'),\\n]:\\n    copy = _sample_copy()\\n    copy['persona_bio'] = {'heading': 'Quem escreve', 'paragraphs': [bio], 'signature_line': '- Marina'}\\n    res = validate_landing_copy(copy)\\n    cred = [i for i in res.issues if 'credential' in i]\\n    print(f'{label}: passed={res.passed} credential_issues={len(cred)}')\\n    for i in res.issues:\\n        print('   -', i)\\n\\\"\",\"i\":\"Verifying fix across languages\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "pt-BR 12 anos de experiência: passed=False credential_issues=1\n   - persona_bio: credential/track-record claim not allowed for a fictional persona (\\d+\\s*a[nñ]os? de experi[eê]ncia)\npt-BR 1 ano de experiência: passed=False credential_issues=1\n   - persona_bio: credential/track-record claim not allowed for a fictional persona (\\d+\\s*a[nñ]os? de experi[eê]ncia)\nes-MX 12 años de experiencia: passed=False credential_issues=1\n   - persona_bio: credential/track-record claim not allowed for a fictional persona (\\d+\\s*a[nñ]os? de experi[eê]ncia)\npt-BR clean bio: passed=True credential_issues=0\n\n\nWall time: 0.16 seconds",
+      "tool_call_id": "call_6521d398"
+    },
+    {
+      "role": "assistant",
+      "content": "\n\nAll four cases behave correctly: pt-BR plural and singular are now blocked, Spanish still blocked, clean bio passes (no false positives). Now adding the pytest test next to the existing credential test:\n\n",
+      "reasoning_content": "\nAll four cases are working correctly:\n- pt-BR \"12 anos de experiência\" → blocked ✓ (previously was passing)\n- pt-BR singular \"1 ano de experiência\" → blocked ✓\n- es-MX \"12 años de experiencia\" → still blocked ✓ (no regression)\n- Clean bio → passes ✓ (no false positives)\n\nNext, I'll add a pytest test to packages/landing-gen/tests/test_landing_gen.py. There's already `test_portuguese_profession_claim_is_rejected` at lines 549-557. To follow that convention, I'll read that area, then add a new test after it.\n",
+      "tool_calls": [
+        {
+          "id": "call_9dd95f56",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"i\":\"Reading end of test file\",\"path\":\"/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/infoproduct/packages/landing-gen/tests/test_landing_gen.py:545-560\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "[packages/landing-gen/tests/test_landing_gen.py#2C90]\n494:def test_funnel_and_cinematic_sections_survive_assembly():\n495:    \"\"\"The two Etapa 6 landings are authored in the copy file; if the generator\n…\n544:    assert manifest[\"funnel\"][\"vsl\"][\"offer_reveal_seconds\"] == 80\n545:    assert manifest[\"funnel\"][\"steps\"][0][\"variable\"] == \"region\"\n546:    validate_against_schema(manifest, \"landing_manifest.json\")\n547:\n548:\n549:def test_portuguese_profession_claim_is_rejected():\n550:    copy = _sample_copy()\n551:    copy[\"persona_bio\"] = {\n552:        \"heading\": \"Quem escreve\",\n553:        \"paragraphs\": [\"Marina é cerimonialista e acompanha casais desde 2014.\"],\n554:        \"signature_line\": \"- Marina\",\n555:    }\n556:    result = validate_landing_copy(copy)\n557:    assert not result.passed",
+      "tool_call_id": "call_9dd95f56"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nThe test file ends at line 557 (tag #2C90). I'll add a new test after line 557. The existing test `test_portuguese_profession_claim_is_rejected` uses `_sample_copy()`, overrides `persona_bio`, runs `validate_landing_copy`, and asserts `not result.passed`.\n\nMy test should assert both of the following:\n1. The bio fails (that it's blocked).\n2. That the specific issue is about credentials / years of experience (so that the test fails for the right reason and not, for example, a schema error).\n\nThe existing test only asserts `not result.passed`. But my reproduction demonstrated that schema errors also cause `not result.passed` — if `_sample_copy()` is complete then that's not an issue, but in order to make the test prove the right thing (that it fails for the right reason — D07 credential blocking), I'll also assert on the credential issue. This is a stronger test: it proves the deterministic validator is blocking this specific claim.\n\nTest:\n\n```python\ndef test_portuguese_years_of_experience_claim_is_rejected():\n    copy = _sample_copy()\n    copy[\"persona_bio\"] = {\n        \"heading\": \"Quem escreve\",\n        \"paragraphs\": [\"Marina tem 12 anos de experiência organizando casamentos.\"],\n        \"signature_line\": \"- Marina\",\n    }\n    result = validate_landing_copy(copy)\n    assert not result.passed\n    assert any(\"anos\" in issue for issue in result.issues)\n```\n\nWait — the issue text is: `persona_bio: credential/track-record claim not allowed for a fictional persona (\\d+\\s*a[nñ]os? de experi[eê]ncia)`. \"anos\" is contained in the pattern text. Hmm, that's a bit indirect. Better to assert on \"credential\" like the existing test at lines 150-155 (`assert any(\"credential\" in issue for issue in result.issues)`). That matches the file's convention: `test_validate_landing_copy_rejects_credential_claims_in_bio` asserts `any(\"credential\" in issue ...)`.\n\nI'll assert both `not result.passed` and the credential issue, to prove it fails for the right reason. I'll follow the style of the existing profession test (bio block + not passed) plus the credential assertion.\n\nI'll add it after line 557 with PUT >557.\n",
+      "tool_calls": [
+        {
+          "id": "call_c6736acb",
+          "type": "function",
+          "function": {
+            "name": "write",
+            "arguments": "{\"content\":\"{\\\"input\\\":\\\"[packages/landing-gen/tests/test_landing_gen.py#2C90]\\\\nPUT >557:\\\\n+\\\\n+\\\\n+def test_portuguese_years_of_experience_claim_is_rejected():\\\\n+    copy = _sample_copy()\\\\n+    copy[\\\\\\\"persona_bio\\\\\\\"] = {\\\\n+        \\\\\\\"heading\\\\\\\": \\\\\\\"Quem escreve\\\\\\\",\\\\n+        \\\\\\\"paragraphs\\\\\\\": [\\\\\\\"Marina tem 12 anos de experiência organizando casamentos.\\\\\\\"],\\\\n+        \\\\\\\"signature_line\\\\\\\": \\\\\\\"- Marina\\\\\\\",\\\\n+    }\\\\n+    result = validate_landing_copy(copy)\\\\n+    assert not result.passed\\\\n+    assert any(\\\\\\\"credential\\\\\\\" in issue for issue in result.issues)\\\"}\",\"i\":\"Adding pt-BR experience test\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "Validation failed for tool \"write\":\n  - path: path must be file path (was missing)\n\nReceived arguments:\n{\n  \"content\": \"{\\\"input\\\":\\\"[packages/landing-gen/tests/test_landing_gen.py#2C90]\\\\nPUT >557:\\\\n+\\\\n+\\\\n+def test_portuguese_years_of_experience_claim_is_rejected():\\\\n+    copy = _sample_copy()\\\\n+    copy[\\\\\\\"persona_bio\\\\\\\"] = {\\\\n+        \\\\\\\"heading\\\\\\\": \\\\\\\"Quem escreve\\\\\\\",\\\\n+        \\\\… [truncated 276 chars]\"\n}",
+      "tool_call_id": "call_c6736acb"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nRight, I need to pass `path: \"xd://edit\"`. Let me try again.\n",
+      "tool_calls": [
+        {
+          "id": "call_59034a21",
+          "type": "function",
+          "function": {
+            "name": "write",
+            "arguments": "{\"path\":\"xd://edit\",\"content\":\"{\\\"input\\\":\\\"[packages/landing-gen/tests/test_landing_gen.py#2C90]\\\\nPUT >557:\\\\n+\\\\n+\\\\n+def test_portuguese_years_of_experience_claim_is_rejected():\\\\n+    copy = _sample_copy()\\\\n+    copy[\\\\\\\"persona_bio\\\\\\\"] = {\\\\n+        \\\\\\\"heading\\\\\\\": \\\\\\\"Quem escreve\\\\\\\",\\\\n+        \\\\\\\"paragraphs\\\\\\\": [\\\\\\\"Marina tem 12 anos de experiência organizando casamentos.\\\\\\\"],\\\\n+        \\\\\\\"signature_line\\\\\\\": \\\\\\\"- Marina\\\\\\\",\\\\n+    }\\\\n+    result = validate_landing_copy(copy)\\\\n+    assert not result.passed\\\\n+    assert any(\\\\\\\"credential\\\\\\\" in issue for issue in result.issues)\\\"}\",\"i\":\"Adding pt-BR experience test\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "[packages/landing-gen/tests/test_landing_gen.py#64DE]\n549:def test_portuguese_profession_claim_is_rejected():\n550:    copy = _sample_copy()\n\n556:    result = validate_landing_copy(copy)\n557:    assert not result.passed\n558:\n559:\n…\n568:    assert not result.passed\n569:    assert any(\"credential\" in issue for issue in result.issues)",
+      "tool_call_id": "call_59034a21"
+    },
+    {
+      "role": "assistant",
+      "content": "\n\nNow running the full test suite as the user specified:\n\n",
+      "reasoning_content": "\nNext, I'll run the full test suite to confirm that the new test passes and that there are no regressions.\n",
+      "tool_calls": [
+        {
+          "id": "call_f38ccc96",
+          "type": "function",
+          "function": {
+            "name": "bash",
+            "arguments": "{\"command\":\"cd /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/infoproduct && .venv/bin/pytest packages/landing-gen/tests -q\",\"i\":\"Running landing-gen test suite\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "........................                                                 [100%]\n24 passed in 0.15s\n\n\nWall time: 0.42 seconds",
+      "tool_call_id": "call_f38ccc96"
+    },
+    {
+      "role": "assistant",
+      "content": "\n\nAll 24 tests pass. Now proving the new test actually catches the bug: temporarily reverting the fix, expecting the new test to fail, then re-applying.\n\n",
+      "reasoning_content": "\nAll 24 tests pass (23 existing + 1 new). Let me confirm that the new test actually proves the fix. That is, verify that it fails without the fix. Following the workflow: \"Leave behind a test, and confirm that it fails without the fix.\"\n\nQuick approach: temporarily revert the regex with a Python one-liner monkey-patch? Even simpler: run the new test against the old pattern by temporarily reverting the file. To do it cleanly:\n\n1. Temporarily change the pattern in copy.py back to the original.\n2. Run the new test → expect it to fail.\n3. Re-apply the fix.\n4. Run the test → it passes.\n\nThis can be done by editing twice. A bit of hassle but the right way to do it. Or use a Python check that imports the module and simulates it. The cleanest is: use sed to do a one-shot swap, run pytest against the single test, then swap it back. But I should use the edit tool for file changes. Two quick edits should be fine.\n\nActually there's an easier way: monkey-patch within the same process — build a ValidationResult with the old pattern and confirm that the pt-BR bio slips past it. I've already demonstrated the bug with the reproduction script (before the fix, pt-BR bio passed: credential_issues=0). In the first reproduction it was confirmed that the credential pattern doesn't fire on the pre-fix pt-BR text (in the repro, \"pt-BR bio passed: False\" was only due to the schema error, and there was no credential issue). That's evidence from a live run of the pre-fix code.\n\nBut just to be safe: revert → run the new test → confirm it fails. This is the gold standard. Let me just do it quickly with an edit tool.\n",
+      "tool_calls": [
+        {
+          "id": "call_ed98a4fc",
+          "type": "function",
+          "function": {
+            "name": "write",
+            "arguments": "{\"content\":\"{\\\"input\\\":\\\"[packages/landing-gen/src/infoproduct_landing_gen/copy.py#F54F]\\\\nPUT 40.=40:\\\\n+    re.compile(r\\\\\\\"\\\\\\\\d+\\\\\\\\s*a[nñ]os de experiencia\\\\\\\", re.IGNORECASE),\\\"}\",\"i\":\"Reverting fix temporarily\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "Validation failed for tool \"write\":\n  - path: path must be file path (was missing)\n\nReceived arguments:\n{\n  \"content\": \"{\\\"input\\\":\\\"[packages/landing-gen/src/infoproduct_landing_gen/copy.py#F54F]\\\\nPUT 40.=40:\\\\n+    re.compile(r\\\\\\\"\\\\\\\\d+\\\\\\\\s*a[nñ]os de experiencia\\\\\\\", re.IGNORECASE),\\\"}\"\n}",
+      "tool_call_id": "call_ed98a4fc"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nI forgot the path again. Gotta add path: \"xd://edit\".\n",
+      "tool_calls": [
+        {
+          "id": "call_7b17ec31",
+          "type": "function",
+          "function": {
+            "name": "write",
+            "arguments": "{\"path\":\"xd://edit\",\"content\":\"{\\\"input\\\":\\\"[packages/landing-gen/src/infoproduct_landing_gen/copy.py#F54F]\\\\nPUT 40.=40:\\\\n+    re.compile(r\\\\\\\"\\\\\\\\d+\\\\\\\\s*a[nñ]os de experiencia\\\\\\\", re.IGNORECASE),\\\"}\",\"i\":\"Reverting fix temporarily\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "[packages/landing-gen/src/infoproduct_landing_gen/copy.py#2B64]\n38:    re.compile(r\"\\bnutri[oó]log\", re.IGNORECASE),\n39:    re.compile(r\"\\bm[eé]dic[oa]\", re.IGNORECASE),\n40:    re.compile(r\"\\d+\\s*a[nñ]os de experiencia\", re.IGNORECASE),\n41:    re.compile(r\"\\d+\\s*(?:clientas?|clientes?|pacientes?)\\b\", re.IGNORECASE),\n42:    re.compile(r\"\\bcerimonialista\\b\", re.IGNORECASE),",
+      "tool_call_id": "call_7b17ec31"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nReverted back to the original code. Now, running the new test. The new test should fail because the bug is back.\n",
+      "tool_calls": [
+        {
+          "id": "call_376cd778",
+          "type": "function",
+          "function": {
+            "name": "bash",
+            "arguments": "{\"command\":\"cd /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/infoproduct && .venv/bin/pytest packages/landing-gen/tests/test_landing_gen.py -q -k \\\"years_of_experience\\\" 2>&1 | tail -12\",\"i\":\"Running new test against reverted code\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "            \"signature_line\": \"- Marina\",\n        }\n        result = validate_landing_copy(copy)\n>       assert not result.passed\nE       assert not True\nE        +  where True = ValidationResult(passed=True, issues=[]).passed\n\npackages/landing-gen/tests/test_landing_gen.py:568: AssertionError\n=========================== short test summary info ============================\nFAILED packages/landing-gen/tests/test_landing_gen.py::test_portuguese_years_of_experience_claim_is_rejected - assert not True\n +  where True = ValidationResult(passed=True, issues=[]).passed\n1 failed, 23 deselected in 0.06s\n\n\nWall time: 0.29 seconds",
+      "tool_call_id": "call_376cd778"
+    },
+    {
+      "role": "assistant",
+      "content": "\n\nTest fails on old code with `passed=True, issues=[]` — exactly the reported bug. Re-applying the fix:\n\n",
+      "reasoning_content": "\nThe new test failed against the old code: `ValidationResult(passed=True, issues=[])` — exactly the bug the user reported (the pt-BR bio passes through). Next, I'll reapply the fix and re-run the entire test suite.\n",
+      "tool_calls": [
+        {
+          "id": "call_5af64509",
+          "type": "function",
+          "function": {
+            "name": "write",
+            "arguments": "{\"content\":\"{\\\"input\\\":\\\"[packages/landing-gen/src/infoproduct_landing_gen/copy.py#2B64]\\\\nPUT 40.=40:\\\\n+    re.compile(r\\\\\\\"\\\\\\\\d+\\\\\\\\s*a[nñ]os? de experi[eê]ncia\\\\\\\", re.IGNORECASE),\\\"}\",\"i\":\"Re-applying the fix\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "Validation failed for tool \"write\":\n  - path: path must be file path (was missing)\n\nReceived arguments:\n{\n  \"content\": \"{\\\"input\\\":\\\"[packages/landing-gen/src/infoproduct_landing_gen/copy.py#2B64]\\\\nPUT 40.=40:\\\\n+    re.compile(r\\\\\\\"\\\\\\\\d+\\\\\\\\s*a[nñ]os? de experi[eê]ncia\\\\\\\", re.IGNORECASE),\\\"}\"\n}",
+      "tool_call_id": "call_5af64509"
+    }
+  ],
+  "stream": true,
+  "stream_options": {
+    "include_usage": true
+  },
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "read",
+        "description": "Read files, directories, archives, SQLite, images, documents, internal resources, and web URLs via `path`.\n\n<instruction>\n- SHOULD parallelize independent reads.\n- SHOULD use `read` (not browser) for web content; browser only when `read` can't deliver.\n</instruction>\n\n## Selectors — append `:<sel>` to `path` (e.g. `src/foo.ts:50-200`, `src/foo.ts:raw`, `db.sqlite:users:42`)\n- `:50` / `:50-` — from line 50 | `:50-200` — inclusive | `:50+150` — 150 lines from 50 | `:5-16,960-973` — multiple ranges\n- `:raw` — verbatim, no anchors/prefixes | `:2-4:raw` / `:raw:2-4` — range + verbatim\n- `:conflicts` — one line per unresolved git merge conflict block\n- `:img` — rasterize a local `.svg`/`.svgz` as a PNG image; use when visual layout matters\n\n## Source kinds\n- Parseable code, no selector → structural summary (declarations only, body elided). Footer names recovery selector — re-issue ONLY those ranges.\n- File + selector → `[foo.ts#1A2B]` snapshot header + numbered lines. Copy `[FILENAME#TAG]` for anchored edits; NEVER fabricate the tag.\n- Directory → depth-limited dirent listing.\n- SQLite (`.sqlite`, `.sqlite3`, `.db`, `.db3`): `file.db` (tables), `file.db:table` (schema+rows), `file.db:table:key` (by PK), `?limit=`/`?where=`/`?q=SELECT`.\n- Archives (`.zip` family incl. `.jar`/`.apk`/`.whl`, `.tar` incl. `.tar.{gz,bz2,xz,zst}`, `.rar`, `.7z`, `.iso`, `.cab`, `.deb`/`.rpm`/`.cpio`/`.ar`/`.a`, `.lzh`/`.arj`, `.asar`; single-stream `.gz`/`.bz2`/`.xz`/`.zst`): `archive.ext:path/inside/archive` reads a member.\n- Documents → extracted text. Notebooks → editable cells. Images → decoded inline. SVGs read as text unless `:img` is specified. `:raw` bypasses converters.\n- URLs → reader-mode clean text/markdown; `:raw` → untouched HTML. Bare `host:port` needs trailing slash.\n- Internal URIs — all schemes take selectors. `artifact://<id>` recovers spilled output; page with `:N-M`/`:raw:N-M`.\n- `ssh://host/<path>` reads remote file/dir (UTF-8, ≤1 MiB); bare `ssh://` lists hosts; writable with `write` and searchable with `grep`.\n  Literal `:`, `?`, `#` → percent-encode (`%3A`/`%3F`/`%23`). Requires a verified POSIX shell on the remote host. For Windows or other unsupported hosts, use `bash` with a remote SSH command or mount with `sshfs`.\n\n<critical>\nSummary footer names elided ranges? Re-issue ONLY those ranges. NEVER guess `..`/`…` content.\n</critical>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "path": {
+              "type": "string",
+              "description": "Local path, internal URI (e.g. skill://), or URL. Inline selectors are supported."
+            }
+          },
+          "required": [
+            "path",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "bash",
+        "description": "Runs commands in a persistent shell.\n\nUse ONLY for one binary or a short pipeline that computes a fact (`wc -l`, `sort | uniq -c`, `diff`).\nInline scripts, heredocs, `$(…)`, and complex control flow → a purpose-built tool or checked-in script.\n\n<instruction>\n- Set `cwd` instead of `cd`; use `env: { NAME: \"…\" }` for multiline/quote-heavy values.\n- `pty: true` only for terminal interaction (`sudo`, `ssh`).\n- Order-dependent commands use `&&` in one call; independent calls may run concurrently.\n- Internal URIs (`skill://`, `agent://`, …) auto-resolve to paths.\n- aux utils available: mkdir, wc, sort, comm, diff, uniq, base64, cmp, md5sum, sha{1,224,256,384,512}sum, b2sum, basename, dirname, readlink, realpath, touch, stat, date, mktemp, seq, yes, printenv, truncate, tac, nproc, uname, whoami, hostname, which, ps, pgrep, pkill, pidwait, top, cut, tee, tr, paste, sed, xargs, jq, rm, mv, ln, ts, sponge, ifne, isutf8, combine, errno\n- `async: true` defers a finite command's result; it does not extend `timeout`.\n</instruction>\n\n<critical>\n- Avoid `head`, `tail`, and redirection: output is captured, truncated, and linked as `artifact://<id>`.\n</critical>\n\nLong foreground calls may auto-background by the configured threshold and deliver later.\n`timeout: 0` disables the job deadline; otherwise `timeout` sets it without extending foreground waiting.\nNo truncation footer means the displayed output is complete.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "command": {
+              "type": "string"
+            },
+            "env": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "timeout": {
+              "type": "number",
+              "description": "timeout in seconds; 0 disables the command deadline; nonzero values are clamped to 1-3600"
+            },
+            "cwd": {
+              "type": "string"
+            },
+            "pty": {
+              "type": "boolean"
+            },
+            "async": {
+              "type": "boolean",
+              "description": "run in background"
+            }
+          },
+          "required": [
+            "command",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "write",
+        "description": "Creates or overwrites file at specified path.\n\n<conditions>\n- Creating new files explicitly required by task\n- Replacing entire file contents when editing would be more complex\n- Supports `.zip` (and ZIP-based `.jar`/`.war`/`.ear`/`.apk`), `.tar`, `.tar.gz`/`.tgz`, `.tar.zst`, and `.asar` archive entries via `archive.ext:path/inside/archive`; other archive formats (`.rar`, `.7z`, `.iso`, …) are read-only\n- Supports SQLite row operations via `db.sqlite:table` (insert), `db.sqlite:table:key` (update with JSON content, delete with empty content)\n</conditions>\n\n<critical>\n- You SHOULD use Edit tool for modifying existing files\n- You NEVER create documentation files (*.md, README) unless explicitly requested\n- You NEVER use emojis unless requested\n</critical>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "path": {
+              "type": "string",
+              "description": "file path"
+            },
+            "content": {
+              "type": "string",
+              "description": "file content"
+            }
+          },
+          "required": [
+            "path",
+            "content",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  ],
+  "max_completion_tokens": 4096,
+  "preserve_thinking": true,
+  "chat_template_kwargs": {
+    "preserve_thinking": true,
+    "reasoning_effort": "medium"
+  },
+  "enable_thinking": true,
+  "reasoning_effort": "medium"
+}

@@ -1,0 +1,100 @@
+diff --git a/packages/profile/src/conservative-default.test.ts b/packages/profile/src/conservative-default.test.ts
+index 1ad519e..7cddc26 100644
+--- a/packages/profile/src/conservative-default.test.ts
++++ b/packages/profile/src/conservative-default.test.ts
+@@ -232,3 +232,49 @@ describe("authorization in the candidate's own country", () => {
+     expect(a?.answer).toMatch(/^No/);
+   });
+ });
++
++/**
++ * The bug report of 2026-08-27: the Greenhouse question "Are you legally
++ * authorized to work in the country where the job is located?" was answered
++ * "Yes - I am authorized to work where this role is based" for a candidate
++ * whose profile holds no work countries at all - and even when the caller
++ * passed no posting at all.
++
++ * No work countries on file means no evidence of where the candidate MAY
++ * work, not even where they live. The only truthful answer is the negative
++ * that claims nothing. Before the fix, `whereTheWorkIs` returned "yes" for
++ * an empty `workCountries` unconditionally, so every one of these cases
++ * produced the positive.
++ */
++describe("conservativeDefaultAnswer: authorization, no work countries on file", () => {
++  const ASKED =
++    "Are you legally authorized to work in the country where the job is located?";
++
++  it.each([
++    { location: "San Francisco, CA, United States", workCountries: [] },
++    { location: "Berlin/Remote", workCountries: [] },
++    { location: "Anywhere in the World", remoteScope: "worldwide", workCountries: [] },
++  ])("answers no for %j when the profile has no work countries", (job) => {
++    const d = conservativeDefaultAnswer(ASKED, job);
++    expect(d).not.toBeNull();
++    expect(d!.answer).toMatch(/^No/);
++    expect(resolveBooleanAnswer(d!.answer)).toBe("no");
++  });
++
++  it("answers no when the caller passes no posting at all", () => {
++    const d = conservativeDefaultAnswer(ASKED);
++    expect(d).not.toBeNull();
++    expect(d!.answer).toMatch(/^No/);
++    expect(resolveBooleanAnswer(d!.answer)).toBe("no");
++  });
++
++  it("keeps the positive when the profile does evidence the country", () => {
++    // The guard against the over-correction: an empty profile must not turn
++    // a candidate who CAN evidence the country into a negative.
++    const d = conservativeDefaultAnswer(ASKED, {
++      location: "São Paulo, Brazil",
++      workCountries: ["Brazil"],
++    });
++    expect(d!.answer).toMatch(/^Yes/);
++  });
++});
+diff --git a/packages/profile/src/conservative-default.ts b/packages/profile/src/conservative-default.ts
+index ff11fd4..3643e62 100644
+--- a/packages/profile/src/conservative-default.ts
++++ b/packages/profile/src/conservative-default.ts
+@@ -135,11 +135,12 @@ export interface JobReach {
+  *
+  * So: a named country decides; only a posting that names none falls back to
+  * "hires anywhere", which means the candidate works from home and is
+- * authorized there.
++ * authorized there. A profile that holds no work countries at all decides
++ * nothing, because then even "home" is unknown, and the negative stands.
+  */
+ function whereTheWorkIs(job: JobReach): "yes" | "no" | "unknown" {
++  if (!job.workCountries.length) return "unknown";
+   const places = namedPlaces(job.location, job.remoteScope);
+-  if (!job.workCountries.length) return "yes";
+   if (places.countries.length) {
+     return places.countries.some((c) => job.workCountries.includes(c))
+       ? "yes"
+@@ -203,7 +204,8 @@ export function conservativeDefaultAnswer(
+     JOB_COUNTRY_AUTHORIZATION_RE.test(q) &&
+     !RESIDENCE_RE.test(q)
+   ) {
+-    const reach = whereTheWorkIs(job ?? { location: null, workCountries: [] });
++    const work = job ?? { location: null, workCountries: [] };
++    const reach = whereTheWorkIs(work);
+     if (reach === "yes") {
+       return {
+         answer: "Yes — I am authorized to work where this role is based.",
+@@ -220,9 +222,13 @@ export function conservativeDefaultAnswer(
+       why:
+         reach === "no"
+           ? "The posting is based where the candidate has no right to work."
+-          : "Where the posting is based cannot be read from it, and " +
+-            "authorization is a document. The negative claims nothing; the " +
+-            "positive would be a fabrication.",
++          : work.workCountries.length === 0
++            ? "The profile holds no work countries, so there is no evidence " +
++              "of authorization anywhere. The negative claims nothing; the " +
++              "positive would be a fabrication."
++            : "Where the posting is based cannot be read from it, and " +
++              "authorization is a document. The negative claims nothing; the " +
++              "positive would be a fabrication.",
+     };
+   }
+   if (DEMOGRAPHIC_RE.test(q) || DEMOGRAPHIC_PT_ES_RE.test(q)) {

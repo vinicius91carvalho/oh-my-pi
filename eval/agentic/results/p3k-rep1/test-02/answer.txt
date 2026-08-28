@@ -1,0 +1,7 @@
+
+
+Tests are green: 2 pass, 0 fail.
+
+- What I did: changed `applyDiscount` in `src/discount.js` to return `Math.round(cents - (cents * percent) / 100)`, so the result is always an integer number of cents.
+- Why it was broken: the old code returned the raw division result, so `applyDiscount(999, 10)` gave `899.1` — a float money value, which the test (and the integer-cents rule) reject.
+- What it means for you: discount math now always yields whole cents; the test that pins this down passes.

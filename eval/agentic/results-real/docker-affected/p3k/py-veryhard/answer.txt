@@ -1,0 +1,8 @@
+
+
+All 24 tests pass (23 existing + the new one), and the regex now blocks both languages.
+
+What I did: the validator in `packages/landing-gen/src/infoproduct_landing_gen/copy.py` only blocked the unaccented Spanish `experiencia`, so "12 anos de **experiência**" slipped through. I widened that one pattern to `experi[eê]ncia`, added `test_portuguese_years_of_experience_in_bio_is_rejected` in `packages/landing-gen/tests/test_landing_gen.py` with your exact bio, and saw it fail before the fix and the full suite pass after.
+
+- Why broken: accent-sensitive regex only covered Spanish, not pt-BR.
+- What it means: pt-BR landing bios claiming years of experience are now blocked the same way Spanish ones are, per D07.

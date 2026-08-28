@@ -1,0 +1,9 @@
+
+
+Done. `npm test` is green: 8 tests, 0 fail.
+
+- **What I did:** added `src/currency.test.js` (6 tests, same `node:test` style as `discount.test.js`) and fixed a real bug the run exposed: `applyDiscount(999, 10)` returned the float `899.1`, breaking the integer-cents rule.
+- **Why it was broken:** `discount.js` did `(cents * percent) / 100` without rounding, so fractional discounts leaked a float into money. I wrapped that term in `Math.round`.
+- **What it means:** every exported file now has its colocated test, and money values are integers again.
+
+Summary: added the missing currency tests, fixed a float leak in `applyDiscount` that failed the suite, and verified all 8 tests pass.

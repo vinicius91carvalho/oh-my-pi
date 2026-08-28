@@ -1,0 +1,7 @@
+
+
+Suite is green. Here is the summary:
+
+- I did: `src/discount.js` now rounds the discount to whole cents before subtracting, using `Math.floor(x + 0.5)` (round half up, rounding a true .5 up).
+- Why it was broken: the discount was computed as plain division, so `999` at 10% gave `899.1` cents, breaking the integer-cents rule and the test.
+- What it means for you: discounts always land on a whole cent, and the rounding matches the "round half up" rule already documented in `docs/decisions.md` (verified: 101 cents at 50% gives a 51-cent discount, not 50).

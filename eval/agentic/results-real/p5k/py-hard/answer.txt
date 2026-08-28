@@ -1,0 +1,11 @@
+
+
+Fixed. One line in `packages/campaign/src/infoproduct_campaign/models.py`: `CAROUSEL_CARDS_MAX` was `5`, now `35`.
+
+**Why it was broken:** the project default is 6 cards per carousel, but the pydantic schema capped `Creative.cards` at 5. So a perfectly default creative could never pass validation. The cap should reflect the TikTok API range (2-35, as the comment right above said and as the bounds test asserts), while 6 stays the default.
+
+**Verification:** the two target files went from 16 failures to all green, and the full suite passes: 402 passed, no regressions.
+
+- What I did: changed `CAROUSEL_CARDS_MAX` from 5 to 35 in `models.py`.
+- Why it was broken: the schema capped cards at 5, below the 6-card project default.
+- What it means: 6-card carousels now validate; all 402 tests pass.

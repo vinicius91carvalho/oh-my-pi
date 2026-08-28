@@ -1,0 +1,60 @@
+diff --git a/packages/profile/src/conservative-default.test.ts b/packages/profile/src/conservative-default.test.ts
+index 1ad519e..0bf0787 100644
+--- a/packages/profile/src/conservative-default.test.ts
++++ b/packages/profile/src/conservative-default.test.ts
+@@ -204,6 +204,43 @@ describe("conservativeDefaultAnswer: authorization where the job is located", ()
+     // about the US does not change with where the role is advertised.
+     expect(d!.answer).toMatch(/not authorized to work in the United States/);
+   });
++
++  it("answers the negative when the posting names a country and the candidate has none", () => {
++    // The Greenhouse case: no work country on file, and the posting names one.
++    // A "yes" here would claim authorization the candidate has not evidenced;
++    // the negative claims nothing.
++    const d = conservativeDefaultAnswer(
++      "Are you legally authorized to work in the country where the job is located?",
++      { location: "San Francisco, CA, United States", workCountries: [] },
++    );
++    expect(d).not.toBeNull();
++    expect(d!.answer).toMatch(/^No/);
++    expect(resolveBooleanAnswer(d!.answer)).toBe("no");
++  });
++
++  it("answers the negative when no posting is passed at all", () => {
++    const d = conservativeDefaultAnswer(
++      "Are you legally authorized to work in the country where the job is located?",
++    );
++    expect(d).not.toBeNull();
++    expect(d!.answer).toMatch(/^No/);
++    expect(resolveBooleanAnswer(d!.answer)).toBe("no");
++    // Pinned to the "cannot be read" branch: this is a posting whose location
++    // the code cannot read, not one it knows the candidate lacks the right in.
++    expect(d!.why).toContain("cannot be read");
++  });
++
++  it("still answers yes for a worldwide posting with no work countries on file", () => {
++    // A role that hires anywhere is worked from the candidate's own home base,
++    // where they are authorized. Guards the fix above from overcorrecting to
++    // "no".
++    const d = conservativeDefaultAnswer(
++      "Are you legally authorized to work in the country where the job is located?",
++      { location: "Remote", remoteScope: "worldwide", workCountries: [] },
++    );
++    expect(d).not.toBeNull();
++    expect(d!.answer).toMatch(/^Yes/);
++  });
+ });
+ 
+ /**
+diff --git a/packages/profile/src/conservative-default.ts b/packages/profile/src/conservative-default.ts
+index ff11fd4..30f0022 100644
+--- a/packages/profile/src/conservative-default.ts
++++ b/packages/profile/src/conservative-default.ts
+@@ -139,7 +139,6 @@ export interface JobReach {
+  */
+ function whereTheWorkIs(job: JobReach): "yes" | "no" | "unknown" {
+   const places = namedPlaces(job.location, job.remoteScope);
+-  if (!job.workCountries.length) return "yes";
+   if (places.countries.length) {
+     return places.countries.some((c) => job.workCountries.includes(c))
+       ? "yes"

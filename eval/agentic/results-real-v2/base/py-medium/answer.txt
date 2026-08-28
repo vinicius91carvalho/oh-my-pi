@@ -1,0 +1,9 @@
+
+
+All 24 tests pass, including `test_brazilian_thousands_use_a_dot`.
+
+What was broken: `format_price` in `locales.py` built the integer price with Python's default US formatting (`1,290`) and never converted that comma to the market's thousands separator. The decimal branch did the conversion, so only whole prices were wrong — and es-MX went unnoticed because its thousands separator is also a comma.
+
+What I changed: both branches now format with the default separators first, then one shared pass swaps them for the locale pack's — comma → thousands separator, dot → decimal separator.
+
+What it means: Brazilian prices now render `R$ 1.290` and `R$ 2.480`; other markets are unchanged.

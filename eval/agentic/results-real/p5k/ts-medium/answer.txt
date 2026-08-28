@@ -1,0 +1,10 @@
+
+
+Fixed. The one-liner in `monthlyUsdMax` (`packages/llm/src/score-job.ts:259`) measured the salary range at its **minimum** instead of its maximum, so a $96k–$144k/yr range came out as $8,000/mo instead of $12,000/mo. The docstring right above it even said the right thing ("best case is `salaryMax ?? salaryMin`"); the code had them swapped. I flipped it to `job.salaryMax ?? job.salaryMin`, rebuilt `@fbj/llm`, and verified:
+
+- `salary-usd.test.ts` (pipeline): 4/4 pass, including the 12,000 case.
+- The llm package's own tests for this function (`score-job.gates`, `pre-gate`, `score-job`): 285/285 pass, including the min-only fallback and the local-market gate that depends on the ceiling.
+
+Why it was broken: the function exists to answer "what is the most this posting offers per month" for the floor comparison, and using the floor of the range instead of the ceiling made well-paid two-end ranges look poor — which is why the jobs list filter and sort were mis-ordered on every range with both ends stated.
+
+What it means for you: the denormalized `jobs.salary_usd_month` and the scorer's floor check now agree and both use the range ceiling; min-only ranges still fall back to the minimum, and the whole salary check got stricter in the right direction (a high-max range can no longer be underpriced against a floor).

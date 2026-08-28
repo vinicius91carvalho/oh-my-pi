@@ -1,0 +1,18 @@
+
+
+Rename complete, verified end to end.
+
+**What I did**
+- Renamed `looksLikeGarbageTitle` → `isGarbageTitle` in all 7 files that named it: the definition (`packages/core/src/garbage-title.ts`), the core test, `packages/llm/src/score-job.ts`, `packages/pipeline/src/stages/discover.ts`, `discover.test.ts`, the comment in `apply.ts`, and `apps/cli/src/index.ts`. The `@fbj/core` barrel uses `export *`, so no extra wiring was needed.
+
+**Checks, all green**
+- `pnpm --filter './packages/*' build` — all 13 packages build
+- `tsc --noEmit` — llm, pipeline, cli clean (core is covered by its `tsc -b` build)
+- Tests: core `garbage-title.test.ts` 26 passed · llm score-job (4 files) 356 passed · pipeline `discover.test.ts` + `fanout.test.ts` 31 passed · cli `tenant.test.ts` 14 passed
+- Final sweep: `grep looksLikeGarbageTitle` across the whole repo returns zero matches, so nothing under `packages/` or `apps/` keeps the old name
+
+```
+What I did: renamed looksLikeGarbageTitle → isGarbageTitle in 7 files across core, llm, pipeline, cli.
+Why it was broken: nothing was broken — a pure rename; behaviour is untouched and every test passes.
+What it means: the export now reads as a boolean question ("is…") and every caller, test, and comment match it.
+```

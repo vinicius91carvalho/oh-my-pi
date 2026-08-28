@@ -1,0 +1,8 @@
+{"id": "py-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 365.7, "requests": 10, "max_prompt_tokens": 17804}
+{"id": "py-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 277.4, "requests": 9, "max_prompt_tokens": 14597}
+{"id": "py-hard", "level": "hard", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 266.4, "requests": 9, "max_prompt_tokens": 15955}
+{"id": "py-veryhard", "level": "veryhard", "pass": false, "tests_ok": false, "touched_tests": 1, "seconds": 653.0, "requests": 14, "max_prompt_tokens": 23676}
+{"id": "ts-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 140.8, "requests": 5, "max_prompt_tokens": 12198}
+{"id": "ts-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 271.6, "requests": 7, "max_prompt_tokens": 17063}
+{"id": "ts-hard", "level": "hard", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 1208.6, "requests": 16, "max_prompt_tokens": 27723}
+{"id": "ts-veryhard", "level": "veryhard", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 1800.1, "requests": 22, "max_prompt_tokens": 30830}

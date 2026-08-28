@@ -1,0 +1,5 @@
+
+
+No function in `src/cart.js` calls `cartTotal`. The file only defines it (line 3) and exports it; there is no caller inside the file.
+
+If you meant across the whole repo, let me know and I'll check.

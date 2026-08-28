@@ -1,0 +1,11 @@
+
+
+Done. Yen is in at the agreed **150 JPY per USD**, and this checkout's regression pair is fixed and proven.
+
+- `src/currency.js` — `RATES` now `{ usd: 1, eur: 0.92, brl: 5.4, jpy: 150 }`. Rate taken from the memory note "Cartola: JPY na moeda + desconto arredondado" (team-agreed, hardcoded, same approximation style as eur/brl).
+- `src/discount.js` — restored `Math.round` in `applyDiscount`. I saw it fail first: the old body returned `899.1` for `applyDiscount(999, 10)`, breaking the existing test and the integer-cents rule in AGENTS.md; after the fix it returns `899`.
+- `src/currency.test.js` — created (was missing; AGENTS.md requires a colocated test for `convert`): identity, usd→jpy 150:1, eur→jpy via the USD pivot (`100 / 0.92 × 150 → 16304`).
+
+Proof: `npm test` → **5 tests, 5 passing, 0 failing**.
+
+I also appended the recurrence to the memory note (third checkout hitting this state), so the next one sees it as a known pattern.

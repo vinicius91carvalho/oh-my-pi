@@ -1,0 +1,14 @@
+
+
+I ran `npm test`. Result: **1 test fails** (1 passes, 2 total).
+
+- Pass: "applies a round discount"
+- Fail: "keeps integer cents on a fractional discount" at `src/discount.test.js:9`
+
+Root cause: `applyDiscount` in `src/discount.js:4` does `cents - (cents * percent) / 100`. With 999 cents and 10% that is `999 - 99.9 = 899.1`, a float. The test expects `899` (integer cents), which also matches the project rule that money must never be a float. The fix is to round the result to whole cents, e.g. `Math.round(cents - (cents * percent) / 100)`.
+
+I left the file untouched as you asked.
+
+- I ran the suite: 2 tests, 1 fail, 1 pass.
+- The failing test catches a float in `applyDiscount`; it returns 899.1 where integer cents 899 is expected.
+- If you want, I can apply the one-line fix and rerun the suite.

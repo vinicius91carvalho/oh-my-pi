@@ -1,0 +1,3 @@
+
+
+The RATES map has three keys: `usd`, `eur`, `brl`.

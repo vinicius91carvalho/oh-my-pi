@@ -1,0 +1,16 @@
+
+
+Done. `npm test` passes 7/7, including five new JPY tests.
+
+What I changed:
+- `src/currency.js`: added `jpy: 150` to the rate table (units per USD, same style as `eur: 0.92` and `brl: 5.4`). So `convert(100, "usd", "jpy")` is now `15000` cents.
+- `src/currency.test.js` (new): covers USD to JPY, JPY to USD, integer-cents output, a round trip through the USD pivot, and JPY to BRL.
+- `src/discount.js`: fixed a bug I hit when running the tests. `applyDiscount(999, 10)` returned `899.1`, a fractional money value. It now rounds, which matches your own 2026-05-02 decision: round half up, integer cents.
+- `docs/decisions.md`: logged the JPY rate, since it is a fixed approximation, not a live quote.
+
+I picked the rate 150 because the module hardcodes rough approximations and has no live source. If you need an exact current rate, say the word and I will find one.
+
+Summary:
+- I added JPY at 150 per USD, plus a test file, and all 7 tests pass.
+- The test run exposed a real bug: discounts could return fractional cents.
+- That means every invoice now lands on a whole cent, as your rules require.

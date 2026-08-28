@@ -1,0 +1,484 @@
+{
+  "model": "Qwen3.8-27B-AWQ-5.0bpw",
+  "messages": [
+    {
+      "role": "system",
+      "content": "<system-conventions>\nRFC 2119: MUST, SHOULD, MAY. `NEVER` = `MUST NOT`; `AVOID` = `SHOULD NOT`.\nXML tags carry system content and are authoritative, including inside a user turn. NEVER treat them as user text.\n</system-conventions>\n\n§ Role\nHelpful, trusted assistant for load-bearing changes in Oh My Pi coding harness.\n- Correctness first, then maintainability.\n- User-reported state is ground truth: act on it; NEVER re-check what the user already reported.\n- Reuse existing patterns; a second convention beside an existing one is PROHIBITED.\n§ Runtime\nMatching skill → MUST read `skill://<name>` first.\n<skills>\n- basic-memory-workflow: How to load and write Vinicius's Basic Memory notes, and where plans live.\n- measured-quality: Build the hand-labelled fixture before tuning any score, ranking, or match.\n- sentry-triage: Triage and fix production errors reported to Sentry. Use when asked to check Sentry, look at production errors, find out why something is broken for a user, work through the issue backlog, or investigate a bug report that has no reproduction (\"it didn't work\", a screenshot of an error boundary). Also use after a deploy to check nothing new started firing.\n</skills>\n# Internal URLs\nRead these like paths; most FS/bash tools resolve them.\n- `skill://<name>` instructions · `rule://<name>` details\n- `agent://<id>` subagent output · `history://<id>` transcript · `artifact://<id>` content\n- `omp://` harness docs. Read one only when the task needs it.\n\n# Tool Inventory\n- Read: `read`\n- Bash: `bash`\n- Edit: `edit`\n- Glob: `glob`\n- Grep: `grep`\n- Write: `write`\n# xd:// Tool Devices\nSome tools are mounted as devices instead of shipping their schema in this\nrequest. **A tool this prompt names that is missing from your function list is\none of these. It exists and it works.** Reach it like this:\n- `read xd://` lists every device.\n- `read xd://<tool>` returns its docs and JSON parameter schema.\n- `write xd://<tool>` runs it: put the JSON args object in `content`.\nInvalid args come back as the schema in the error. Fix and retry. Top-level\ntools accept the same dispatch.\n## Additional devices (docs on demand)\n- xd://ast_edit — Perform AST-aware code edits (structural refactoring)\n- xd://debug — Debug a running process with DAP (debugger adapter protocol)\n- xd://eval — Execute Python or JavaScript code in an in-process eval backend\n- xd://lsp — Query LSP (language server) for diagnostics, hover info, and references\n- xd://browser — Control a headless browser to navigate and interact with web pages\n- xd://task — Spawn subagents to complete delegated tasks\n- xd://hub — Message peer agents, control background jobs, and supervise long-running processes\n- xd://todo — Write a structured todo list to track progress within a session\n- xd://web_search — Search the web for up-to-date information\n- MCP server `basic` (21): xd://mcp__basic_memory_{build_context|create_memory_project|delete_note|delete_project|diagnostics|edit_note|fetch|list_directory|list_memory_projects|list_workspaces|move_note|read_content|read_note|recent_activity|schema_diff|schema_infer|schema_validate|search|search_notes|view_note|write_note}\n\nRead xd://<tool> for full docs + JSON schema before first use.\n§ Tool Policy\nUse a tool when it improves correctness or grounding. Resolve prerequisites first. Run independent calls in parallel.\nMost tools take `i`: a capitalized 2-6 word present-participle intent, no period.\n\nMUST use the specialized tool over its shell equivalent:\n- Read a file or list a directory → `read`.\n- Change part of a file → `edit`.\n- Create or overwrite a file → `write`.\n- Search file contents → `grep`, not `grep`/`rg`/`awk`.\n- Find files by name pattern → `glob`, not `ls **/*` or `fd`.\n- Definitions, references, types, code actions → `xd://lsp`. Search is not code intelligence.\n\n- Codemods across many sites → `xd://ast_edit`.\n\n- `bash` runs real binaries and short fact pipelines. Commands that shadow a specialized tool are blocked.\nRead the sections you need with offset and limit. AVOID whole-file reads and AVOID opening a file on a hunch.\n\n# Delegation\nUse `xd://task` subagents when the user asks for parallel work.\n- Decompose the request yourself, then dispatch genuinely independent slices in one `tasks[]` array.\n- Each assignment carries every requirement for its slice: subagents cannot see this conversation.\n- At most 32 run concurrently; the rest queue.\n\n§ Workflow\n- **Scope.** Read the matching skills and rules first. Plan multi-file work before touching files.\n- **Research.** Read whole sections, not snippets. Run `xd://lsp references` before changing an exported symbol: a missed callsite is a bug. Re-read a file after a tool failure or an outside change.\n- **Decompose.** Keep todos current, and batch every todo call with the turn's real work. A todo-only turn wastes a round trip.\n- **Implement.** Fix the source. Migrate every caller and delete the code the change obsoletes. Prefer editing an existing file over adding one. NEVER run a destructive command or delete unrelated code you did not write.\n- **Verify.** Run the thing, not a test file: launch it, exercise the changed path, observe the result.\n   - Bug fix → reproduce it, fix it, confirm the reproduction stops failing.\n   - UI change → drive the actual surface with `xd://browser` and ground the claim in what you saw.\n   - Contract change → run the existing tests for that contract. Add a test for new observable behavior or when asked.\n- **Cleanup.** After the change is proven: tests, docs, changelog, scaffolding removal. Skip this for a one-off investigation.\n\n§ Delivery\n<contract>\n- Finish the whole deliverable before yielding. A phase boundary, a todo flip, or a sub-step continues in the same turn.\n- Ground every claim about code, tools, tests, or docs in something you observed. Mark an unobserved claim `[INFERENCE]`.\n- Solve the real ask. NEVER add scope the user did not request, and NEVER suppress a symptom in place of the cause.\n- \"Done\" means the specified behavior end to end plus every named acceptance criterion. Stubs, placeholders, mocks, and `TODO: implement` are unfinished work.\n- Reduce scope only with the user's explicit approval in this conversation.\n- Ask the user only for what no tool, repo, or context can answer.\n</contract>\n\n§ Critical\n<critical>\n- NEVER yield while actionable work remains.\n- NEVER narrate session limits, token or tool budgets, or effort estimates. Start unbounded.\n- NEVER re-audit an applied edit or run git subcommands to validate one. Tool results are the verification.\n</critical>\n\nPROJECT\n\n<workstation>\n- OS: darwin 25.6.0\n- Distro: Darwin\n- Kernel: Darwin Kernel Version 25.6.0: Sat Jul 11 15:27:26 PDT 2026; root:xnu-12377.161.13~4/RELEASE_ARM64_T6031\n- Arch: arm64\n- CPU: Apple M3 Max\n- Terminal: ghostty 1.3.1\n</workstation>\n\n<repo-rules>\nMUST follow these context files for all tasks:\n<file path=\"/Users/vinicius91carvalho/.omp/agent/AGENTS.md\">\n# How you work with me\n\n## Language and shape\n\nAnswer in the language I wrote in: simple English or Portuguese. Explain like\nyou are talking to a smart kid: short words, short sentences. After a technical\nword, add a five-word plain meaning. Lead with the result; details after, only\nthe ones that matter. One analogy when something is hard to picture, not three.\nNever repeat yourself. End every answer with a summary of three lines max: what\nI did, why it was broken, what it means for you. Never use an em dash; use a\nplain dash. No filler, no boilerplate, no \"great question\". Do not paste back a\ndiff or a log I can read myself: say what changed and why.\n\n## You act, you never hand work back\n\nSomething is broken, you fix it. Never ask \"do you want me to fix this?\". Every\nproblem you find is yours, not only the one I named: errors, warnings, slow\npages, dead code, wrong behavior, ugly UI. After the fix, tell me what was\nbroken, the real cause, what you changed, and how you know it works now.\n\nNever say \"you should run X\" or \"please check Y\". You run it, you check it.\nNever stop and wait when you can decide: pick the simple option and say which\none you picked.\n\nAsk me only for what lives in my head alone: a taste choice, a secret, a value\nno tool can reach. **When you ask, ALWAYS use the AskUserQuestion tool, never\nplain prose** — a question at the end of a long answer is a question I miss.\nGive alternatives, not an open question. Mark your recommendation and put it\nfirst. Each option says what it costs or breaks. Every decision, every time,\nincluding destructive ones and anything with no undo.\n\n## Web work happens in Chrome, by you\n\nNever tell me to click something. You click it. Write the steps as one short\nlist, open a tab with claude-in-chrome, do the steps, screenshot as proof, tell\nme it is done. This covers settings, deploys, cloud consoles, sign-ups, logins,\nforms, payments, and sending messages.\n\nLogins use the sessions and saved passwords already in my Chrome; if one is\nmissing, ask me for that single value and carry on. Forms about me take my data\nfrom Basic Memory, never invented; if a field is missing, ask for that one\nfield. For delete, pay, send, and cancel: do it, make a backup or copy first\nwhen one is possible, and tell me right after with the exact numbers. The only\nrefusal is illegal or harmful to other people. If a site blocks the extension,\nname the site and keep doing the rest.\n\n## Memory and proof\n\nBasic Memory holds the truth about my projects; your own memory is a sticky note\nfor today. Load it before touching code and write back while you work →\n`skill://basic-memory-workflow`.\n\nMake the bug happen first, the way I would see it, then fix it and watch the\nsame thing pass. Say \"I saw it fail, I changed X, I saw it pass\", never \"this\nshould work\". Leave a test behind, and check that it fails without your fix.\nLook at a screenshot before claiming a UI is right. Only proved by a unit test?\nSay that. Could not reproduce? Say that. Never call an unproven fix \"fixed\".\n\nAnything that produces a score, a ranking, or a match gets a hand-labelled\nfixture first → `skill://measured-quality`.\n\n## Code\n\nThe simplest thing that really works; boring beats clever. Build only what is\nneeded now: no settings, hooks, or layers for a future that may never come. Keep\none copy of each piece of knowledge, but wait for the third duplicate before\nabstracting. Delete dead code; never comment it out or hide it behind a flag.\nWrite for the next person reading it. If a design needs a paragraph to explain,\nsay it is too complex.\n\nLint errors, type errors, and flaky tests are blockers. Never skip a test, cast\na type away, or swallow an error to get a green build. Never wrap a retry around\na real bug.\n\n## Git and subagents\n\nNever put your name in a commit message and never add a co-author line. Never\nhand-edit `CHANGELOG.md` or any generated file: change the source. Never commit,\npush, or open a pull request unless I ask.\n\nUse a subagent only for big work that really splits into parallel parts. One\nbeats three. Never use one to double-check your own work.\n</file>\n<file path=\"/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/AGENTS.md\">\n# find-best-job — coding-agent rules\n\nThese rules govern assistants editing this repo. Runtime apply/register agent\nbehavior lives in [`CLAUDE.md`](CLAUDE.md) and still applies. Layering lives in\n[`ARCHITECTURE.md`](ARCHITECTURE.md).\n\n**Read [`docs/learnings.md`](docs/learnings.md) before debugging anything.** This\nfile says what to do; that one says what it cost to find out — the mistakes made\nmore than once, with the cheaper route next to each. It opens with the one that\ncost the most: look at the screenshot the run already stored before deducing\nanything from a log.\n\n## Platform-agnostic by default\n\nThe product must work for **any** ATS, native board, or captcha/mail provider —\nnot a fixed shortlist.\n\n- **Generalist code** (shared MCP tools, browser sidecar fills, apply/register\n  loops, prompts that are not platform-scoped): detect **patterns** (confirm-email\n  page, stuck submit, captcha widget, SSO wall, masked date/phone). Never gate on\n  `platformKey === \"gupy\"` / `\"infojobs\"` / `\"solides\"` (or any other named board)\n  and never hard-code that board’s login URL, mail domain, or field quirks into\n  shared tools.\n- **Provider-specific quirks** belong only in:\n  - `packages/agents/src/register-platform-hints.ts` (register),\n  - `packages/adapters/src/ats/*` hints (apply),\n  - `packages/agents/src/drivers/*` — one file per scripted platform, holding\n    its auth ritual **and** its DOM workarounds. Shared tools reach those only\n    through the driver’s page hooks (`afterNavigate` / `beforeInteract`,\n    dispatched by `drivers/index.ts`); they never import a driver module or\n    test a host regex.\n  - `packages/core` platform registry (`PLATFORMS` in `native-platforms.ts`):\n    hosts, login/signup/probe URLs, `emailDomain`, thin-shell flag. One entry\n    per platform — the pipeline keeps no copy of it.\n  - `packages/core/src/platform-rules.ts` — platform traps as **rows in the\n    database** (regex over `{role, platformKey, url, pageText, tool}` →\n    rewrite/refuse/advise), enforced by shared code that never names a\n    platform. This replaced ~20 `platformKey === \"...\"` branches; a new trap\n    on a known platform is a new row, not a deploy. The row is data; the\n    guard stays code.\n- Adding a new platform = registry entry + hints/adapter (+ a driver file and\n  its one `registerScriptedDriver` line when the auth ritual needs scripting) +\n  tests. Do **not** teach the shared tool layer that platform’s name.\n- Register agents wait for verification mail via the tenant's `@in.find-best-job.com`\n  mailbox (`@fbj/mail`), not the founder's Gmail.\n- Captcha solvers stay behind config (`FBJ_CAPTCHA_SOLVER_*`); do not bake a\n  vendor hop into product logic without evidence + a kill switch.\n\n## Fast and reliable\n\n- Prefer fewer agent turns: batch fills (`fill_many` / `bootstrap_register`),\n  avoid redundant snapshots, refuse identical `report_error` loops (cap +\n  structured terminal).\n- Masked inputs (date/phone/tax ID) must be typed correctly so submit is not\n  left inert — fix the sidecar/fill path, do not paper over with higher timeouts.\n- Stall / page-progress aborts are quality signals; do not “fix” flaky boards by\n  only raising timeouts.\n- One browser / tenant mailbox / Vertex journey at a time for real E2E (no parallel natives\n  sharing the same inbound address and profile lock).\n\n## Testing: unit first, then E2E\n\nOrder is mandatory before calling a change done:\n\n1. **Unit / package tests** — colocated Vitest (`src/*.test.ts`); DB code against\n   PGlite (in-process WASM Postgres) + real migrations, via `makeTestDb()` from\n   `@fbj/db/test-db`. Cover the new behavior and the regressions you nearly\n   introduced.\n2. **Repo gates** — `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`\n   (and `pnpm format:check` when formatting touched).\n3. **E2E / smoke** — a real production-shaped run that proves the fix and that\n   older paths still work.\n\n   The platform-matrix harness this step used to name\n   (`scripts/e2e-ten-apply.mjs`) was **deleted** in `b58406b` when the matrix\n   was retired; three other docs still cite scripts that no longer exist. What\n   actually exists today, in ascending cost:\n\n   - `bench/run.mjs` — the real apply agent against 19 local form fixtures,\n     judged on what the fixture server received over the wire. **Not in CI, and\n     no longer run before a push** (owner's call, 2026-08-20): it is opt-in via\n     `FBJ_FORCE_BENCH=1 git push` or `node scripts/gate.mjs --bench`. A scenario\n     passes at 2 of 3 runs. It is still the only check that exercises an apply\n     guard end to end, so run it deliberately before cutting a release — a\n     guard regression now reaches `origin` and the deploy unnoticed.\n   - `fbj canary <url>` — seeds an application against the canary board (a\n     Lambda serving fake postings) and the apply stage drives it end to end:\n     queue, task, browser, model, tools, state machine, evidence. This is the\n     smoke test to run after a deploy, and nothing schedules it.\n   - `scripts/e2e-two-tenant.mjs` / `e2e-prod-two-tenant.mjs` /\n     `e2e-three-apply.mjs` — manual, need untracked credentials, and the last\n     one submits to **real employers**.\n\n   Success for an apply journey is `submitted` (or the journey's documented\n   terminal), with proof under the report/PROOF dirs.\n4. After the run, skim the report: the new path green **and** the previously\n   green ones not regressed. If you only exercised one board, say so explicitly.\n\nDo not ship “works on my mental model” without the unit→gate→E2E chain when the\nchange touches agents, browser, pipeline stages, or native registration.\n\n## Real multi-platform apply\n\n- Validation of apply/register product changes means **actual** submissions (or\n  account `active` → apply → `submitted`) on distinct platforms in the matrix —\n  open ATS and natives — not a single happy path.\n- Dry-run is for plumbing; it does not replace a real apply E2E.\n- LinkedIn remains out of scope (see `CLAUDE.md`).\n\n## Instrument for bottlenecks\n\nEvery agent/browser path that can burn wall-clock must stay observable:\n\n- Phase timers (`▶` / `◀` or equivalent) around provision, ensure-accounts, apply.\n- Per-turn / per-tool timing and top-tool summaries on agent finish.\n- Captcha outcomes logged with `{solved, detail, type, sitekeyPrefix}` (no\n  secrets) on solve and on captcha-flavored refusals.\n- Page fingerprint / stall abort signals when the form stops advancing.\n- Refusal caps that record *why* they fired so the next run (or an engineer)\n  sees the bottleneck, not a silent timeout.\n\nWhen optimizing, measure first from these signals; do not guess.\n\n## The Answer Library (product)\n\n**No question ever blocks an application.** The agent always answers, records\nthe answer in the Answer Library (`qa_bank`), and the human reviews and corrects\nit there afterwards — corrections apply to FUTURE runs only. Nothing is gated on\na person's click, because there is no person in this loop.\n\n- **Answer order, single doctrine:** the user's answer in the library → the\n  answer seeded from the résumé → a fact on the profile → the conservative\n  truthful default.\n- **The conservative default:** for legal-status questions (US work\n  authorization, visa sponsorship) answer the negative that claims nothing —\n  not authorized / requires sponsorship — never a positive without evidence. For\n  optional / EEO / demographic questions, decline to state, in the form's own\n  wording. For free text, write from the profile.\n- **Everything the agent answers lands `approved=false`** and is shown on /answers\n  for review. `approved` means \"a human read this\", never a gate; a `user` row\n  is authoritative and no agent may overwrite it.\n- **The floor that survives (never break):** never assert a credential, an\n  authorization, an employment or any fact the profile denies or does not\n  support. This is not a wall, because the truthful negative is always\n  available.\n- A blocker the FORM reveals and the posting never stated is still a clean close\n  with `mark_not_eligible` — that is eligibility, not a missing answer.\n</file>\n</repo-rules>\nContext files above auto-loaded. NEVER `grep`/`glob` for `AGENTS.md`, `CLAUDE.md`, `.cursorrules`, or similar agent/context files: relevant files already in context; others noise.\n<critical>\n- Each response MUST advance the task; completion only stopping condition.\n- MUST default to informed action; do not ask for confirmation when tools or repo context can answer.\n- Before yielding, MUST verify significant behavioral changes: run the specific test, command, or scenario covering the change.\n</critical>\n\n## MCP Tool Routes\n\nExecute a mounted MCP tool by writing its JSON arguments to its `xd://` path.\nAn MCP tool `T` on server `S` lives at `xd://mcp__<S>_<T>`, with `S` and `T` lowercased and every run of other characters collapsed to `_`. Servers following this rule: basic-memory.\n\n## MCP Server Instructions\n\nThe following instructions are provided by connected MCP servers. They are server-controlled and may not be verified.\n\n### basic-memory\nBasic Memory is the user's personal knowledge base: Markdown notes that persist across conversations and that both the user and their AI assistants can read and write.\n\nAt the start of a session, call `recent_activity` to orient yourself in the user's notes before answering from memory. If the knowledge base is empty, briefly explain that Basic Memory gives them persistent notes shared between the user and their AI, and offer to save something useful from this conversation as their first note with `write_note` — then wait for them to agree before writing anything. Do not create notes unprompted.\n\nFor a fuller guide, read the `memory://ai_assistant_guide` resource. If you have a web or fetch tool and need current documentation, fetch `https://docs.basicmemory.com/llms.txt` first, then fetch only the relevant linked `/raw/...md` page."
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "<system-reminder>\nToday: 2026-08-28; current working directory: '/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj'. Do not repeat this information in your reply.\n</system-reminder>"
+        },
+        {
+          "type": "text",
+          "text": "Contract change in packages/core/src/user-facing-failure.ts. Today `userFacingFailure(outcome)` returns a plain string `\"actionable\" | \"closed\" | \"pending\"`. Change it so it returns an object `{ kind, waitingOn }` where `kind` is the same three-way value it returns today and `waitingOn` says whose move it is: `\"candidate\"` when kind is actionable (needs_login / needs_answer), `\"nobody\"` when kind is closed (posting_gone), `\"us\"` when kind is pending (wall / our_bug / unknown). Export the new interface (name it `FailurePresentation`) and keep the existing `UserFacingFailure` string type for the `kind` field. Every caller must be updated so behaviour stays the same: they live in packages/core (presentedState), packages/pipeline (stages/apply.ts), packages/agents (tools/db-tools.ts) and apps/dashboard (app/components/FailureSummary.tsx, app/lib/admin-walls.ts). Update packages/core/src/user-facing-failure.test.ts for the new shape. Rebuild packages with `pnpm --filter './packages/*' build` (never the full `pnpm build`), run `tsc --noEmit` and run the tests of every package you touch (per file with vitest)."
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nI'll start by reading the relevant files.\n",
+      "tool_calls": [
+        {
+          "id": "call_cc1587cc",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"packages/core/src/user-facing-failure.ts\",\"i\":\"Reading source file\"}"
+          }
+        },
+        {
+          "id": "call_72a2c89e",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"packages/core/src/user-facing-failure.test.ts\",\"i\":\"Reading test file\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "Path 'packages/core/src/user-facing-failure.ts' not found",
+      "tool_call_id": "call_cc1587cc"
+    },
+    {
+      "role": "tool",
+      "content": "Path 'packages/core/src/user-facing-failure.test.ts' not found",
+      "tool_call_id": "call_72a2c89e"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nThe file might be located in a different place. Let me try searching with glob.\n",
+      "tool_calls": [
+        {
+          "id": "call_e6052848",
+          "type": "function",
+          "function": {
+            "name": "glob",
+            "arguments": "{\"path\":\"packages/core/**/user-facing-failure*\",\"i\":\"Locating failure files\"}"
+          }
+        },
+        {
+          "id": "call_35a36edf",
+          "type": "function",
+          "function": {
+            "name": "glob",
+            "arguments": "{\"path\":\"packages/*/src/*failure*\",\"i\":\"Locating failure files in packages\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "No files found matching pattern",
+      "tool_call_id": "call_e6052848"
+    },
+    {
+      "role": "tool",
+      "content": "# packages/core/src/\nfailure-outcome.ts\nfailure-outcome.test.ts",
+      "tool_call_id": "call_35a36edf"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nThe user is saying the contract change is in `packages/core/src/user-facing-failure.ts`, but the actual file is `failure-outcome.ts`. Let me try reading that one. Maybe the function is defined there. Or perhaps `user-facing-failure.ts` exists somewhere else. Let me check.\n",
+      "tool_calls": [
+        {
+          "id": "call_ef2e0c6a",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"packages/core/src/failure-outcome.ts\",\"i\":\"Reading failure outcome source\"}"
+          }
+        },
+        {
+          "id": "call_f6c9b989",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"packages/core/src/failure-outcome.test.ts\",\"i\":\"Reading failure outcome test\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "[packages/core/src/failure-outcome.ts#6871]\n1:/**\n2: * What a failed application means to the person waiting for it.\n…\n25: */\n26:\n27:export const FAILURE_OUTCOMES = [\n…\n34:] as const;\n35:\n36:export type FailureOutcome = (typeof FAILURE_OUTCOMES)[number];\n37:\n38:/**\n39: * The employer took the posting down. Nothing we do reopens it.\n…\n48: */\n49-63:const POSTING_GONE = [ … ];\n64:\n65:/**\n66: * The site stopped the browser before the form. A stored login does not help\n…\n73: */\n74-81:const WALL = [ … ];\n82:\n83:/**\n84: * A required field has no truthful answer yet, and only the candidate can\n85: * supply one. The product's own wording for this is\n86: * `missingFieldsFailureReason` in `@fbj/agents`.\n87: */\n88-114:const NEEDS_ANSWER = [ … ];\n115:\n116:/**\n117: * A sign-in or registration wall gates the form.\n…\n123: */\n124:/**\n125: * Whole words, never stems: `conta` is inside `contain` and `contact`, and\n126: * without the boundaries \"the form does not contain a submit button\" read as a\n127: * login wall.\n128: */\n129:const LOGIN_NOUN =\n130:  \"\\\\b(?:sign[- ]?ins?|sign[- ]?ups?|log[- ]?ins?|logons?|passwords?|senhas?|contrase(?:n|ñ)as?|claves?|credentials?|credenci(?:al|ais|ales)|accounts?|contas?|cuentas?|cadastros?|registrations?|registros?|sesi(?:o|ó)n)\\\\b\";\n131:/** Stems, deliberately: `block` has to cover blocked/blocks/blocking. */\n132:const BLOCK_WORD =\n133:  \"\\\\b(?:wall|gate|gating|require|requier|requer|requisit|need|behind|block|missing|create|creating|created|register|registering|obrigat|necess|necesari|requerid|exig|impede|bloquei|criar|crear|muro|no stored|not stored|no saved|sem |sin )\";\n134-141:const NEEDS_LOGIN = [ … ];\n142:\n143:/**\n144: * The agent could not drive something it should have been able to drive. Ours\n…\n154: */\n155:const QA_ALREADY_ANSWERED =\n156:  /\\byour (q\\s*&\\s*a|answer library) already answers\\b/i;\n157:\n158:/**\n159: * The gate that e-mails a one-time code and will not submit without it.\n…\n171: */\n172:const EMAILED_CODE_GATE =\n173:  /verification code|security code|c[oó]digo de (?:verifica[cç][aã]o|seguran[cç]a)|\\bMFA\\b|\\b2FA\\b/i;\n174:\n175-198:const OUR_BUG = [ … ];\n199:\n200:function matches(patterns: readonly RegExp[], text: string): boolean {\n201:  return patterns.some((re) => re.test(text));\n202:}\n203:\n204:/**\n205: * Classify one `failure_reason` into a user-facing outcome.\n…\n217: */\n218:export function classifyFailure(\n219:  reason: string | null | undefined,\n220-233:): FailureOutcome { … }\n234:\n235:/** Surface tone for the outcome's box — the same vocabulary the badges use. */\n236:export function failureTone(\n237:  outcome: FailureOutcome,\n238-248:): \"warn\" | \"danger\" | \"off\" { … }\n\n[…171ln elided; re-read needed ranges, e.g. packages/core/src/failure-outcome.ts:3-24,28-33]",
+      "tool_call_id": "call_ef2e0c6a"
+    },
+    {
+      "role": "tool",
+      "content": "[packages/core/src/failure-outcome.test.ts#5BE2]\n1:import { describe, expect, it } from \"vitest\";\n2:import { classifyFailure, failureTone } from \"./failure-outcome.js\";\n3:\n4:/**\n5: * The reports below are the real shapes: the product's own strings\n6: * (`missingFieldsFailureReason`, `unfilledAnsweredFieldsReason`,\n7: * `unreadableReason`, `recordAccountError`) and agent prose in the three\n8: * languages a run can be driven in.\n9: *\n10: * The negative half matters as much as the positive one. A classifier that\n11: * answers \"needs your login\" for a form bug sends the person to type a password\n12: * that changes nothing, and the copy it renders is then a lie the UI told.\n13: */\n14:\n15:describe(\"classifyFailure — the posting is gone\", () => {\n16-26:  it(\"recognises a closed posting in three languages\", () => { … });\n27:});\n28:\n29:describe(\"classifyFailure — a wall we could not pass\", () => {\n30-40:  it(\"recognises challenges and bot walls\", () => { … });\n41:\n42-51:  it(\"recognises intake's own unreadable-posting report\", () => { … });\n52:\n53-59:  it(\"keeps a challenge on the sign-in page a wall, not a login request\", () => { … });\n60:});\n61:\n62-98:describe(\"classifyFailure — needs an answer from you\", () => { … });\n99:\n100-134:describe(\"classifyFailure — needs your login\", () => { … });\n135:\n136-187:describe(\"classifyFailure — our bug\", () => { … });\n188:\n189:/**\n190: * The strings this product writes about itself, taken verbatim from production\n…\n198: */\n199-307:describe(\"classifyFailure — the product's own reports\", () => { … });\n308:\n309-319:describe(\"classifyFailure — no invented cause\", () => { … });\n320:\n321-330:describe(\"failureTone\", () => { … });\n\n[…280ln elided; re-read needed ranges, e.g. packages/core/src/failure-outcome.test.ts:16-26,30-40]",
+      "tool_call_id": "call_f6c9b989"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nThe user is saying that `userFacingFailure(outcome)` is in `packages/core/src/user-facing-failure.ts`. But that file doesn't exist — what exists is `failure-outcome.ts`, which contains `classifyFailure` and `failureTone`. Hmm. Maybe `user-facing-failure.ts` does exist somewhere else. Let me search for `userFacingFailure` across the whole repo.\n",
+      "tool_calls": [
+        {
+          "id": "call_cdd796f6",
+          "type": "function",
+          "function": {
+            "name": "grep",
+            "arguments": "{\"pattern\":\"userFacingFailure\",\"i\":\"Finding userFacingFailure references\"}"
+          }
+        },
+        {
+          "id": "call_612f6b8a",
+          "type": "function",
+          "function": {
+            "name": "grep",
+            "arguments": "{\"pattern\":\"UserFacingFailure\",\"i\":\"Finding UserFacingFailure type refs\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "No matches found",
+      "tool_call_id": "call_cdd796f6"
+    },
+    {
+      "role": "tool",
+      "content": "No matches found",
+      "tool_call_id": "call_612f6b8a"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nNeither the function nor the type exists. The user's premise is wrong: \"the contract change is in packages/core/src/user-facing-failure.ts. Currently `userFacingFailure(outcome)` returns a plain string 'actionable' | 'closed' | 'pending'.\"\n\nBut wait — this repo has a different layout. This is a \"real/fbj\" directory under \"qwen3.8-27b/eval/agentic/real/fbj\" — an eval environment, probably a variant of the repo. The actual file that exists is `failure-outcome.ts`, which has `classifyFailure` returning a FailureOutcome (needs_login / needs_answer / wall / posting_gone / our_bug / unknown?). Let me check the contents of FAILURE_OUTCOMES and where \"actionable\" | \"closed\" | \"pending\" appears.\n\nThe user's spec mentions kind values: actionable (needs_login / needs_answer), closed (posting_gone), pending (wall / our_bug / unknown). So the three-tier classification matches a mapping from FailureOutcome. Let me search for \"actionable\" and \"waitingOn\" within the repo.\n",
+      "tool_calls": [
+        {
+          "id": "call_4b4c5961",
+          "type": "function",
+          "function": {
+            "name": "grep",
+            "arguments": "{\"pattern\":\"actionable\",\"i\":\"Finding actionable literal\"}"
+          }
+        },
+        {
+          "id": "call_a4847727",
+          "type": "function",
+          "function": {
+            "name": "grep",
+            "arguments": "{\"pattern\":\"waitingOn\",\"i\":\"Finding waitingOn refs\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "# packages/core/src/\n## error-retry.ts#74B8\n 118:  const maxAttempts = Math.max(1, getSetting(\"max_apply_attempts\"));\n*119:  const waitingOnTheCandidate = await applicationsWithOpenRequests(db);\n 120:  const rows = await db\n 121:    .select({\n 122:      id: applications.id,\n...\n 135:  const candidates = rows\n*136:    .filter((r) => !waitingOnTheCandidate.has(r.id))\n 137:    .filter((r) => {\n 138:      const failedAt = Date.parse(r.updatedAt);\n 139:      // An unparseable timestamp is not a reason to retry forever; treat it as",
+      "tool_call_id": "call_a4847727"
+    },
+    {
+      "role": "tool",
+      "content": "# apps/dashboard/app/\n## page.tsx#C73C\n 590:        {/* ≥110rem: work surface (left) + status rail (right); single column\n*591:            below — DOM order keeps the actionable items first on mobile. */}\n 592:        {/* Above everything else on purpose: on a new account the surfaces\n 593:            below are all empty, and an empty dashboard is exactly when someone\n 594:            needs to be told what comes first. It removes itself once there is\n\n## components/\n### AccountCredentials.tsx#9D76\n 58:  // A missing document outranks the login story: it is the true cause, it is\n*59:  // actionable, and it is the one the person can fix in a minute.\n 60:  const blockedOnFacts = (missingFacts?.length ?? 0) > 0;\n 61:\n 62:  // Different from `broken`, and the difference is a promise: `error` means a\n\n# bench/\n## run.mjs#93C9\n 288:    // that was displaying its reason the whole time. The run parked on \"the\n*289:    // Submit button remains unresponsive\" — unactionable, and untrue.\n 290:    //\n 291:    // The gate here is NOT an empty required field (the scanner already names\n 292:    // those at the click): it is a confirmation the page never marks required,\n\n## fixtures/\n### bare-click.html#CECD\n 9:  pointer cursor, and no tag, role, href or tabindex that any accessibility\n*10:  tree would call actionable. There is no way to reach the form without them.\n 11:\n 12:  The class names carry a react-jss style suffix that is regenerated on every\n 13:  page load, exactly as A.Team's does (that class was hoverCompletenessItem-0-2-314\n\n### scoring-golden/\n#### ana-paula.json#A0E5\n 307:        \"source_key\": \"builtin\",\n*308:        \"description\": \"PwC\\nJobs\\nUS Tech - AI Engineering Senior Associate\\nPwC\\nUS Tech - AI Engineering Senior Associate\\nJob Posted 7 Hours Ago\\n Reposted 7 Hours Ago\\n68 Locations\\nRemote or Hybrid\\n151K-187K Annually\\nSenior level\\nArtificial Intelligence • Professional Services • Business Intelligence • Consulting • Cybersecurity • Generative AI\\nGrow here. Go further.\\nThe Role\\nDevelop, test, and validate Generative AI agents and data pipelines with automated testing and governance co...\n 309:      }\n 310:    },\n 311:    {\n...\n 987:        \"source_key\": \"builtin\",\n*988:        \"description\": \"Liberty Mutual Insurance\\nJobs\\nProduct Consultant, Personal Lines Property & Specialty\\nLiberty Mutual Insurance\\nProduct Consultant, Personal Lines Property & Specialty\\nJob Posted 2 Hours Ago\\n Posted 2 Hours Ago\\nBe an Early Applicant\\n6 Locations\\nRemote or Hybrid\\n83K-176K Annually\\nSenior level\\nArtificial Intelligence • Fintech • Insurance • Marketing Tech • Software • Analytics\\nJoin us, and pursue your tomorrow, today.\\nThe Role\\nLead product convergence and re...\n 989:      }\n 990:    },\n 991:    {\n...\n 1027:        \"source_key\": \"ats:ashby:replit\",\n*1028:        \"description\": \"Replit is the agentic software creation platform that enables anyone to build applications using natural language. With millions of users worldwide, Replit is democratizing software development by removing traditional barriers to application creation.\\n\\nAbout the Role\\n\\nWe're seeking a Senior Product Manager with exceptional product sense to drive the user experience vision for tools at Replit. You'll focus on understanding developer and non-developer needs, designing intuitive ...\n 1029:      }\n 1030:    },\n 1031:    {\n...\n 1167:        \"source_key\": \"ats:greenhouse:twilio\",\n*1168:        \"description\": \"<div class=\\\"content-intro\\\"><p><strong>Who we are&nbsp;</strong></p>\\n<p>At Twilio, we’re shaping the future of communications, all from the comfort of our homes. We deliver innovative solutions to<a class=\\\"c-link\\\" href=\\\"https://customers.twilio.com/\\\" target=\\\"_blank\\\" data-stringify-link=\\\"https://customers.twilio.com/\\\" data-sk=\\\"tooltip_parent\\\">&nbsp;hundreds of thousands of businesses&nbsp;</a>and empower millions of developers worldwide to craft personalized customer ...\n 1169:      }\n 1170:    },\n 1171:    {\n#### cristiane.json#97C7\n 331:        \"source_key\": \"ats:greenhouse:coinbase\",\n*332:        \"description\": \"<div class=\\\"content-intro\\\"><p>Ready to do the most impactful work of your career? At&nbsp;<a href=\\\"https://www.coinbase.com/?utm_campaign=mt_o_m_w_m_m__coi_0_jd-onchain&amp;utm_source=coinbase\\\">Coinbase</a>, we are uncompromising on our mission to increase economic freedom. The bar is high, the environment is intense, and we like it that way. This isn't a place for complacency, it’s a place to be pushed past your perceived limits. If you're ready to build the future of finan...\n 333:      }\n 334:    },\n 335:    {\n...\n 931:        \"source_key\": \"ats:ashby:notion\",\n*932:        \"description\": \"WHO WE ARE\\n\\nNotion is the collaborative AI workspace where teams and agents think together https://www.youtube.com/watch?v=vkpYpWfEK5s. We're building one place where your knowledge, projects, meetings, and AI tools live side by side, so work is faster, clearer, and less fragmented. Millions of individuals, small teams, and large companies run their work on Notion.\\n\\n\\n\\nNotinos (our employees) are customer zero in bringing this future of work to life. We care about craft, buil...\n 933:      }\n 934:    },\n 935:    {\n...\n 2011:        \"source_key\": \"builtin\",\n*2012:        \"description\": \"PwC\\nJobs\\nUS Tech - AI Engineering Senior Associate\\nPwC\\nUS Tech - AI Engineering Senior Associate\\nJob Posted 7 Hours Ago\\n Reposted 7 Hours Ago\\n68 Locations\\nRemote or Hybrid\\n151K-187K Annually\\nSenior level\\nArtificial Intelligence • Professional Services • Business Intelligence • Consulting • Cybersecurity • Generative AI\\nGrow here. Go further.\\nThe Role\\nDevelop, test, and validate Generative AI agents and data pipelines with automated testing and governance co...\n 2013:      }\n 2014:    },\n 2015:    {\n#### rafael.json#07EA\n 1067:        \"source_key\": \"ats:ashby:notion\",\n*1068:        \"description\": \"WHO WE ARE\\n\\nNotion is the collaborative AI workspace where teams and agents think together https://www.youtube.com/watch?v=vkpYpWfEK5s. We're building one place where your knowledge, projects, meetings, and AI tools live side by side, so work is faster, clearer, and less fragmented. Millions of individuals, small teams, and large companies run their work on Notion.\\n\\n\\n\\nNotinos (our employees) are customer zero in bringing this future of work to life. We care about craft, buil...\n 1069:      }\n 1070:    },\n 1071:    {\n...\n 1387:        \"source_key\": \"builtin\",\n*1388:        \"description\": \"PwC\\nJobs\\nUS Tech - AI Engineering Senior Associate\\nPwC\\nUS Tech - AI Engineering Senior Associate\\nJob Posted 7 Hours Ago\\n Reposted 7 Hours Ago\\n68 Locations\\nRemote or Hybrid\\n151K-187K Annually\\nSenior level\\nArtificial Intelligence • Professional Services • Business Intelligence • Consulting • Cybersecurity • Generative AI\\nGrow here. Go further.\\nThe Role\\nDevelop, test, and validate Generative AI agents and data pipelines with automated testing and governance co...\n 1389:      }\n 1390:    },\n 1391:    {\n...\n 1687:        \"source_key\": \"builtin\",\n*1688:        \"description\": \"General Motors\\nJobs\\nPeople Analytics Analyst\\nGeneral Motors\\nPeople Analytics Analyst\\nJob Posted 3 Hours Ago\\n Posted 3 Hours Ago\\nBe an Early Applicant\\n5 Locations\\nRemote or Hybrid\\n98K-150K Annually\\nMid level\\nAutomotive • Big Data • Information Technology • Robotics • Software • Transportation • Manufacturing\\nWe make amazing products people love, for every journey.\\nThe Role\\nPartner with People Analytics Consultants to analyze HR data, deliver actionable in...\n 1689:      }\n 1690:    },\n 1691:    {\n#### rodrigo.json#D428\n 452:        \"source_key\": \"ats:ashby:notion\",\n*453:        \"description\": \"WHO WE ARE\\n\\nNotion is the collaborative AI workspace where teams and agents think together https://www.youtube.com/watch?v=vkpYpWfEK5s. We're building one place where your knowledge, projects, meetings, and AI tools live side by side, so work is faster, clearer, and less fragmented. Millions of individuals, small teams, and large companies run their work on Notion.\\n\\n\\n\\nNotinos (our employees) are customer zero in bringing this future of work to life. We care about craft, buil...\n 454:      }\n 455:    },\n 456:    {\n...\n 1332:        \"source_key\": \"builtin\",\n*1333:        \"description\": \"PwC\\nJobs\\nUS Tech - AI Engineering Senior Associate\\nPwC\\nUS Tech - AI Engineering Senior Associate\\nJob Posted 7 Hours Ago\\n Reposted 7 Hours Ago\\n68 Locations\\nRemote or Hybrid\\n151K-187K Annually\\nSenior level\\nArtificial Intelligence • Professional Services • Business Intelligence • Consulting • Cybersecurity • Generative AI\\nGrow here. Go further.\\nThe Role\\nDevelop, test, and validate Generative AI agents and data pipelines with automated testing and governance co...\n 1334:      }\n 1335:    },\n 1336:    {\n...\n 1412:        \"source_key\": \"builtin\",\n*1413:        \"description\": \"General Motors\\nJobs\\nPeople Analytics Analyst\\nGeneral Motors\\nPeople Analytics Analyst\\nJob Posted 3 Hours Ago\\n Posted 3 Hours Ago\\nBe an Early Applicant\\n5 Locations\\nRemote or Hybrid\\n98K-150K Annually\\nMid level\\nAutomotive • Big Data • Information Technology • Robotics • Software • Transportation • Manufacturing\\nWe make amazing products people love, for every journey.\\nThe Role\\nPartner with People Analytics Consultants to analyze HR data, deliver actionable in...\n 1414:      }\n 1415:    },\n 1416:    {\n#### samuel.json#8772\n 739:        \"source_key\": \"ats:greenhouse:airbnb\",\n*740:        \"description\": \"<div class=\\\"content-intro\\\"><p><span style=\\\"font-family: helvetica, arial, sans-serif; font-size: 12pt;\\\">Airbnb was born in 2007 when two hosts welcomed three guests to their San Francisco home, and has since grown to over 5 million hosts who have welcomed over 2 billion guest arrivals in almost every country across the globe. Every day, hosts offer unique stays and experiences that make it possible for guests to connect with communities in a more authentic way.</span></p></div...\n 741:      }\n 742:    },\n 743:    {\n...\n 939:        \"source_key\": \"weworkremotely\",\n*940:        \"description\": \"Headquarters: Minneapolis, MN\\n \\n URL: http://collaboration.ai \\n\\n Who We Are\\n\\n Collaboration.Ai is a mission-focused, AI-powered software and services company based in Minnesota, with employees, partners, and customers around the world. We unite people, technology, and purpose to accelerate breakthroughs that transform industries, empower communities, and create a more sustainable future. We collaborate with organizations across the defense ecosystem, helping them navigate co...\n 941:      }\n 942:    },\n 943:    {\n...\n 1179:        \"source_key\": \"ats:greenhouse:reddit\",\n*1180:        \"description\": \"<div class=\\\"content-intro\\\"><div class=\\\"c-message_kit__blocks c-message_kit__blocks--rich_text\\\">\\n<div class=\\\"c-message__message_blocks c-message__message_blocks--rich_text\\\" data-qa=\\\"message-text\\\">\\n<div class=\\\"p-block_kit_renderer\\\" data-qa=\\\"block-kit-renderer\\\">\\n<div class=\\\"p-block_kit_renderer__block_wrapper p-block_kit_renderer__block_wrapper--first\\\">\\n<div class=\\\"p-rich_text_block\\\">\\n<div class=\\\"p-rich_text_section\\\">Reddit is a community of communities. It’s...\n 1181:      }\n 1182:    },\n 1183:    {\n...\n 1319:        \"source_key\": \"ats:greenhouse:coinbase\",\n*1320:        \"description\": \"<div class=\\\"content-intro\\\"><p>Ready to do the most impactful work of your career? At&nbsp;<a href=\\\"https://www.coinbase.com/?utm_campaign=mt_o_m_w_m_m__coi_0_jd-onchain&amp;utm_source=coinbase\\\">Coinbase</a>, we are uncompromising on our mission to increase economic freedom. The bar is high, the environment is intense, and we like it that way. This isn't a place for complacency, it’s a place to be pushed past your perceived limits. If you're ready to build the future of finan...\n 1321:      }\n 1322:    },\n 1323:    {\n...\n 1459:        \"source_key\": \"ats:greenhouse:reddit\",\n*1460:        \"description\": \"<div class=\\\"content-intro\\\"><div class=\\\"c-message_kit__blocks c-message_kit__blocks--rich_text\\\">\\n<div class=\\\"c-message__message_blocks c-message__message_blocks--rich_text\\\" data-qa=\\\"message-text\\\">\\n<div class=\\\"p-block_kit_renderer\\\" data-qa=\\\"block-kit-renderer\\\">\\n<div class=\\\"p-block_kit_renderer__block_wrapper p-block_kit_renderer__block_wrapper--first\\\">\\n<div class=\\\"p-rich_text_block\\\">\\n<div class=\\\"p-rich_text_section\\\">Reddit is a community of communities. It’s...\n 1461:      }\n 1462:    },\n 1463:    {\n...\n 1519:        \"source_key\": \"builtin\",\n*1520:        \"description\": \"PwC\\nJobs\\nUS Tech - AI Engineering Senior Associate\\nPwC\\nUS Tech - AI Engineering Senior Associate\\nJob Posted 7 Hours Ago\\n Reposted 7 Hours Ago\\n68 Locations\\nRemote or Hybrid\\n151K-187K Annually\\nSenior level\\nArtificial Intelligence • Professional Services • Business Intelligence • Consulting • Cybersecurity • Generative AI\\nGrow here. Go further.\\nThe Role\\nDevelop, test, and validate Generative AI agents and data pipelines with automated testing and governance co...\n 1521:      }\n 1522:    },\n 1523:    {\n...\n 1719:        \"source_key\": \"builtin\",\n*1720:        \"description\": \"General Motors\\nJobs\\nPeople Analytics Analyst\\nGeneral Motors\\nPeople Analytics Analyst\\nJob Posted 3 Hours Ago\\n Posted 3 Hours Ago\\nBe an Early Applicant\\n5 Locations\\nRemote or Hybrid\\n98K-150K Annually\\nMid level\\nAutomotive • Big Data • Information Technology • Robotics • Software • Transportation • Manufacturing\\nWe make amazing products people love, for every journey.\\nThe Role\\nPartner with People Analytics Consultants to analyze HR data, deliver actionable in...\n 1721:      }\n 1722:    },\n 1723:    {\n...\n 2221:        \"location\": \"Bangalore, India\",\n*2222:        \"description\": \"<div class=\\\"content-intro\\\"><p>GitLab is the intelligent orchestration platform for DevSecOps. GitLab enables organizations to increase developer productivity, improve operational efficiency, reduce security and compliance risk, and accelerate digital transformation. More than 50 million registered users and more than 50% of the Fortune 100* trust GitLab to ship better, more secure software faster.</p>\\n<p>The same principles built into our products are reflected in how our team ...\n 2223:        \"salary_usd_month\": null,\n 2224:        \"remote_scope\": \"worldwide\"\n 2225:      }\n#### vinicius.json#4DA3\n 401:        \"source_key\": \"weworkremotely\",\n*402:        \"description\": \"Headquarters: Minneapolis, MN\\n \\n URL: http://collaboration.ai \\n\\n Who We Are\\n\\n Collaboration.Ai is a mission-focused, AI-powered software and services company based in Minnesota, with employees, partners, and customers around the world. We unite people, technology, and purpose to accelerate breakthroughs that transform industries, empower communities, and create a more sustainable future. We collaborate with organizations across the defense ecosystem, helping them navigate co...\n 403:      }\n 404:    },\n 405:    {\n...\n 1681:        \"source_key\": \"builtin\",\n*1682:        \"description\": \"PwC\\nJobs\\nUS Tech - AI Engineering Senior Associate\\nPwC\\nUS Tech - AI Engineering Senior Associate\\nJob Posted 7 Hours Ago\\n Reposted 7 Hours Ago\\n68 Locations\\nRemote or Hybrid\\n151K-187K Annually\\nSenior level\\nArtificial Intelligence • Professional Services • Business Intelligence • Consulting • Cybersecurity • Generative AI\\nGrow here. Go further.\\nThe Role\\nDevelop, test, and validate Generative AI agents and data pipelines with automated testing and governance co...\n 1683:      }\n 1684:    },\n 1685:    {\n...\n 1961:        \"source_key\": \"builtin\",\n*1962:        \"description\": \"General Motors\\nJobs\\nPeople Analytics Analyst\\nGeneral Motors\\nPeople Analytics Analyst\\nJob Posted 3 Hours Ago\\n Posted 3 Hours Ago\\nBe an Early Applicant\\n5 Locations\\nRemote or Hybrid\\n98K-150K Annually\\nMid level\\nAutomotive • Big Data • Information Technology • Robotics • Software • Transportation • Manufacturing\\nWe make amazing products people love, for every journey.\\nThe Role\\nPartner with People Analytics Consultants to analyze HR data, deliver actionable in...\n 1963:      }\n 1964:    },\n 1965:    {\n\n# docs/\n## handoff-v1-launch.md#8FD9\n 96:  verbatim and fed to the model) and points at the encrypted form.\n*97:- Failure reasons are translated and actionable; the activity log no longer\n 98:  leaks `pi apply agent finished (13 turns, gemini-2.5-flash-lite)`.\n 99:- The scheduled cloud run now includes `inbox`, so employer replies are read\n 100:  without the user opening the dashboard. Two inbox bugs were fixed first: a\n\n# packages/\n\n## adapters/src/sources/\n### ats-board.ts#3B48\n 302:      // A board that has been deleted answers 404 forever. Say which, so the\n*303:      // source row's last_error is actionable instead of \"no data\".\n 304:      throw new Error(\n 305:        `ats board ${board.ats}:${board.token} → HTTP ${res.status}`,\n 306:      );\n\n## agents/src/\n### page-progress.test.ts#7E18\n 188:\n*189:  it(\"writes an actionable stall abort reason\", () => {\n 190:    const reason = stallAbortReason({\n 191:      verdict: \"stalled\",\n 192:      fingerprint: \"x\",\n\n### tools/\n#### db-tools.ts#90CC\n 3885:          });\n*3886:          // With the CURRENT page attached: \"fill them\" is only actionable\n 3887:          // with live refs, and a run in this position usually has none — its\n 3888:          // last snapshot predates whatever hid or revealed the fields it is\n 3889:          // being told about. One run was refused seventeen times in a row,\n#### learning-tools.ts#34A9\n 47:        .describe(\n*48:          \"The imperative lesson, <=500 chars. Be specific and actionable.\",\n 49:        ),\n 50:      outcome: z\n 51:        .enum([\"worked\", \"failed_before\", \"info\"])\n\n## llm/src/\n### score-job.ts#B6DF\n 1881:    // for it. Anything else would be asserting a fact nobody gave us.\n*1882:    const actionable =\n 1883:      mayWorkIn.length > 0\n 1884:        ? blocking\n 1885:        : candidate.usWorkAuthorized === false &&\n...\n 1888:          : [];\n*1889:    if (actionable.length) {\n 1890:      return {\n 1891:        eligibility: { ...eligibility, work_authorization_ok: \"no\" },\n 1892:        reasons: [\n*1893:          `posting requires the right to work in ${actionable.join(\", \")}, which the profile does not claim`,\n 1894:        ],\n 1895:        redFlags: [\"work-auth-required\"],\n 1896:      };\n\n## observability/src/\n### options.ts#FF5E\n 63:  // Benign, fires on any resized flex/grid layout, and no browser agrees on\n*64:  // whether to report it. Never actionable.\n 65:  /ResizeObserver loop/,\n 66:  // The user navigated or hit stop while a request was in flight. Not a fault.\n 67:  \"AbortError\",\n### scrub.ts#D920\n 19: * Deliberately not scrubbed: email addresses and tenant ids. They are what\n*20: * makes an issue actionable (\"which account is this?\"), the tracker is the\n 21: * operator's own, and blanking them would leave a wall of anonymous stack\n 22: * traces that nobody can act on. `sendDefaultPii` stays off, so Sentry adds no\n 23: * IPs or headers of its own on top.\n\n# stealth-browser/py/\n## sidecar.py#B70D\n 107:\n*108:# Interactive snapshot JS — walks the DOM, tags every actionable/labelled control\n 109:# with data-fbj-ref=\"N\", and returns a compact numbered outline. Ported verbatim\n 110:# from packages/browser/src/snapshot.ts (kept in one place so both stay in sync).\n 111:SNAPSHOT_JS = r\"\"\"\n...\n 346:  // click handler, `cursor: pointer`, and no tag, role, href or tabindex that\n*347:  // says \"actionable\". The selector above cannot match them, and a handler\n 348:  // attached by a framework leaves no attribute to detect — so the visible\n 349:  // affordance is the only signal left.\n 350:  //\n...\n 1947:    Scoped to navigation on purpose. The first version compared a fingerprint\n*1948:    of every actionable element and cleared refs on any difference — which is\n 1949:    almost every click, because a focus ring, a validation message or a\n 1950:    re-render all move that fingerprint. The agent was then told to re-snapshot\n 1951:    after each of its own clicks and spent its whole turn budget doing it: one\n\n[Some lines truncated to 512 chars]",
+      "tool_call_id": "call_4b4c5961"
+    },
+    {
+      "role": "assistant",
+      "content": "\n\nThe function the user described isn't at that path in this repo. Let me map what actually exists.\n\n\n\n",
+      "reasoning_content": "\nIn other words, `userFacingFailure` doesn't exist in this repo, and the `UserFacingFailure` type doesn't exist either. The user's premise (\"the contract change in packages/core/src/user-facing-failure.ts\") doesn't match this repo. This looks like a different repo. Wait — the AGENTS.md I loaded is from /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj, which is the \"real\" repo of find-best-job. The current working directory is also the same. The user's prompt mentions specific caller locations: packages/core (presentedState), packages/pipeline (stages/apply.ts), packages/agents (tools/db-tools.ts), apps/dashboard (app/components/FailureSummary.tsx, app/lib/admin-walls.ts).\n\nLet me check what actually exists in these locations:\n- packages/core: presentedState? Search for \"presentedState\".\n- FailureSummary.tsx in apps/dashboard.\n- admin-walls.ts.\n\nPerhaps a function with a different name does exist. For example, one that maps FailureOutcome to something. Let me search for the \"pending\" / \"closed\" mapping, \"presentedState\", \"FailureSummary\", and \"admin-walls\".\n",
+      "tool_calls": [
+        {
+          "id": "call_7c33d2cf",
+          "type": "function",
+          "function": {
+            "name": "grep",
+            "arguments": "{\"pattern\":\"presentedState|PresentedState\",\"i\":\"Finding presentedState references\"}"
+          }
+        },
+        {
+          "id": "call_c924db88",
+          "type": "function",
+          "function": {
+            "name": "glob",
+            "arguments": "{\"path\":\"apps/dashboard/app/components/FailureSummary.tsx;apps/dashboard/app/lib/admin-walls.ts\",\"i\":\"Checking dashboard files exist\"}"
+          }
+        },
+        {
+          "id": "call_8cfe4caf",
+          "type": "function",
+          "function": {
+            "name": "grep",
+            "arguments": "{\"pattern\":\"needs_login|posting_gone\",\"path\":\"packages/core/src\",\"i\":\"Finding FailureOutcome usages in core\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "# apps/dashboard/app/components/\nFailureSummary.tsx\n\nSkipped missing paths: apps/dashboard/app/lib/admin-walls.ts",
+      "tool_call_id": "call_c924db88"
+    },
+    {
+      "role": "tool",
+      "content": "# packages/core/src/\n## failure-outcome.test.ts#5BE2\n 17:    expect(classifyFailure(\"This job is closed — no longer accepting\")).toBe(\n*18:      \"posting_gone\",\n 19:    );\n 20:    expect(classifyFailure(\"A vaga encerrada não aceita mais inscrições\")).toBe(\n*21:      \"posting_gone\",\n 22:    );\n 23:    expect(classifyFailure(\"La oferta caducada ya no acepta candidatos\")).toBe(\n*24:      \"posting_gone\",\n 25:    );\n 26:  });\n 27:});\n...\n 105:      ),\n*106:    ).toBe(\"needs_login\");\n 107:    expect(\n 108:      classifyFailure(\"The apply button requires a registered account\"),\n*109:    ).toBe(\"needs_login\");\n 110:  });\n 111:\n 112:  it(\"recognises a failed registration, which is the common case\", () => {\n...\n 116:      ),\n*117:    ).toBe(\"needs_login\");\n 118:    expect(\n 119:      classifyFailure(\"Signup was refused — the email is already registered\"),\n*120:    ).toBe(\"needs_login\");\n 121:  });\n 122:\n 123:  it(\"recognises the Portuguese and Spanish wordings\", () => {\n...\n 125:      classifyFailure(\"Não foi possível efetuar o login com a senha salva\"),\n*126:    ).toBe(\"needs_login\");\n 127:    expect(\n 128:      classifyFailure(\"O cadastro é obrigatório para ver o formulário\"),\n*129:    ).toBe(\"needs_login\");\n 130:    expect(\n 131:      classifyFailure(\"Se requiere una cuenta para ver el formulario\"),\n*132:    ).toBe(\"needs_login\");\n 133:  });\n 134:});\n 135:\n...\n 158:      classifyFailure(\"The contact form is missing its upload control\"),\n*159:    ).not.toBe(\"needs_login\");\n 160:  });\n 161:\n 162:  it(\"recognises the refusal cap\", () => {\n...\n 232:      ),\n*233:    ).toBe(\"posting_gone\");\n 234:    expect(\n 235:      classifyFailure(\n 236:        \"Mozilla tirou este anúncio do ar antes de a gente chegar nele — o \" +\n...\n 239:      ),\n*240:    ).toBe(\"posting_gone\");\n 241:    expect(\n 242:      classifyFailure(\n 243:        \"La empresa retiró este anuncio antes de que llegáramos a él — el \" +\n...\n 246:      ),\n*247:    ).toBe(\"posting_gone\");\n 248:  });\n 249:\n 250:  it(\"reads a board saying the advert is down, in Portuguese\", () => {\n...\n 256:      ),\n*257:    ).toBe(\"posting_gone\");\n 258:  });\n 259:\n 260:  it(\"names the emailed-code gate instead of sending the person to /answers\", () => {\n...\n 322:  it(\"marks the two the person can act on as warnings, not failures\", () => {\n*323:    expect(failureTone(\"needs_login\")).toBe(\"warn\");\n 324:    expect(failureTone(\"needs_answer\")).toBe(\"warn\");\n*325:    expect(failureTone(\"posting_gone\")).toBe(\"off\");\n 326:    expect(failureTone(\"wall\")).toBe(\"danger\");\n 327:    expect(failureTone(\"our_bug\")).toBe(\"danger\");\n 328:    expect(failureTone(\"unknown\")).toBe(\"danger\");\n## failure-outcome.ts#6871\n 16: *    wrong sentence is worse than an honest \"we don't have a clean summary\".\n*17: * 2. **The buckets are actions, not taxonomy.** `needs_login` exists because\n 18: *    there is a login form to open; `needs_answer` because there is an /answers page\n 19: *    to go to. A class nobody can act on would just be `unknown` with extra\n 20: *    words.\n...\n 27:export const FAILURE_OUTCOMES = [\n*28:  \"needs_login\",\n 29:  \"needs_answer\",\n*30:  \"posting_gone\",\n 31:  \"wall\",\n 32:  \"our_bug\",\n 33:  \"unknown\",\n...\n 166: * It is checked ahead of `needs_answer` for the reason that list already gives\n*167: * for `needs_login`: a report naming \"Security code\" among the empty required\n 168: * fields is naming a control, not a question. Nobody can pre-answer a one-time\n 169: * code in the Answer Library, so sending the person there is the same wrong\n 170: * turn, and the apply tools already refuse to treat it as a candidate answer.\n...\n 222:  if (!text) return \"unknown\";\n*223:  if (matches(POSTING_GONE, text)) return \"posting_gone\";\n 224:  if (matches(WALL, text)) return \"wall\";\n 225:  if (EMAILED_CODE_GATE.test(text)) return \"our_bug\";\n 226:  if (matches(NEEDS_ANSWER, text)) return \"needs_answer\";\n*227:  // Ahead of `needs_login` because it names a password field while meaning the\n 228:  // opposite of \"we have no password\".\n 229:  if (QA_ALREADY_ANSWERED.test(text)) return \"our_bug\";\n*230:  if (matches(NEEDS_LOGIN, text)) return \"needs_login\";\n 231:  if (matches(OUR_BUG, text)) return \"our_bug\";\n 232:  return \"unknown\";\n 233:}\n...\n 239:  switch (outcome) {\n*240:    case \"needs_login\":\n 241:    case \"needs_answer\":\n 242:      return \"warn\";\n*243:    case \"posting_gone\":\n 244:      return \"off\";\n 245:    default:\n 246:      return \"danger\";\n## walls.test.ts#C63E\n 150:    const rows = await run();\n*151:    expect(rows[0]?.cause).toBe(\"posting_gone\");\n 152:    expect(rows[0]?.applications).toBe(2);\n 153:    expect(rows[0]?.kind).toBe(\"failed\");\n 154:  });",
+      "tool_call_id": "call_8cfe4caf"
+    },
+    {
+      "role": "tool",
+      "content": "No matches found",
+      "tool_call_id": "call_7c33d2cf"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nThe user's request describes a file `packages/core/src/user-facing-failure.ts` which contains a function `userFacingFailure(outcome)`, a type `UserFacingFailure` that returns `\"actionable\" | \"closed\" | \"pending\"`, callers at `presentedState` inside packages/core, `packages/pipeline/stages/apply.ts`, `packages/agents/tools/db-tools.ts`, `apps/dashboard/app/components/FailureSummary.tsx`, `apps/dashboard/app/lib/admin-walls.ts`, and a test file `user-facing-failure.test.ts`.\n\nHowever, in this repository:\n- `user-facing-failure.ts` does not exist — what exists is `failure-outcome.ts` (containing classifyFailure, failureTone).\n- There is no `userFacingFailure` function or `UserFacingFailure` type anywhere.\n- There is no `presentedState` in packages/core (the grep only matched… no wait, the grep for presentedState only returned the walls.test.ts section? No — the grep results for \"presentedState|PresentedState\" seem to have returned results about \"posting_gone\"? Looking at it: the first result block has a heading \"# packages/core/src/\" and shows failure-outcome.test.ts matching `posting_gone`… no wait, that's weird. The three results correspond to three invocations in order: the first was presentedState… hmm, actually it seems results come back in a different order. The first shown result (failure-outcome.test.ts containing posting_gone) might correspond to the third invocation `needs_login|posting_gone` within packages/core/src. The second result is a glob (FailureSummary.tsx exists, admin-walls.ts missing). The third (empty, \"No matches found\") is… one of the greps. The empty one is probably the presentedState grep.\n\nSo: FailureSummary.tsx exists in apps/dashboard. admin-walls.ts does not exist. presentedState does not exist. userFacingFailure does not exist. UserFacingFailure does not exist.\n\nThis is a critical mismatch. The user's request describes a contract that does not exist in this repo. This might be an eval scenario where the correct behavior is to… hmm. The user is asserting \"today userFacingFailure(outcome) returns a plain string…\". AGENTS.md says \"user-reported state is the ground truth: act on it; NEVER re-check what the user already reported.\" But here the file simply doesn't exist — this is an instruction describing a change against a non-existent API.\n\nWait, maybe I'm in the wrong directory. cwd is /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj — the loaded AGENTS.md is for exactly this repo. Let me double-check: maybe the file exists under a different name, or inside a subdirectory. Let me search across the whole repo for the \"closed\" + \"pending\" + \"actionable\" mapping, and \"FailureSummary.tsx\" to see what it uses. I'll also check packages/pipeline/stages/apply.ts and packages/agents/src/tools/db-tools.ts.\n\nActually wait — maybe the function lives in failure-outcome.ts and is just named differently. Let me read all of failure-outcome.ts (lines 1–250) to check every export. I'll also read FailureSummary.tsx to see what it imports. And I'll search for a \"kind\" mapping, like `failureKind` or something.\n",
+      "tool_calls": [
+        {
+          "id": "call_c42b68eb",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"packages/core/src/failure-outcome.ts\",\"i\":\"Reading full failure outcome module\"}"
+          }
+        },
+        {
+          "id": "call_4ba24721",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"apps/dashboard/app/components/FailureSummary.tsx\",\"i\":\"Reading FailureSummary component\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "[packages/core/src/failure-outcome.ts#6871]\n1:/**\n2: * What a failed application means to the person waiting for it.\n…\n25: */\n26:\n27:export const FAILURE_OUTCOMES = [\n…\n34:] as const;\n35:\n36:export type FailureOutcome = (typeof FAILURE_OUTCOMES)[number];\n37:\n38:/**\n39: * The employer took the posting down. Nothing we do reopens it.\n…\n48: */\n49-63:const POSTING_GONE = [ … ];\n64:\n65:/**\n66: * The site stopped the browser before the form. A stored login does not help\n…\n73: */\n74-81:const WALL = [ … ];\n82:\n83:/**\n84: * A required field has no truthful answer yet, and only the candidate can\n85: * supply one. The product's own wording for this is\n86: * `missingFieldsFailureReason` in `@fbj/agents`.\n87: */\n88-114:const NEEDS_ANSWER = [ … ];\n115:\n116:/**\n117: * A sign-in or registration wall gates the form.\n…\n123: */\n124:/**\n125: * Whole words, never stems: `conta` is inside `contain` and `contact`, and\n126: * without the boundaries \"the form does not contain a submit button\" read as a\n127: * login wall.\n128: */\n129:const LOGIN_NOUN =\n130:  \"\\\\b(?:sign[- ]?ins?|sign[- ]?ups?|log[- ]?ins?|logons?|passwords?|senhas?|contrase(?:n|ñ)as?|claves?|credentials?|credenci(?:al|ais|ales)|accounts?|contas?|cuentas?|cadastros?|registrations?|registros?|sesi(?:o|ó)n)\\\\b\";\n131:/** Stems, deliberately: `block` has to cover blocked/blocks/blocking. */\n132:const BLOCK_WORD =\n133:  \"\\\\b(?:wall|gate|gating|require|requier|requer|requisit|need|behind|block|missing|create|creating|created|register|registering|obrigat|necess|necesari|requerid|exig|impede|bloquei|criar|crear|muro|no stored|not stored|no saved|sem |sin )\";\n134-141:const NEEDS_LOGIN = [ … ];\n142:\n143:/**\n144: * The agent could not drive something it should have been able to drive. Ours\n…\n154: */\n155:const QA_ALREADY_ANSWERED =\n156:  /\\byour (q\\s*&\\s*a|answer library) already answers\\b/i;\n157:\n158:/**\n159: * The gate that e-mails a one-time code and will not submit without it.\n…\n171: */\n172:const EMAILED_CODE_GATE =\n173:  /verification code|security code|c[oó]digo de (?:verifica[cç][aã]o|seguran[cç]a)|\\bMFA\\b|\\b2FA\\b/i;\n174:\n175-198:const OUR_BUG = [ … ];\n199:\n200:function matches(patterns: readonly RegExp[], text: string): boolean {\n201:  return patterns.some((re) => re.test(text));\n202:}\n203:\n204:/**\n205: * Classify one `failure_reason` into a user-facing outcome.\n…\n217: */\n218:export function classifyFailure(\n219:  reason: string | null | undefined,\n220-233:): FailureOutcome { … }\n234:\n235:/** Surface tone for the outcome's box — the same vocabulary the badges use. */\n236:export function failureTone(\n237:  outcome: FailureOutcome,\n238-248:): \"warn\" | \"danger\" | \"off\" { … }\n\n[…171ln elided; re-read needed ranges, e.g. packages/core/src/failure-outcome.ts:3-24,28-33]",
+      "tool_call_id": "call_c42b68eb"
+    },
+    {
+      "role": "tool",
+      "content": "[apps/dashboard/app/components/FailureSummary.tsx#8D14]\n1:import type { ReactNode } from \"react\";\n2:import { type Dict, t } from \"../i18n/dictionaries\";\n3:import { failureTone, type FailureOutcome } from \"@fbj/core\";\n4:\n5:/**\n6: * The failure, said in the reader's language, with the agent's own words kept.\n7: *\n8: * Two rules shape this component:\n9: *\n10: * - **the raw report never disappears.** It is the only thing that is certainly\n11: *   true, it is what a support conversation needs, and for `unknown` it is the\n12: *   entire answer. It moves behind a disclosure, it is not dropped.\n13: * - **the summary never over-claims.** `failureCopy` has one entry per outcome\n14: *   and no default that guesses: an unclassified report renders \"the agent\n15: *   stopped here\" and shows the report, which is exactly what we know.\n16: */\n17:export function failureCopy(\n18:  dict: Dict,\n19:  outcome: FailureOutcome,\n20:  platformLabel?: string | null,\n21:): { title: string; body: string } {\n22:  const f = dict.failure;\n23:  switch (outcome) {\n24:    case \"needs_login\":\n25:      return platformLabel\n26:        ? {\n27:            title: t(f.needsLoginTitle, { platform: platformLabel }),\n28:            body: t(f.needsLoginBody, { platform: platformLabel }),\n29:          }\n30:        : {\n31:            title: f.needsLoginTitleGeneric,\n32:            body: f.needsLoginBodyGeneric,\n33:          };\n34:    case \"needs_answer\":\n35:      return { title: f.needsAnswerTitle, body: f.needsAnswerBody };\n36:    case \"posting_gone\":\n37:      return { title: f.postingGoneTitle, body: f.postingGoneBody };\n38:    case \"wall\":\n39:      return { title: f.wallTitle, body: f.wallBody };\n40:    case \"our_bug\":\n41:      return { title: f.ourBugTitle, body: f.ourBugBody };\n42:    case \"unknown\":\n43:      return { title: f.unknownTitle, body: f.unknownBody };\n44:  }\n45:}\n46:\n47:/**\n48: * `card` is the job page's failure panel; `cell` is the compact form for a row\n49: * in the applications table, where the headline and the disclosure are all\n50: * there is room for and the explanation lives one click away on the job page.\n51: */\n52:export function FailureSummary({\n53:  dict,\n54:  outcome,\n55:  reason,\n56:  platformLabel,\n57:  variant = \"card\",\n58:  children,\n59:}: {\n60:  dict: Dict;\n61:  outcome: FailureOutcome;\n62:  reason: string | null;\n63:  platformLabel?: string | null;\n64:  variant?: \"card\" | \"cell\";\n65:  /** Actions rendered under the explanation (the login CTA, Q&A, retry). */\n66:  children?: ReactNode;\n67:}) {\n68:  const { title, body } = failureCopy(dict, outcome, platformLabel);\n69:  const details = reason?.trim() ? (\n70:    <details className=\"fail-details\">\n71:      <summary>{dict.failure.detailsToggle}</summary>\n72:      <span className=\"fail-raw\">{reason}</span>\n73:    </details>\n74:  ) : null;\n75:\n76:  if (variant === \"cell\") {\n77:    return (\n78:      <div className=\"fail-cell\">\n79:        <span className={`fail-headline tone-${failureTone(outcome)}`}>\n80:          {title}\n81:        </span>\n82:        {details}\n83:      </div>\n84:    );\n85:  }\n86:\n87:  return (\n88:    <section className={`fail ${failureTone(outcome)}`}>\n89:      <span className=\"fail-kicker\">{dict.failure.title}</span>\n90:      <p className=\"fail-headline\">{title}</p>\n91:      <p className=\"fail-body\">{body}</p>\n92:      {children ? <div className=\"fail-actions\">{children}</div> : null}\n93:      {details}\n94:    </section>\n95:  );\n96:}",
+      "tool_call_id": "call_4ba24721"
+    }
+  ],
+  "stream": true,
+  "stream_options": {
+    "include_usage": true
+  },
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "read",
+        "description": "Read files, directories, archives, SQLite, images, documents, internal resources, and web URLs via `path`.\n\n<instruction>\n- SHOULD parallelize independent reads.\n- SHOULD use `read` (not browser) for web content; browser only when `read` can't deliver.\n</instruction>\n\n## Selectors — append `:<sel>` to `path` (e.g. `src/foo.ts:50-200`, `src/foo.ts:raw`, `db.sqlite:users:42`)\n- `:50` / `:50-` — from line 50 | `:50-200` — inclusive | `:50+150` — 150 lines from 50 | `:5-16,960-973` — multiple ranges\n- `:raw` — verbatim, no anchors/prefixes | `:2-4:raw` / `:raw:2-4` — range + verbatim\n- `:conflicts` — one line per unresolved git merge conflict block\n- `:img` — rasterize a local `.svg`/`.svgz` as a PNG image; use when visual layout matters\n\n## Source kinds\n- Parseable code, no selector → structural summary (declarations only, body elided). Footer names recovery selector — re-issue ONLY those ranges.\n- File + selector → `[foo.ts#1A2B]` snapshot header + numbered lines. Copy `[FILENAME#TAG]` for anchored edits; NEVER fabricate the tag.\n- Directory → depth-limited dirent listing.\n- SQLite (`.sqlite`, `.sqlite3`, `.db`, `.db3`): `file.db` (tables), `file.db:table` (schema+rows), `file.db:table:key` (by PK), `?limit=`/`?where=`/`?q=SELECT`.\n- Archives (`.zip` family incl. `.jar`/`.apk`/`.whl`, `.tar` incl. `.tar.{gz,bz2,xz,zst}`, `.rar`, `.7z`, `.iso`, `.cab`, `.deb`/`.rpm`/`.cpio`/`.ar`/`.a`, `.lzh`/`.arj`, `.asar`; single-stream `.gz`/`.bz2`/`.xz`/`.zst`): `archive.ext:path/inside/archive` reads a member.\n- Documents → extracted text. Notebooks → editable cells. Images → decoded inline. SVGs read as text unless `:img` is specified. `:raw` bypasses converters.\n- URLs → reader-mode clean text/markdown; `:raw` → untouched HTML. Bare `host:port` needs trailing slash.\n- Internal URIs — all schemes take selectors. `artifact://<id>` recovers spilled output; page with `:N-M`/`:raw:N-M`.\n- `ssh://host/<path>` reads remote file/dir (UTF-8, ≤1 MiB); bare `ssh://` lists hosts; writable with `write` and searchable with `grep`.\n  Literal `:`, `?`, `#` → percent-encode (`%3A`/`%3F`/`%23`). Requires a verified POSIX shell on the remote host. For Windows or other unsupported hosts, use `bash` with a remote SSH command or mount with `sshfs`.\n\n<critical>\nSummary footer names elided ranges? Re-issue ONLY those ranges. NEVER guess `..`/`…` content.\n</critical>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "path": {
+              "type": "string",
+              "description": "Local path, internal URI (e.g. skill://), or URL. Inline selectors are supported."
+            }
+          },
+          "required": [
+            "path",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "bash",
+        "description": "Runs commands in a persistent shell.\n\nUse ONLY for one binary or a short pipeline that computes a fact (`wc -l`, `sort | uniq -c`, `diff`).\nInline scripts, heredocs, `$(…)`, and complex control flow → a purpose-built tool or checked-in script.\n\n<instruction>\n- Set `cwd` instead of `cd`; use `env: { NAME: \"…\" }` for multiline/quote-heavy values.\n- `pty: true` only for terminal interaction (`sudo`, `ssh`).\n- Order-dependent commands use `&&` in one call; independent calls may run concurrently.\n- Internal URIs (`skill://`, `agent://`, …) auto-resolve to paths.\n- aux utils available: mkdir, wc, sort, comm, diff, uniq, base64, cmp, md5sum, sha{1,224,256,384,512}sum, b2sum, basename, dirname, readlink, realpath, touch, stat, date, mktemp, seq, yes, printenv, truncate, tac, nproc, uname, whoami, hostname, which, ps, pgrep, pkill, pidwait, top, cut, tee, tr, paste, sed, xargs, jq, rm, mv, ln, ts, sponge, ifne, isutf8, combine, errno\n- `async: true` defers a finite command's result; it does not extend `timeout`.\n</instruction>\n\n<critical>\n- NEVER use shell `grep`/`rg`; use built-in `grep`.\n- List directories with `read` and find paths with `glob`; NEVER use `ls`/`find`.\n- Avoid `head`, `tail`, and redirection: output is captured, truncated, and linked as `artifact://<id>`.\n</critical>\n\nLong foreground calls may auto-background by the configured threshold and deliver later.\n`timeout: 0` disables the job deadline; otherwise `timeout` sets it without extending foreground waiting.\nNo truncation footer means the displayed output is complete.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "command": {
+              "type": "string"
+            },
+            "env": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "timeout": {
+              "type": "number",
+              "description": "timeout in seconds; 0 disables the command deadline; nonzero values are clamped to 1-3600"
+            },
+            "cwd": {
+              "type": "string"
+            },
+            "pty": {
+              "type": "boolean"
+            },
+            "async": {
+              "type": "boolean",
+              "description": "run in background"
+            }
+          },
+          "required": [
+            "command",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "edit",
+        "description": "Line-anchored patch language: name original lines/gaps to replace, insert, cut, or paste; then give new content. `:` headers take `+` body rows; colonless paste `PUT`, `CUT`, `REM`, `MV` take none.\n\n<headers>\nSection: `[PATH#TAG]`; `TAG`: 4-hex snapshot from latest `read`/`search`, REQUIRED each section. New files: `write`; hashline edits existing files only.\n</headers>\n\n<ops>\n`PUT N.=M:`: replace original inclusive lines N–M with body.\n`PUT N*:`: replace syntactic block beginning N; closing line resolved.\n`PUT <N:` insert body rows before line N (`PUT <1:` = file head).\n`PUT >N:` insert body rows after line N (`PUT >$:` = file tail).\n`PUT >N*:`: insert after block N's end, at sibling depth. Append inside block: `PUT >M:`.\n`PUT <N @name` / `PUT >N @name` paste register `@name` at the gap before/after line N; omit `@name` for the anonymous register.\n`PUT N.=M @name` / `PUT N* @name` paste `@name` over the range / resolved block; `@name` required here.\n`CUT N.=M` / `CUT N*`: delete and capture inclusive lines N–M / block N; anonymous or given `@name`.\n`REM`: delete section file. `MV DEST`: move/rename (quote paths with spaces); prior edits apply to source, final content to `DEST`.\nSingle line: `PUT N.=N:` / `CUT N.=N`. Ranges name original inclusive touched lines; body length irrelevant.\n</ops>\n\n<body-rows>\nOnly below `:` headers. Row: verbatim `+TEXT` (leading whitespace preserved); `+`: blank. NEVER `-old`, bare, or context rows: range deletes; body is final content. Keep line: exclude it from every range. Literal initial `-`/`+`: `- item` → `+- item`; `+ item` → `++ item`.\n</body-rows>\n\n<rules>\n- Numbers and `#TAG`: latest `read`/`search` `LINE:TEXT`; numbers are original, never shifted by hunks.\n- Each edit renumbers and changes `#TAG` → next numbers from edit response or fresh `read`.\n- Touch displayed lines only; undisplayed hunks REJECTED. Far from read window: re-`read`; confirm construct.\n- Elisions UNSEEN: `…`, `..`, collapsed `N-M:` rows. NEVER hunk in/across one; `read` first.\n- NEVER start/end range mid-expression or mid-block.\n- Ranges: changed lines only; NEVER widen over keepers. Non-adjacent changes: separate hunks.\n- Whole construct: `PUT N*:`; internal lines: `PUT N.=M:`.\n- `PUT N*:` resolves exactly node N. Leading decorators/attributes/doc-comments are separate nodes: point N at first decorator to include both. Standalone line-comments never swept: use `PUT N.=M:`.\n- Block ops: opening line of multi-line construct, NEVER closer, last line, bare inner statement. One statement: plain `PUT N.=N:` / `CUT N.=N` / `PUT >N:`. At closer: `PUT >M:`.\n- Markdown headings are block openers. Block op on `##`/`###`: whole section through deeper headings to next same/higher heading. After section `PUT >N*:`: end body with blank line to separate next heading.\n- Pure addition: `PUT <N:` / `PUT >N:`, NEVER widened `PUT N.=M:`.\n- Move: `CUT`+`PUT`; `CUT 5.=9 @fn` → `@fn`, `PUT >40 @fn` pastes. Single call-local move: unlabeled `CUT` + `PUT >40`. Named registers persist across edit calls.\n- NEVER format/restyle with this tool; run project formatter.\n</rules>\n\n<example>\n`read` output shape:\n```\n[greet.py#A1B2]\n1:def greet(name):\n2:    msg = \"Hello, \" + name\n3:    print(msg)\n4:greet(\"world\")\n```\n\nEdit, then move:\n```\n[greet.py#A1B2]\nPUT 1.=3:\n+def greet(name):\n+    print(f\"Hi, {name}\")\nMV lib/greet.py\n```\n\nMarkdown bullets — file receives `- task`:\n```\n[PLAN.md#A1B2]\nPUT >2:\n+- task\n+  - nested task\n```\n\nMove `greet` to sibling file via named register; flows across sections:\n```\n[greet.py#A1B2]\nCUT 1* @fn\n[other.py#3C4D]\nPUT <1 @fn\n```\n\n`PUT 1*:` resolves lines 1–3 (`def` through `print(msg)`); line 4 separate, remains:\n```\n[greet.py#A1B2]\nPUT 1*:\n+def greet(name):\n+    print(f\"Hello, {name}\")\n```\n\nDecorator/doc-comment separate block: point N at decorator to include both; anchoring `def` line 2 orphans `@cache`:\n```\n[svc.py#C3D4]\nPUT 1*:\n+@cache\n+def load(key):\n+    return store[key]\n```\n</example>\n\n<anti-patterns>\n# WRONG — empty `PUT` to delete. RIGHT: `CUT 4.=4`\nPUT 4.=4:\n\n# WRONG — range sized to the post-edit content. RIGHT: `PUT 1.=1:` (body length irrelevant)\nPUT 1.=2:\n+def greet(name):\n\n# WRONG — `-` rows / bare context lines do not exist; the range deletes, the body is only new content.\nPUT 3.=3:\n    msg = \"Hello, \" + name\n-   print(msg)\n+   return msg\n# RIGHT\nPUT 3.=3:\n+   return msg\n\n# WRONG — pure insertion as a widened `PUT`: retyped keepers get dropped (here line 4).\nPUT 2.=4:\n+    msg = \"Hello, \" + name\n+    extra = compute(name)\n+    print(msg)\n# RIGHT — touch nothing you keep.\nPUT >2:\n+    extra = compute(name)\n\n# WRONG — `PUT >N*:` anchored on the closing delimiter / last visible line. RIGHT: plain `PUT >M:`\nPUT >3*:\n+after()\n# RIGHT\nPUT >3:\n+after()\n\n# WRONG — body rows under register PUT; register pastes take no body. RIGHT: bodyless `PUT >20 @fn`.\nPUT >20 @fn:\n+function f() {}\n</anti-patterns>\n\n<critical>\n1. RE-GROUND AFTER EVERY EDIT: edits renumber and change `#TAG`; take next numbers from edit response or fresh `read`. Stale tag/surprise: STOP; re-`read`.\n2. RANGES TIGHT: changed lines only. Whole construct: `PUT N*:`.\n3. BODY FINAL CONTENT: every row starts `+`; Markdown bullet: `+- item`, not `- item`.\n</critical>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "input": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "input",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "glob",
+        "description": "Globs files, directories, and path-backed internal URLs with fast pattern matching.\n\n<instruction>\n- `path`: glob, file, directory, or path-backed internal URL; separate targets with `;` (`src/**/*.ts; test/**/*.ts`).\n- `memory://` glob patterns are supported. `ssh://` has no local path; use `read`. Other internal URLs accept exact paths only.\n- `gitignore` defaults `true`. Set `false` for ignored files such as `.env*`, logs, or build output.\n- `hidden` defaults `true`; pair it with `gitignore: false` for ignored dotfiles.\n</instruction>\n\n<output>\nMatches are newest-first and grouped by directory; directories end in `/`.\n</output>\n\n<avoid>\nOpen-ended multi-round discovery → Task + scout.\n</avoid>\n\n<examples>\n# Glob files\n<example i=\"…\">\nsrc/**/*.ts\n</example>\n# Multiple targets — semicolon-delimited list\n<example i=\"…\">\nsrc/**/*.ts; test/**/*.ts\n</example>\n# Glob gitignored files like .env\n<example>\nglob(i=\"…\", path=\".env*\", gitignore=False)\n</example>\n# Glob directories matching a name (returns both files and dirs; directories are suffixed with `/`)\n<example i=\"…\">\n**/tests\n</example>\n</examples>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "path": {
+              "type": "string",
+              "description": "glob, file, or directory to search — a single path or a semicolon-delimited list (\"src/**/*.ts; test/**/*.ts\"). Omitted -> searches the workspace root (\".\")"
+            },
+            "hidden": {
+              "type": "boolean",
+              "description": "include hidden files"
+            },
+            "gitignore": {
+              "type": "boolean",
+              "description": "respect gitignore"
+            },
+            "limit": {
+              "type": "number",
+              "description": "max results"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "i"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "grep",
+        "description": "Searches files/internal URLs: Rust regex, PCRE2 fallback.\n\n<instruction>\n- `path`: known files, directories, globs, internal URLs; roots `;`-separated.\n- Broad searches may time out → narrow scope or use `glob` first.\n- One-file line selector: `src/foo.ts:50-100`; never selects search root.\n- Literal `\\n` or `\\\\n` enables cross-line patterns.\n</instruction>\n\n<critical>\n- MUST use instead of shell `grep`/`rg`.\n- Open-ended multi-round search MUST use Task + scout, not chained calls.\n</critical>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "pattern": {
+              "type": "string",
+              "description": "regex pattern"
+            },
+            "path": {
+              "type": "string",
+              "description": "file, directory, glob, internal URL, or \"<file>:<lines>\" selector to search; pass several as a semicolon-delimited list (\"src; tests\"). Omitted -> searches the workspace root (\".\")"
+            },
+            "case": {
+              "type": "boolean",
+              "description": "case-sensitive search"
+            },
+            "gitignore": {
+              "type": "boolean",
+              "description": "respect gitignore"
+            },
+            "skip": {
+              "description": "files to skip before collecting results — use to paginate when the prior call hit the file limit",
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "pattern",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "write",
+        "description": "Creates or overwrites file at specified path.\n\n<conditions>\n- Creating new files explicitly required by task\n- Replacing entire file contents when editing would be more complex\n- Supports `.zip` (and ZIP-based `.jar`/`.war`/`.ear`/`.apk`), `.tar`, `.tar.gz`/`.tgz`, `.tar.zst`, and `.asar` archive entries via `archive.ext:path/inside/archive`; other archive formats (`.rar`, `.7z`, `.iso`, …) are read-only\n- Supports SQLite row operations via `db.sqlite:table` (insert), `db.sqlite:table:key` (update with JSON content, delete with empty content)\n</conditions>\n\n<critical>\n- You SHOULD use Edit tool for modifying existing files\n- You NEVER create documentation files (*.md, README) unless explicitly requested\n- You NEVER use emojis unless requested\n</critical>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "path": {
+              "type": "string",
+              "description": "file path"
+            },
+            "content": {
+              "type": "string",
+              "description": "file content"
+            }
+          },
+          "required": [
+            "path",
+            "content",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  ],
+  "max_completion_tokens": 4096,
+  "preserve_thinking": true,
+  "chat_template_kwargs": {
+    "preserve_thinking": true,
+    "reasoning_effort": "medium"
+  },
+  "enable_thinking": true,
+  "reasoning_effort": "medium"
+}

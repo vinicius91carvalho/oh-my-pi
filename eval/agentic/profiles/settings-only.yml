@@ -1,0 +1,6 @@
+# Sem a mudanca nova: so o que o OMP ja oferecia hoje. Serve para separar
+# quanto veio de configuracao existente e quanto veio do meu patch.
+tools:
+  xdevDocs: catalog
+personality: none
+includeModelInPrompt: false

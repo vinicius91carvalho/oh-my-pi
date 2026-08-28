@@ -1,0 +1,384 @@
+{
+  "config": "B3-mtp",
+  "passed": 12,
+  "total": 12,
+  "tasks": [
+    {
+      "id": "cb1",
+      "kind": "codebase",
+      "repo": "find-best-job",
+      "prompt": "In this repo, the tool `report_error` is registered with a `kind` parameter typed from the exported constant REPORT_ERROR_KINDS. How many values does that array contain, and which obvious-sounding kind was deliberately left out? Answer with the number and the omitted name only.",
+      "expect_any": [
+        "12"
+      ],
+      "expect_all": [
+        "missing_required_info"
+      ],
+      "why": "Verified by reading packages/agents/src/tools/db-tools.ts:1023-1040: twelve entries, and a comment states missing_required_info is deliberately absent because the agent must derive an answer instead of stopping.",
+      "context_files": [
+        {
+          "repo": "find-best-job",
+          "path": "packages/agents/src/tools/db-tools.ts",
+          "from": 1010,
+          "to": 1050
+        }
+      ],
+      "answer": "12, missing_required_info",
+      "passed": true,
+      "missing": [],
+      "elapsed": 10.1,
+      "usage": {
+        "prompt_tokens": 596,
+        "completion_tokens": 188,
+        "total_tokens": 784,
+        "input_tokens": 596,
+        "output_tokens": 188,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_time": 10.1
+      }
+    },
+    {
+      "id": "cb2",
+      "kind": "codebase",
+      "repo": "find-best-job",
+      "prompt": "In the `report_error` tool, if the agent passes an explicit `kind` AND the prose would infer a different one, which wins? One sentence.",
+      "expect_any": [
+        "stated",
+        "explicit",
+        "agent's own",
+        "passed"
+      ],
+      "why": "Verified in db-tools.ts: the stated kind wins unless it is absent or 'other', in which case inferReportErrorKind(detail) is used.",
+      "context_files": [
+        {
+          "repo": "find-best-job",
+          "path": "packages/agents/src/tools/db-tools.ts",
+          "from": 2786,
+          "to": 2835
+        }
+      ],
+      "answer": "The agent’s explicit `kind` wins, unless it is `other`, in which case the prose inference is used.",
+      "passed": true,
+      "missing": [],
+      "elapsed": 12.4,
+      "usage": {
+        "prompt_tokens": 852,
+        "completion_tokens": 209,
+        "total_tokens": 1061,
+        "input_tokens": 852,
+        "output_tokens": 209,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_time": 12.4
+      }
+    },
+    {
+      "id": "cb3",
+      "kind": "codebase",
+      "repo": "find-best-job",
+      "prompt": "According to this project's agent instructions, is submitting a job application something the agent must ask a human to approve first? Answer yes or no and quote the rule.",
+      "expect_any": [
+        "no",
+        "never ask",
+        "pre-authorized",
+        "pre-authorised"
+      ],
+      "why": "Verified in CLAUDE.md: the section is titled 'Submitting applications is pre-authorized - never ask permission', and the human-task queue was removed entirely.",
+      "context_files": [
+        {
+          "repo": "find-best-job",
+          "path": "CLAUDE.md",
+          "from": 1,
+          "to": 90
+        }
+      ],
+      "answer": "No.\n\nThe instructions state:\n\n> **Submitting applications is pre-authorized — never ask permission**\n\nand:\n\n> **Applying to a job already in `approved` is authorized work, not a decision to escalate.** Do it. Never ask \"want me to apply?\", \"should I run it for real?\", or \"shall I submit?\"",
+      "passed": true,
+      "missing": [],
+      "elapsed": 21.7,
+      "usage": {
+        "prompt_tokens": 1457,
+        "completion_tokens": 403,
+        "total_tokens": 1860,
+        "input_tokens": 1457,
+        "output_tokens": 403,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_time": 21.74
+      }
+    },
+    {
+      "id": "cb4",
+      "kind": "codebase",
+      "repo": "find-best-job",
+      "prompt": "A captcha blocks an application. Should the agent call report_error? Answer yes or no, in one sentence.",
+      "expect_any": [
+        "no"
+      ],
+      "why": "Verified in CLAUDE.md and in the report_error tool description: 'Captchas are never an error to report' and 'NOT for captchas - those are solved automatically'.",
+      "context_files": [
+        {
+          "repo": "find-best-job",
+          "path": "CLAUDE.md",
+          "from": 1,
+          "to": 90
+        }
+      ],
+      "answer": "No, the agent should not call report_error for a captcha.",
+      "passed": true,
+      "missing": [],
+      "elapsed": 14.7,
+      "usage": {
+        "prompt_tokens": 1446,
+        "completion_tokens": 157,
+        "total_tokens": 1603,
+        "input_tokens": 1446,
+        "output_tokens": 157,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_time": 14.74
+      }
+    },
+    {
+      "id": "cb5",
+      "kind": "codebase",
+      "repo": "infoproduct",
+      "prompt": "The script scripts/qa_layout.py is the layout gate. Name three of the hard rules by which it fails a page.",
+      "expect_any": [
+        "APERTO",
+        "BURACO",
+        "RITMO",
+        "TOPO",
+        "DESNIVEL",
+        "COLISAO",
+        "FLUTUA",
+        "SANGRIA",
+        "IMAGENS"
+      ],
+      "min_matches": 3,
+      "why": "Verified in the module docstring of infoproduct/scripts/qa_layout.py, which lists nine named rules.",
+      "context_files": [
+        {
+          "repo": "infoproduct",
+          "path": "scripts/qa_layout.py",
+          "from": 1,
+          "to": 40
+        }
+      ],
+      "answer": "Three hard rules are:\n\n1. **APERTO** — sibling blocks with less than 4 mm of spacing, or overlapping.\n2. **BURACO** — more than 14 mm of space between siblings, or at the start/end of a container.\n3. **RITMO** — inconsistent spacing between siblings in the same container, beyond 0.5 mm tolerance.",
+      "passed": true,
+      "missing": [],
+      "elapsed": 12.1,
+      "usage": {
+        "prompt_tokens": 748,
+        "completion_tokens": 195,
+        "total_tokens": 943,
+        "input_tokens": 748,
+        "output_tokens": 195,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_time": 12.09
+      }
+    },
+    {
+      "id": "mech1",
+      "kind": "mechanical",
+      "prompt": "Rewrite this TypeScript to use optional chaining and nullish coalescing, changing nothing else:\n\nconst name = user && user.profile && user.profile.name ? user.profile.name : 'anon';",
+      "expect_all": [
+        "user?.profile?.name",
+        "??"
+      ],
+      "why": "There is exactly one idiomatic rewrite: user?.profile?.name ?? 'anon'.",
+      "answer": "```ts\nconst name = user?.profile?.name ?? 'anon';\n```",
+      "passed": true,
+      "missing": [],
+      "elapsed": 13.9,
+      "usage": {
+        "prompt_tokens": 91,
+        "completion_tokens": 373,
+        "total_tokens": 464,
+        "input_tokens": 91,
+        "output_tokens": 373,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_time": 13.94
+      }
+    },
+    {
+      "id": "mech2",
+      "kind": "mechanical",
+      "prompt": "Write a shell one-liner that prints the machine's unified memory in whole GB on macOS. Output only the command.",
+      "expect_all": [
+        "hw.memsize"
+      ],
+      "expect_any": [
+        "1073741824",
+        "1024",
+        "GB"
+      ],
+      "why": "sysctl -n hw.memsize divided by 1073741824 is the standard way; this is the exact line used in this dotfiles repo's rebuild.sh.",
+      "answer": "We need answer user: \"Write a shell one-liner that prints the machine's unified memory in whole GB on macOS. Output only the command.\"\n\nNeed produce only command. Need think. macOS unified memory? likely physical memory. sysctl hw.memsize returns bytes. Need whole GB. Could use sysctl -n hw.memsize | awk '{printf \"%d\\n\", $1/1024/1024/1024}' or shell arithmetic: echo $(( $(sysctl -n hw.memsize) / 1024 / 1024 / 1024 )). One-liner. Need output only command. Maybe `sysctl -n hw.memsize | awk '{print int($1/1073741824)}'`. But \"unified memory\" on Apple Silicon? sysctl hw.memsize is total physical memory. Could also use `system_profiler SPHardwareDataType | awk '/Memory/{print $2}'` but not whole GB? It prints e.g. 16 GB. But one-liner prints machine's unified memory in whole GB. Better sysctl.\n\nNeed ensure shell one-liner. `echo $(( $(sysctl -n hw.memsize) / 1024 / 1024 / 1024 ))` works in bash/zsh. On macOS default zsh. Command substitution. If memsize large fits 64-bit. Good.\n\nCould use `sysctl -n hw.memsize | awk '{printf \"%d\\n\", $1/1073741824}'`. This is POSIX-ish. But shell one-liner? yes.\n\nNeed only command, no explanation. Which is most robust? `sysctl -n hw.memsize | awk '{print int($1/1073741824)}'` prints integer. If memory not multiple of GB? whole GB maybe floor. Could use `printf '%d\\n' $(( $(sysctl -n hw.memsize) / 1073741824 ))`.\n\nNeed maybe \"unified memory\" specifically Apple Silicon: `sysctl -n hw.memsize` is total memory. There is `hw.memsize` and `hw.physmem`? On macOS, `hw.memsize` is size of physical memory in bytes. `hw.physmem` maybe? Let's recall: sysctl hw.memsize: size of physical memory in bytes. hw.physmem? maybe not. `sysctl hw.memsize` common.\n\nCould use `sysctl -n hw.memsize | awk '{printf \"%d\\n\", $1/1024/1024/1024}'`.\n\nNeed output only command. Final: `sysctl -n hw.memsize | awk '{print int($1/1073741824)}'`\n\nCheck if awk int works. If $1 is 17179869184, /1073741824 = 16.0, int 16. Good. If 8589934592 = 8. Good.\n\nAlternative shell arithmetic: `echo $(( $(sysctl -n",
+      "passed": true,
+      "missing": [],
+      "elapsed": 25.1,
+      "usage": {
+        "prompt_tokens": 76,
+        "completion_tokens": 700,
+        "total_tokens": 776,
+        "input_tokens": 76,
+        "output_tokens": 700,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_time": 25.09
+      }
+    },
+    {
+      "id": "mech3",
+      "kind": "mechanical",
+      "prompt": "Convert this to a single git command: show me the names of files changed in the last commit, nothing else.",
+      "expect_any": [
+        "--name-only",
+        "--stat",
+        "diff-tree"
+      ],
+      "why": "git show --name-only --pretty=format: HEAD (or git diff-tree --no-commit-id --name-only -r HEAD) are the accepted answers.",
+      "answer": "```bash\ngit show --name-only",
+      "passed": true,
+      "missing": [],
+      "elapsed": 26.0,
+      "usage": {
+        "prompt_tokens": 75,
+        "completion_tokens": 700,
+        "total_tokens": 775,
+        "input_tokens": 75,
+        "output_tokens": 700,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_time": 26.04
+      }
+    },
+    {
+      "id": "img1",
+      "kind": "image",
+      "image": "~/github/vinicius91carvalho/find-best-job/consent-desktop.png",
+      "prompt": "Look at this screenshot. What are the exact labels of the two buttons in the cookie banner at the bottom, and which of the three language codes in the top right is currently selected?",
+      "expect_all": [
+        "Recusar",
+        "Aceitar",
+        "PT"
+      ],
+      "why": "Read from the image myself: the banner has Recusar and Aceitar; the switcher shows EN PT ES with PT highlighted.",
+      "answer": "The two buttons in the cookie banner are labeled **Recusar** (the outlined/white button on the left) and **Aceitar** (the dark button on the right).\n\nOf the three language codes in the top right (EN, PT, ES), the one currently selected is **PT** — it's the only one shown with a white/highlighted background, consistent with the page being displayed in Portuguese.",
+      "passed": true,
+      "missing": [],
+      "elapsed": 18.5,
+      "usage": {
+        "prompt_tokens": 847,
+        "completion_tokens": 343,
+        "total_tokens": 1190,
+        "input_tokens": 847,
+        "output_tokens": 343,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_time": 18.14
+      }
+    },
+    {
+      "id": "img2",
+      "kind": "image",
+      "image": "~/github/vinicius91carvalho/infoproduct/mobile-sticky.png",
+      "prompt": "This is a mobile screenshot. Read the sticky bar pinned to the bottom: what price is shown, and what is the call-to-action button's text?",
+      "expect_all": [
+        "349"
+      ],
+      "expect_any": [
+        "Comprar ahora",
+        "Comprar"
+      ],
+      "why": "Read from the image myself: the sticky bar shows $349 MXN, subtitle 'Coleccion Bienestar en 21 Dias', button 'Comprar ahora'.",
+      "answer": "- **Price shown:** $349 MXN\n- **Call-to-action button text:** \"Comprar ahora\"",
+      "passed": true,
+      "missing": [],
+      "elapsed": 11.1,
+      "usage": {
+        "prompt_tokens": 397,
+        "completion_tokens": 228,
+        "total_tokens": 625,
+        "input_tokens": 397,
+        "output_tokens": 228,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_time": 11.11
+      }
+    },
+    {
+      "id": "img3",
+      "kind": "image",
+      "image": "~/github/vinicius91carvalho/infoproduct/desktop-hero.png",
+      "prompt": "Read the small grey line of text directly underneath the orange button in this hero section. Reproduce it.",
+      "expect_all": [
+        "349"
+      ],
+      "expect_any": [
+        "Pago unico",
+        "Pago único",
+        "Garantia",
+        "Garantía",
+        "7"
+      ],
+      "why": "Read from the image myself: 'Pago unico de $349 MXN - Acceso inmediato - Garantia de 7 dias'.",
+      "answer": "Pago único de $349 MXN · Acceso inmediato · Garantía de 7 días",
+      "passed": true,
+      "missing": [],
+      "elapsed": 15.2,
+      "usage": {
+        "prompt_tokens": 1335,
+        "completion_tokens": 152,
+        "total_tokens": 1487,
+        "input_tokens": 1335,
+        "output_tokens": 152,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_time": 15.14
+      }
+    },
+    {
+      "id": "img4",
+      "kind": "image",
+      "image": "~/github/vinicius91carvalho/find-best-job/emails-full.png",
+      "prompt": "This image stacks three email templates. In the FIRST one (the daily digest), four numbers are listed. How many applications were sent, and how many are waiting for the user's review?",
+      "expect_all": [
+        "3",
+        "4"
+      ],
+      "why": "Read from the image myself: 3 candidaturas enviadas, 2 aprovadas esperando envio, 4 vagas aguardando a sua revisao, 1 com erro.",
+      "answer": "In the first template (the daily digest), the list reads:\n\n- **3** candidaturas enviadas → **3 applications sent**\n- 2 aprovadas, esperando envio\n- **4** vagas aguardando a sua revisão → **4 waiting for your review**\n- 1 candidaturas com erro\n\nSo: **3 applications were sent**, and **4 are waiting for the user's review**.\n\n(Note: the \"2\" refers to approved applications awaiting *send*, not to the review queue, so it's not the number you're after.)",
+      "passed": true,
+      "missing": [],
+      "elapsed": 32.3,
+      "usage": {
+        "prompt_tokens": 1962,
+        "completion_tokens": 554,
+        "total_tokens": 2516,
+        "input_tokens": 1962,
+        "output_tokens": 554,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_time": 32.26
+      }
+    }
+  ]
+}

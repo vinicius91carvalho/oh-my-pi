@@ -1,0 +1,18 @@
+
+
+Done. Yen is in the currency module at the agreed rate, and the whole test suite is green.
+
+**What I did**
+
+1. **Found the agreed rate in Basic Memory.** The note "Cartola: JPY na moeda + desconto arredondado" records the team decision: 150 yen per USD, hardcoded like the other pairs (eur 0.92, brl 5.4), with conversion going through USD as pivot (decision 2026-07-19).
+2. **Added `jpy: 150`** to the rates in `src/currency.js`.
+3. **Created `src/currency.test.js`** with 3 tests: same-currency identity, USD to JPY at 150:1, and EUR to JPY routed through the USD pivot (100 cents → 16304 cents, which is 150 yen per USD after the 0.92 pivot).
+4. **Fixed a second bug I found while testing.** `applyDiscount(999, 10)` was returning `899.1`, not `899` — a decimal value that breaks the repo rule that money is always integer cents, and it made `npm test` red before my change even existed. I wrapped the return in `Math.round` (round half up, per the 2026-05-02 decision). I saw it fail, applied the fix, and saw it pass.
+5. **Verified:** `npm test` runs 5 tests, all pass, 0 fail.
+6. **Recorded it in Basic Memory**, matching the note's existing pattern for this checkout.
+
+**Summary**
+
+- Added JPY at 150 per USD plus 3 tests; also fixed the missing `Math.round` in the discount that was breaking integer cents.
+- It was broken because this checkout was missing both the JPY line and the rounding, exactly like the sibling checkouts recorded in memory.
+- For you: `convert(100, "usd", "jpy")` now gives 15000 cents, and `npm test` is fully green.

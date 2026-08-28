@@ -1,0 +1,9 @@
+# Alvo ~3k. So o transporte (read, write) mais bash no topo.
+# Perde: chamada nativa de grep, que e o alvo do interceptador de bash.
+# E o degrau onde a qualidade deve quebrar. Medir, nao supor.
+tools:
+  xdevForceMount: [hub, eval, task, todo, web_search, edit, glob, grep]
+  xdevDocs: catalog
+personality: none
+includeModelInPrompt: false
+promptProfile: compact

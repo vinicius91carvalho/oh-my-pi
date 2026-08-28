@@ -1,0 +1,7 @@
+
+
+Fixed. All 8 tests pass now.
+
+- What changed: `usableTimeZone` in `packages/core/src/timezone.ts` returned the raw stored value, but the check `isUsableTimeZone` ran on a trimmed copy. So `" Europe/London "` passed the check, yet the function handed the un-trimmed string to callers. It now trims once and returns that same trimmed value.
+- Why it broke: the trim lived in the predicate, not in the return path, so padded zones slipped through as-is.
+- For you: time zones copied from résumés with stray spaces are now normalized before use; verified by the previously failing test and the full file passing (8/8).

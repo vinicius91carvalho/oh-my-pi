@@ -1,0 +1,11 @@
+
+
+Done. All 24 tests pass (23 existing + 1 new).
+
+**What changed**
+- `packages/landing-gen/src/infoproduct_landing_gen/copy.py` line 40: the years-of-experience pattern went from `a[nñ]os de experiencia` to `a[nñ]os? de experi[eê]ncia`. The old one handled Spanish "años de experiencia" but never Portuguese "experiência" (the ê), so pt-BR bios slipped past D07. It now also catches the singular "1 ano de experiência".
+- `packages/landing-gen/tests/test_landing_gen.py`: new `test_portuguese_years_of_experience_claim_is_rejected`, using your exact bio ("Marina tem 12 anos de experiência organizando casamentos."), asserting both that validation fails and that the credential rule fired (not a schema error).
+
+**Proved**: with the fix reverted, the new test fails with `ValidationResult(passed=True, issues=[])` (your exact bug); with the fix, it passes, Spanish stays blocked, and a clean bio passes with no false positives.
+
+**What it means**: pt-BR landing copies can no longer sneak a fictional persona's "X anos de experiência" past the deterministic validator.

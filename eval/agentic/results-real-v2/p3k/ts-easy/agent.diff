@@ -1,0 +1,12 @@
+diff --git a/packages/core/src/timezone.ts b/packages/core/src/timezone.ts
+index 0a63eb4..88db2b3 100644
+--- a/packages/core/src/timezone.ts
++++ b/packages/core/src/timezone.ts
+@@ -39,5 +39,6 @@ export function usableTimeZone(
+   tz: string | null | undefined,
+   fallback: string,
+ ): string {
+-  return isUsableTimeZone(tz) ? (tz as string) : fallback;
++  const trimmed = (tz ?? "").trim();
++  return trimmed && isUsableTimeZone(trimmed) ? trimmed : fallback;
+ }

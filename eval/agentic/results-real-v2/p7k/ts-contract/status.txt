@@ -1,0 +1,6 @@
+ M apps/dashboard/app/components/FailureSummary.tsx
+ M apps/dashboard/app/lib/admin-walls.ts
+ M packages/agents/src/tools/db-tools.ts
+ M packages/core/src/user-facing-failure.test.ts
+ M packages/core/src/user-facing-failure.ts
+ M packages/pipeline/src/stages/apply.ts

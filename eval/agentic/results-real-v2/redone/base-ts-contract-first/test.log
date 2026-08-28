@@ -1,0 +1,70 @@
+Scope: 13 of 21 workspace projects
+packages/db build$ tsc -b
+packages/db build: Done
+packages/core build$ tsc -b
+packages/core build: Done
+packages/browser build$ tsc -b
+packages/notify build$ tsc -b
+packages/mail build$ tsc -b
+packages/llm build$ tsc -b
+packages/browser build: Done
+packages/observability build$ tsc -b
+packages/notify build: Done
+packages/llm build: Done
+packages/mail build: Done
+packages/queue build$ tsc -b
+packages/storage build$ tsc -b
+packages/observability build: Done
+packages/queue build: Done
+packages/storage build: Done
+packages/profile build$ tsc -b
+packages/adapters build$ tsc -b
+packages/adapters build: Done
+packages/profile build: Done
+packages/agents build$ tsc -b && mkdir -p dist/prompts && cp src/prompts/*.md dist/prompts/
+packages/agents build: Done
+packages/pipeline build$ tsc -b
+packages/pipeline build: Done
+
+ RUN  v4.1.10 /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/packages/core
+
+ ❯ src/user-facing-failure.hidden.test.ts (8 tests | 6 failed) 7ms
+     × maps needs_login 3ms
+     × maps needs_answer 0ms
+     × maps posting_gone 0ms
+     × maps wall 0ms
+     × maps our_bug 0ms
+     × maps unknown 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/user-facing-failure.hidden.test.ts > userFacingFailure returns { kind, waitingOn } > maps needs_login
+ FAIL  src/user-facing-failure.hidden.test.ts > userFacingFailure returns { kind, waitingOn } > maps needs_answer
+ FAIL  src/user-facing-failure.hidden.test.ts > userFacingFailure returns { kind, waitingOn } > maps posting_gone
+ FAIL  src/user-facing-failure.hidden.test.ts > userFacingFailure returns { kind, waitingOn } > maps wall
+ FAIL  src/user-facing-failure.hidden.test.ts > userFacingFailure returns { kind, waitingOn } > maps our_bug
+ FAIL  src/user-facing-failure.hidden.test.ts > userFacingFailure returns { kind, waitingOn } > maps unknown
+AssertionError: expected 'string' to be 'object' // Object.is equality
+
+Expected: "object"
+Received: "string"
+
+ ❯ src/user-facing-failure.hidden.test.ts:34:24
+     32|   it.each(FAILURE_OUTCOMES)("maps %s", (outcome) => {
+     33|     const out = userFacingFailure(outcome);
+     34|     expect(typeof out).toBe("object");
+       |                        ^
+     35|     expect(out).toEqual(EXPECTED[outcome]);
+     36|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  6 failed | 15 passed (21)
+   Start at  03:30:40
+   Duration  112ms (transform 38ms, setup 0ms, import 52ms, tests 13ms, environment 0ms)
+
+undefined
+/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/packages/core:
+[ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command failed with exit code 1: vitest run src/user-facing-failure.test.ts src/user-facing-failure.hidden.test.ts

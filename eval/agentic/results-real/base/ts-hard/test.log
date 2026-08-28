@@ -1,0 +1,71 @@
+$ tsc -b
+
+ RUN  v4.1.10 /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/packages/pipeline
+
+ ❯ src/posting-live.test.ts (10 tests | 3 failed) 6ms
+     × reports a posting the API confirms 3ms
+     × reports the posting from the incident as gone 0ms
+     × will not call a posting dead when the BOARD is what 404s 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/posting-live.test.ts > asking the ATS whether a posting is open > reports a posting the API confirms
+AssertionError: expected 'unknown' to be 'live' // Object.is equality
+
+Expected: "live"
+Received: "unknown"
+
+ ❯ src/posting-live.test.ts:47:63
+     45|       [jobUrl("mozilla", "8089088")]: { status: 200, body: { id: 80890…
+     46|     });
+     47|     expect(await checkPostingLive(LIVE, { fetchImpl: impl })).toBe("li…
+       |                                                               ^
+     48|   });
+     49|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/posting-live.test.ts > asking the ATS whether a posting is open > reports the posting from the incident as gone
+AssertionError: expected 'unknown' to be 'dead' // Object.is equality
+
+Expected: "dead"
+Received: "unknown"
+
+ ❯ src/posting-live.test.ts:58:63
+     56|       [boardUrl("mozilla")]: { status: 200, body: { jobs: [] } },
+     57|     });
+     58|     expect(await checkPostingLive(DEAD, { fetchImpl: impl })).toBe("de…
+       |                                                               ^
+     59|   });
+     60|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/posting-live.test.ts > asking the ATS whether a posting is open > will not call a posting dead when the BOARD is what 404s
+AssertionError: expected [] to have a length of 2 but got +0
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ src/posting-live.test.ts:71:19
+     69|     });
+     70|     expect(await checkPostingLive(DEAD, { fetchImpl: impl })).toBe("un…
+     71|     expect(calls).toHaveLength(2);
+       |                   ^
+     72|   });
+     73| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 7 passed (10)
+   Start at  16:27:44
+   Duration  592ms (transform 212ms, setup 0ms, import 514ms, tests 6ms, environment 0ms)
+
+undefined
+/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/packages/pipeline:
+[ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command failed with exit code 1: vitest run src/posting-live.test.ts

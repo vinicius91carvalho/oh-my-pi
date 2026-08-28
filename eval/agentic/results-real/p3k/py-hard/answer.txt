@@ -1,0 +1,9 @@
+
+
+Done. I saw the failure, changed one line, and watched the whole campaign suite go green.
+
+**What changed:** `packages/campaign/src/infoproduct_campaign/models.py:17` - `CAROUSEL_CARDS_MAX` went from `5` to `35`.
+
+**Why it was broken:** the constant disagreed with its own comment on the line above, which says "API allows 2-35". TikTok's carousel ad API really does allow 2-35 cards (confirmed by the `providers/tiktok.py` docstring: "2-35 images"), and the tests build 6-card carousels and expect the error message "2-35 cards". Because the pydantic `max_length=5` on `Creative.cards` fired before any business validation ran, all 16 tests died at model construction - including `test_build_creatives_pipeline_rejects_invalid_input`, which expects a proper "Creatives validation failed" error but got a raw pydantic dump instead.
+
+**What it means:** 6-card (up to 35-card) carousels now build cleanly, and invalid creatives fail with the intended validation message. The two files you named pass 35/35, and the full campaign suite passes 81/81.

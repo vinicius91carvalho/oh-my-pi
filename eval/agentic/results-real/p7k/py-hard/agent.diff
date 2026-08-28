@@ -1,0 +1,13 @@
+diff --git a/packages/campaign/src/infoproduct_campaign/models.py b/packages/campaign/src/infoproduct_campaign/models.py
+index 60e65f2..46e0e54 100644
+--- a/packages/campaign/src/infoproduct_campaign/models.py
++++ b/packages/campaign/src/infoproduct_campaign/models.py
+@@ -14,7 +14,7 @@ DEFAULT_AUTHOR_MODEL = "fable-5"
+ # Project default: 6 cards per TikTok carousel ad (API allows 2-35).
+ CAROUSEL_CARDS_DEFAULT = 6
+ CAROUSEL_CARDS_MIN = 2
+-CAROUSEL_CARDS_MAX = 5
++CAROUSEL_CARDS_MAX = 35
+ 
+ 
+ class TokenUsage(BaseModel):

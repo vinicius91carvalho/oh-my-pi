@@ -1,0 +1,5 @@
+
+
+The test confirms that a valid 6-card carousel must pass validation, and that the "too few" message must read as "2-35 cards". This is consistent with the model's comment "the API allows 2-35". Let's verify how `Creative.cards` uses these constants:
+
+

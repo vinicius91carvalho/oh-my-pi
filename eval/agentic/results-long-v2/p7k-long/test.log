@@ -1,0 +1,17 @@
+Scope: all 21 workspace projects
+✓ Lockfile passes supply-chain policies (verified 6d ago)
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+. prepare$ git config core.hooksPath .githooks && git config core.sshCommand 'ssh -o ServerAliveInterval=30 -o ServerAliveCountMax=40' || true
+. prepare: Done
+Done in 533ms using pnpm v11.13.1
+
+ RUN  v4.1.10 /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/packages/profile
+
+
+ Test Files  2 passed (2)
+      Tests  44 passed (44)
+   Start at  09:34:32
+   Duration  691ms (transform 471ms, setup 0ms, import 1.17s, tests 61ms, environment 0ms)
+

@@ -1,0 +1,14 @@
+
+
+Fixed. All 409 `@fbj/llm` tests pass, and the salary test passes under the exact command you gave (build `@fbj/llm` then run the pipeline test).
+
+**What I did**
+One-line fix in `packages/llm/src/score-job.ts:259`: `monthlyUsdMax` computed `job.salaryMin ?? job.salaryMax` — min first — when its own docstring and the pipeline test both say the best case is `salaryMax ?? salaryMin`. Flipped the fallback order, rebuilt `@fbj/llm`, re-ran the failing test: 4/4 green, and the full `@fbj/llm` suite (409 tests) stays green.
+
+**Why it was broken**
+`??` returns the first non-null value, so whenever a posting listed both bounds, the function measured the floor, not the ceiling: 96k/12 = 8000 instead of 144k/12 = 12000, and BRL 8k/mo instead of 15k/mo. The bug only showed up after a rebuild because the test resolves `@fbj/llm` through `dist/`; the stale dist on disk predates the flipped line, which is why the test passed before `pnpm --filter @fbj/llm build`.
+
+**What it means for you**
+`jobs.salary_usd_month` (the column the jobs list filters and sorts by) and the scorer's salary floor now both read the range's ceiling, so salary filtering agrees with what the posting actually offers.
+
+The other two tests in the file (unknown currency → null, magnitude-based period inference) were already passing and still do; the min-only case keeps working because when `salaryMax` is null the fallback lands on `salaryMin` exactly as before.

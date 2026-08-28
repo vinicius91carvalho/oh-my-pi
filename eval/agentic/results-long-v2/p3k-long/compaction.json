@@ -1,0 +1,312 @@
+{
+ "requests": 43,
+ "compaction_fired": true,
+ "compaction_at_request": 7,
+ "max_messages_before": 15,
+ "requests_after_compaction": 36,
+ "tool_calls_after_compaction": 1,
+ "xd_refs_after_compaction": 1101,
+ "rows": [
+  {
+   "req": 1,
+   "messages": 2,
+   "top_level_tools": 3,
+   "xd_refs": 28,
+   "tool_calls_in_history": 0
+  },
+  {
+   "req": 2,
+   "messages": 5,
+   "top_level_tools": 3,
+   "xd_refs": 28,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 3,
+   "messages": 7,
+   "top_level_tools": 3,
+   "xd_refs": 28,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 4,
+   "messages": 9,
+   "top_level_tools": 3,
+   "xd_refs": 28,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 5,
+   "messages": 12,
+   "top_level_tools": 3,
+   "xd_refs": 28,
+   "tool_calls_in_history": 6
+  },
+  {
+   "req": 6,
+   "messages": 15,
+   "top_level_tools": 3,
+   "xd_refs": 28,
+   "tool_calls_in_history": 8
+  },
+  {
+   "req": 7,
+   "messages": 5,
+   "top_level_tools": 3,
+   "xd_refs": 28,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 8,
+   "messages": 7,
+   "top_level_tools": 3,
+   "xd_refs": 28,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 9,
+   "messages": 5,
+   "top_level_tools": 3,
+   "xd_refs": 28,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 10,
+   "messages": 7,
+   "top_level_tools": 3,
+   "xd_refs": 28,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 11,
+   "messages": 10,
+   "top_level_tools": 3,
+   "xd_refs": 28,
+   "tool_calls_in_history": 5
+  },
+  {
+   "req": 12,
+   "messages": 5,
+   "top_level_tools": 3,
+   "xd_refs": 28,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 13,
+   "messages": 7,
+   "top_level_tools": 3,
+   "xd_refs": 28,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 14,
+   "messages": 10,
+   "top_level_tools": 3,
+   "xd_refs": 28,
+   "tool_calls_in_history": 5
+  },
+  {
+   "req": 15,
+   "messages": 5,
+   "top_level_tools": 3,
+   "xd_refs": 28,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 16,
+   "messages": 8,
+   "top_level_tools": 3,
+   "xd_refs": 28,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 17,
+   "messages": 10,
+   "top_level_tools": 3,
+   "xd_refs": 28,
+   "tool_calls_in_history": 5
+  },
+  {
+   "req": 18,
+   "messages": 12,
+   "top_level_tools": 3,
+   "xd_refs": 29,
+   "tool_calls_in_history": 6
+  },
+  {
+   "req": 19,
+   "messages": 14,
+   "top_level_tools": 3,
+   "xd_refs": 29,
+   "tool_calls_in_history": 7
+  },
+  {
+   "req": 20,
+   "messages": 4,
+   "top_level_tools": 3,
+   "xd_refs": 33,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 21,
+   "messages": 6,
+   "top_level_tools": 3,
+   "xd_refs": 34,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 22,
+   "messages": 10,
+   "top_level_tools": 3,
+   "xd_refs": 35,
+   "tool_calls_in_history": 5
+  },
+  {
+   "req": 23,
+   "messages": 4,
+   "top_level_tools": 3,
+   "xd_refs": 30,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 24,
+   "messages": 6,
+   "top_level_tools": 3,
+   "xd_refs": 33,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 25,
+   "messages": 4,
+   "top_level_tools": 3,
+   "xd_refs": 33,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 26,
+   "messages": 6,
+   "top_level_tools": 3,
+   "xd_refs": 33,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 27,
+   "messages": 8,
+   "top_level_tools": 3,
+   "xd_refs": 34,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 28,
+   "messages": 5,
+   "top_level_tools": 3,
+   "xd_refs": 33,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 29,
+   "messages": 4,
+   "top_level_tools": 3,
+   "xd_refs": 32,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 30,
+   "messages": 6,
+   "top_level_tools": 3,
+   "xd_refs": 32,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 31,
+   "messages": 8,
+   "top_level_tools": 3,
+   "xd_refs": 32,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 32,
+   "messages": 4,
+   "top_level_tools": 3,
+   "xd_refs": 31,
+   "tool_calls_in_history": 0
+  },
+  {
+   "req": 33,
+   "messages": 4,
+   "top_level_tools": 3,
+   "xd_refs": 31,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 34,
+   "messages": 6,
+   "top_level_tools": 3,
+   "xd_refs": 31,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 35,
+   "messages": 4,
+   "top_level_tools": 3,
+   "xd_refs": 31,
+   "tool_calls_in_history": 0
+  },
+  {
+   "req": 36,
+   "messages": 5,
+   "top_level_tools": 3,
+   "xd_refs": 31,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 37,
+   "messages": 8,
+   "top_level_tools": 3,
+   "xd_refs": 31,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 38,
+   "messages": 11,
+   "top_level_tools": 3,
+   "xd_refs": 31,
+   "tool_calls_in_history": 6
+  },
+  {
+   "req": 39,
+   "messages": 14,
+   "top_level_tools": 3,
+   "xd_refs": 31,
+   "tool_calls_in_history": 8
+  },
+  {
+   "req": 40,
+   "messages": 5,
+   "top_level_tools": 3,
+   "xd_refs": 31,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 41,
+   "messages": 7,
+   "top_level_tools": 3,
+   "xd_refs": 31,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 42,
+   "messages": 9,
+   "top_level_tools": 3,
+   "xd_refs": 31,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 43,
+   "messages": 4,
+   "top_level_tools": 3,
+   "xd_refs": 28,
+   "tool_calls_in_history": 1
+  }
+ ]
+}

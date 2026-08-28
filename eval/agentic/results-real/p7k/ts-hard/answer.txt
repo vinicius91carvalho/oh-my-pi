@@ -1,0 +1,9 @@
+
+
+Fixed. The one-line root cause:
+
+- **What I did:** Restored the `(job-)?` prefix in the Greenhouse host regex in `packages/core/src/posting-identity.ts` (line 89), rebuilt `@fbj/core`, and re-ran the test: 10/10 pass. Core's own `posting-identity` suite (12 tests) and eslint also pass.
+- **Why it was broken:** commit `eec4082` ("chore: sync") silently changed the regex from `/(^|\.)(job-)?boards(-api)?\.greenhouse\.io$/` to `/(^|\.)boards(-api)?\.greenhouse\.io$/`. Greenhouse's actual job page host is `job-boards.greenhouse.io`, where `boards` sits after a hyphen, so `^` or `.` can no longer anchor it. `postingIdentity` then returned `null` for every real posting URL, and `checkPostingLive` hit its "cannot ask" guard: `unknown`, zero fetches. I proved it directly: old regex matches `job-boards` = false, fixed = true, while `boards` / `boards-api` keep matching and a lookalike `xjob-boards` still does not.
+- **What it means:** liveness probing works again end to end. The pipeline test confirms the incident posting (8077533) reports `dead` and a live one (8089088) reports `live`, with the fetch actually happening.
+
+If you want, the follow-up hardening is a CI check that `dist` never drifts from source, but that was not part of this fix.

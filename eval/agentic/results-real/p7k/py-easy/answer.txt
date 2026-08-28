@@ -1,0 +1,11 @@
+
+
+The full research package is green too: 28 passed.
+
+What I found and fixed:
+- The corroboration rule is "needs at least 2 sources", but the exclusion check in `score_and_rank_trends` (`scoring.py:248`) used `len(sources) <= MIN_CORROBORATING_SOURCES`. With `<=`, a trend with exactly 2 sources was dropped instead of ranked, so all three tests that use exactly-two-source trends got an empty list.
+- One-character fix: `<=` to `<`. The model already agrees with the intent, since `TrendEntry.sources_corroborating` has `min_length=2`.
+
+- What I did: changed one comparison from `<=` to `<` in `scoring.py`.
+- Why it was broken: the check excluded trends with exactly 2 sources instead of requiring fewer than 2.
+- What it means: two-source trends now rank correctly; all 28 package tests pass.

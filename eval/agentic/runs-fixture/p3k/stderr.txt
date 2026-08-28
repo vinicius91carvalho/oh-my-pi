@@ -1,0 +1,4 @@
+Working...
+400 oMLX prefill memory guard rejected this prompt: Prefill would require ~25.47 GB peak (current 24.37 GB + KV+SDPA 1.09 GB) but dynamic ceiling is 24.89 GB. Raise custom_ceiling_bytes in admin Memory settings (currently pinned at 27.00 GB), or reduce context length. To continue, set Memory Guard to aggressive, raise the custom memory guard ceiling, free system memory, or compact/reduce context.
+oMLX prefill memory guard rejected this prompt: Prefill would require ~25.47 GB peak (current 24.37 GB + KV+SDPA 1.09 GB) but dynamic ceiling is 24.89 GB. Raise custom_ceiling_bytes in admin Memory settings (currently pinned at 27.00 GB), or reduce context length. To continue, set Memory Guard to aggressive, raise the custom memory guard ceiling, free system memory, or compact/reduce context. (type=invalid_request_error param=prefill_memory_exceeded)
+raw-http-request=/Users/vinicius91carvalho/.omp/logs/http-400-requests/1787809647870-2chfht8h35nq9.json

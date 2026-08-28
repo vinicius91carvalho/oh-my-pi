@@ -1,0 +1,12 @@
+
+
+Fixed.
+
+- What was broken: `scoring.py:248` used `len(sources) <= MIN_CORROBORATING_SOURCES` with the minimum set to 2, so trends backed by exactly 2 sources were being wrongly excluded, and `score_and_rank_trends` returned an empty list.
+- The fix: changed `<=` to `<`. Now only trends with a single source are excluded, and the 2-source rule works as intended.
+- Verification: before the fix, 3 tests were failing with `IndexError`/`assert 0 == 1`; after the fix, all 5 in `test_scoring.py` pass, and the whole research package is 57/57 green.
+
+**Summary**
+- The bug was an off-by-one error in the source-corroboration filter.
+- Changed `<=` to `<` on line 248 of `scoring.py`.
+- All tests pass: 57/57 in the research package.

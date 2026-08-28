@@ -1,0 +1,7 @@
+
+
+Invoice 88213 caused a customer complaint about a 1-cent difference, which led to the "round half up" discount rounding rule being adopted on 2026-05-02.
+
+- Did: found the one mention in docs/decisions.md.
+- Why: asked what the doc says about that invoice.
+- You get: the invoice is the reason the round-half-up rule exists.

@@ -1,0 +1,6 @@
+# Degrau 3: template compacto, ainda com as 11 ferramentas no topo.
+tools:
+  xdevDocs: catalog
+personality: none
+includeModelInPrompt: false
+promptProfile: compact

@@ -1,0 +1,6 @@
+./run-real.sh: line 42: 99864 Alarm clock: 14            perl -e "alarm ${TASK_TIMEOUT:-1800}; exec @ARGV" "$BUN" "$OMP_SRC/packages/coding-agent/src/cli.ts" -p --model omlxtap/Qwen3.8-27B-AWQ-5.0bpw --no-session --auto-approve --config "$CFG" "$PROMPT" < /dev/null > "$RUN/answer.txt" 2> "$RUN/stderr.txt"
+{"id": "ts-hard", "level": "hard", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 1799.8, "requests": 26, "max_prompt_tokens": 33224, "aborted": 0}
+./run-real.sh: line 66: syntax error near unexpected token `('
+./run-real.sh: line 66: ` "requests": int(reqs),'
+./run-real.sh: line 45: 16531 Alarm clock: 14            perl -e "alarm ${TASK_TIMEOUT:-1800}; exec @ARGV" "$BUN" "$OMP_SRC/packages/coding-agent/src/cli.ts" -p --model omlxtap/Qwen3.8-27B-AWQ-5.0bpw --no-session --auto-approve --config "$CFG" "$PROMPT" < /dev/null > "$RUN/answer.txt" 2> "$RUN/stderr.txt"
+{"id": "ts-veryhard", "level": "veryhard", "pass": true, "tests_ok": true, "touched_tests": 1, "seconds": 1798.2, "requests": 26, "max_prompt_tokens": 24838, "aborted": 1}

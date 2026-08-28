@@ -1,0 +1,13 @@
+diff --git a/packages/core/src/timezone.ts b/packages/core/src/timezone.ts
+index 0a63eb4..6c4eaad 100644
+--- a/packages/core/src/timezone.ts
++++ b/packages/core/src/timezone.ts
+@@ -39,5 +39,7 @@ export function usableTimeZone(
+   tz: string | null | undefined,
+   fallback: string,
+ ): string {
+-  return isUsableTimeZone(tz) ? (tz as string) : fallback;
++  // `isUsableTimeZone` validates the trimmed form, so return it — otherwise a
++  // padded zone passes the check but the caller gets the untrimmed string back.
++  return isUsableTimeZone(tz) ? (tz ?? "").trim() : fallback;
+ }

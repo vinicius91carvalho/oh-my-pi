@@ -1,0 +1,14 @@
+
+
+Done. The fix is one line in `packages/core/src/posting-identity.ts`:
+
+- **Root cause:** `postingIdentity` recognized only the hosts `boards.greenhouse.io` and `boards-api.greenhouse.io`. Greenhouse's current job board host is `job-boards.greenhouse.io`, so the function returned `null` for URLs like `https://job-boards.greenhouse.io/mozilla/jobs/8089088`. The pipeline's `checkPostingLive` treats "no identity" as "I could not ask", so it answered `unknown` and never called `fetch`. The adapters package had already learned the `job-` prefix in `parseAtsBoard`; the core's copy of the host regex (a documented duplication, since core sits below adapters) had drifted.
+- **Fix:** host regex changed to `/(^|\.)job-?boards(-api)?\.greenhouse\.io$/`, which matches `boards`, `job-boards`, and `boards-api` in one pattern, plus a comment warning that a missed host here reads as a silent `unknown`.
+- **Verified:** core tests went from 3 failing to 12/12 green (including "reads it from the URL a person opens", which now reads `board: "mozilla"`); core rebuilt, then your exact command `pnpm --filter @fbj/pipeline exec vitest run src/posting-live.test.ts` passes 10/10; repo lint and typecheck are green (31/31 tasks). No tests were edited.
+
+I reproduced the failure first (core suite, 3 red), then watched the same suites pass after the fix.
+
+Three-line summary:
+- I fixed the missing `job-boards` host variant in `postingIdentity`, which made the liveness probe bail out with `unknown` instead of asking Greenhouse's API.
+- It was broken because Greenhouse rebranded its board host and only the adapters package had caught up; core's duplicated regex had not.
+- For you: live/dead detection works again for `job-boards.greenhouse.io` postings, and the probe asks the API before any apply run as designed.

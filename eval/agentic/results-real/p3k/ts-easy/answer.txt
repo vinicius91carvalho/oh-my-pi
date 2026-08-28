@@ -1,0 +1,5 @@
+
+
+Fixed. The test now passes (8/8), and the package typechecks and lints clean.
+
+**What happened:** `usableTimeZone` trimmed the string to check whether `Intl` would accept it, but then handed back the original untrimmed value. So `" Europe/London "` passed the check and came back with its spaces, which `Intl` would reject. The fix trims once and returns that same trimmed value.

@@ -1,0 +1,21 @@
+
+
+Done. `looksLikeGarbageTitle` is now `isGarbageTitle` everywhere; a fresh `rg` over `packages/` and `apps/` (minus node_modules/dist) returns zero hits for the old name, and the new name appears exactly 34 times in the same 7 files the old one occupied:
+
+- `packages/core/src/garbage-title.ts` — definition
+- `packages/core/src/garbage-title.test.ts` — imports, `describe` label, all assertions
+- `packages/llm/src/score-job.ts` — import + call
+- `packages/pipeline/src/stages/discover.ts` — import + 2 calls
+- `packages/pipeline/src/stages/discover.test.ts` — import, call, comment
+- `packages/pipeline/src/stages/apply.ts` — comment mention
+- `apps/cli/src/index.ts` — import + call in the sweep
+
+Verification, all green:
+- `pnpm --filter './packages/*' build` — all 12 packages built.
+- `tsc --noEmit` in `@fbj/core`, `@fbj/llm`, `@fbj/pipeline`, `@fbj/cli` — exit 0, no errors.
+- Tests, per file: core `garbage-title.test.ts` 26/26; llm `score-job` 4 files 356/356; pipeline `discover.test.ts` 8/8; cli `tenant.test.ts` 14/14 (no test file exists for `cli/index.ts`, so that one is covered by tsc).
+
+Summary
+- Renamed one identifier across 7 files (34 spots) with a mechanical substitution, then proved no old name remains.
+- It was never broken; the name just needed to be consistent everywhere.
+- Nothing changed at runtime, every check (build, typecheck, tests) passes, so the code behaves exactly as before.

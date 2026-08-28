@@ -1,0 +1,9 @@
+
+
+Done. The command you gave now passes, and so does the llm package's own contract test for the same function (220 tests green).
+
+**What I did:** In `packages/llm/src/score-job.ts`, `monthlyUsdMax` read `job.salaryMin ?? job.salaryMax`, so it normalized the *floor* of the range instead of the ceiling. The docstring right above it says the best case is `salaryMax ?? salaryMin`. One line fix: `job.salaryMax ?? job.salaryMax` → `job.salaryMax ?? job.salaryMin`, then rebuilt `@fbj/llm` (packages import through `dist/`) and re-ran the test.
+
+**Why it was broken:** For a 96k-144k/year USD range it took the 96k end, and 96000 / 12 = 8000. The ceiling, 144000 / 12, is the 12000 the test expects.
+
+**What it means:** The denormalized `jobs.salary_usd_month` column (which the jobs list filters and orders by across pages) now measures the most a posting offers, matching the scorer's floor check. A min-only posting still falls back to its min, and the magnitude-based period inference is unchanged because it reads the same `amount` variable.

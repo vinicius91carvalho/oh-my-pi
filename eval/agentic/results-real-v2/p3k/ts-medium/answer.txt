@@ -1,0 +1,14 @@
+
+
+Fixed and verified.
+
+**What was broken:** `monthlyUsdMax` in `packages/llm/src/score-job.ts` picked `salaryMin ?? salaryMax` for the "best case" of a range, so a 96k–144k USD/year range normalized to 96k/12 = 8,000 instead of 144k/12 = 12,000. The comment on the function says the intent is `salaryMax ?? salaryMin` — the code had drifted the other way.
+
+**The fix:** one line, line 259 — `const amount = job.salaryMax ?? job.salaryMin;`. Min-only ranges still work (the `??` falls through), and the period-inference test uses only `max`, so nothing else shifts.
+
+**Verified:** rebuilt `@fbj/llm` (the pipeline reads it from `dist/`), then ran `salary-usd.test.ts` in `@fbj/pipeline` — 4/4 pass. I also ran `score-job.gates.test.ts` in `@fbj/llm`, which pins the floor comparison to the ceiling (e.g. 80–100k/year must read $8,333/mo, not $6,667): 220/220 pass.
+
+Summary:
+- What I did: swapped min/max preference in `monthlyUsdMax` so a range's ceiling is used for the monthly USD value.
+- Why it was broken: the line used `salaryMin ?? salaryMax`, contradicting the function's own contract of best-case = max.
+- What it means: the jobs list's salary column and the scorer's floor gate now agree, and ranges compare at their top end as designed.

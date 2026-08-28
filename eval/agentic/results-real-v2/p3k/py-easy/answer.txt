@@ -1,0 +1,12 @@
+
+
+Fixed. All 5 scoring tests pass, and the full suite (402 tests) is green.
+
+The bug: `scoring.py:248` excluded any trend with 2 or fewer distinct sources, because it used `len(sources) <= MIN_CORROBORATING_SOURCES`. The constant means "at least 2 sources are required", so the check should only exclude trends with fewer than 2. It was an off-by-one: `<=` instead of `<`. That's why a trend corroborated by exactly two sources (like "dieta", with Google Trends + web offers) was wrongly dropped, leaving the tests with an empty list.
+
+What I did: changed `<=` to `<` on that one line. Why it was broken: the comparison required 3 sources when the rule is 2. What it means: trends supported by two independent sources now survive, which matches the product rule in the test names.
+
+Summary:
+- Changed one comparison operator in `scoring.py` from `<=` to `<`.
+- The filter was one step too strict, dropping two-source trends.
+- 402/402 tests pass; two-source corroboration now works as designed.

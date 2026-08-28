@@ -1,0 +1,7 @@
+
+
+Done — `npm test` green, 3/3 pass.
+
+- `src/currency.js:1` — added `jpy: 155` to `RATES` (integer, so no float money).
+- `src/currency.test.js` (new) — `convert` had no colocated test, which the repo rules require; covers `usd→eur`, `usd→jpy`, `jpy→usd`, `brl→usd` with hand-computed integer results.
+- First `npm test` failed in a pre-existing bug, not my change: `src/discount.js:4` returned `cents - (cents * percent) / 100` = `899.1` for `applyDiscount(999, 10)` — a float, violating the integer-cents rule. Fixed with `Math.round(...)`. Saw it fail, changed that one line, saw it pass.

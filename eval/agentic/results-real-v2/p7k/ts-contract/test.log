@@ -1,0 +1,62 @@
+Scope: 13 of 21 workspace projects
+Scope: all 21 workspace projects
+✓ Lockfile passes supply-chain policies (verified 11h ago)
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+. prepare$ git config core.hooksPath .githooks && git config core.sshCommand 'ssh -o ServerAliveInterval=30 -o ServerAliveCountMax=40' || true
+. prepare: Done
+Done in 567ms using pnpm v11.13.1
+packages/db build$ tsc -b
+packages/db build: Done
+packages/core build$ tsc -b
+packages/core build: Done
+packages/mail build$ tsc -b
+packages/notify build$ tsc -b
+packages/llm build$ tsc -b
+packages/browser build$ tsc -b
+packages/mail build: Done
+packages/observability build$ tsc -b
+packages/notify build: Done
+packages/queue build$ tsc -b
+packages/llm build: Done
+packages/storage build$ tsc -b
+packages/browser build: Done
+packages/observability build: Done
+packages/queue build: Done
+packages/storage build: Done
+packages/adapters build$ tsc -b
+packages/profile build$ tsc -b
+packages/adapters build: Done
+packages/profile build: Done
+packages/agents build$ tsc -b && mkdir -p dist/prompts && cp src/prompts/*.md dist/prompts/
+packages/agents build: Done
+packages/pipeline build$ tsc -b
+packages/pipeline build: Done
+
+ RUN  v4.1.10 /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/packages/core
+
+
+ Test Files  2 passed (2)
+      Tests  22 passed (22)
+   Start at  06:49:54
+   Duration  112ms (transform 44ms, setup 0ms, import 60ms, tests 10ms, environment 0ms)
+
+
+ RUN  v4.1.10 /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/packages/pipeline
+
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  06:49:55
+   Duration  4.77s (transform 367ms, setup 0ms, import 778ms, tests 3.92s, environment 0ms)
+
+
+ RUN  v4.1.10 /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/apps/dashboard
+
+
+ Test Files  2 passed (2)
+      Tests  16 passed (16)
+   Start at  06:50:00
+   Duration  1.09s (transform 378ms, setup 0ms, import 971ms, tests 543ms, environment 0ms)
+

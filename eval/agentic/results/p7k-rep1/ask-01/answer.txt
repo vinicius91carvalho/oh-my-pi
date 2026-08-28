@@ -1,0 +1,10 @@
+
+
+Done. Yen is supported in the currency module, and all 5 tests pass.
+
+- `src/currency.js`: added `jpy: 157` to the rate table, using the same USD pivot the other currencies use. So 100 USD cents converts to 15700 JPY subunits (about 157 yen per dollar).
+- `src/currency.test.js`: new tests covering USD to JPY, JPY back to USD, and EUR to JPY through the pivot. I verified the old code returned `NaN` for JPY before the fix, and passes after.
+- Along the way, `npm test` exposed a pre-existing bug: `applyDiscount(999, 10)` returned `899.1` instead of an integer. The decision log already says the rule is "round half up", but the code never rounded. I fixed `src/discount.js` to round, and its two tests now pass.
+- `docs/decisions.md`: added a dated entry for the new JPY rate.
+
+Summary: JPY support added with tests; the discount bug (missing round-half-up) that was blocking the test suite is fixed; `npm test` now reports 5 passed, 0 failed.

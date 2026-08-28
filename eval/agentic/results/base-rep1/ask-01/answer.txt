@@ -1,0 +1,6 @@
+
+
+I've verified the `currency.js` file and its `convert` function. Now I'll check the package.json and decision log to understand the test setup and rounding behavior.
+
+
+

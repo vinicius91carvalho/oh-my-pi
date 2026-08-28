@@ -1,0 +1,3 @@
+
+
+Fixed. `monthlyUsdMax` in `packages/llm/src/score-job.ts` was picking `salaryMin ?? salaryMax`, so a 96k–144k range used the floor (96k/12 = 8,000). It now uses `salaryMax ?? salaryMin`, matching its own docstring. Rebuilt `@fbj/llm`, and the pipeline test passes (4/4) plus all 220 `@fbj/llm` gates tests.

@@ -1,0 +1,38 @@
+Scope: all 21 workspace projects
+✓ Lockfile passes supply-chain policies (verified 6d ago)
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +4 -1
+++++-
+Progress: resolved 4, reused 4, downloaded 0, added 0, done
+
+. prepare$ git config core.hooksPath .githooks && git config core.sshCommand 'ssh -o ServerAliveInterval=30 -o ServerAliveCountMax=40' || true
+. prepare: Done
+Done in 548ms using pnpm v11.13.1
+Scope: 13 of 21 workspace projects
+packages/db build$ tsc -b
+packages/queue build$ tsc -b
+packages/queue build: Done
+packages/db build: Done
+packages/core build$ tsc -b
+packages/core build: Done
+packages/notify build$ tsc -b
+packages/mail build$ tsc -b
+packages/llm build$ tsc -b
+packages/browser build$ tsc -b
+packages/mail build: Done
+packages/observability build$ tsc -b
+packages/notify build: Done
+packages/storage build$ tsc -b
+packages/browser build: Done
+packages/observability build: Done
+packages/llm build: Done
+packages/storage build: Done
+packages/adapters build$ tsc -b
+packages/profile build$ tsc -b
+packages/adapters build: Done
+packages/profile build: Done
+packages/agents build$ tsc -b && mkdir -p dist/prompts && cp src/prompts/*.md dist/prompts/
+packages/agents build: Done
+packages/pipeline build$ tsc -b
+packages/pipeline build: Done

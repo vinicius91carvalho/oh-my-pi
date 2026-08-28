@@ -1,0 +1,7 @@
+
+
+All 5 tests pass now (28 total in the package). One-line fix in `packages/research/src/infoproduct_research/scoring.py:248`.
+
+- **What I did:** changed `if len(sources) <= MIN_CORROBORATING_SOURCES` to `if len(sources) < MIN_CORROBORATING_SOURCES` in `score_and_rank_trends`.
+- **Why it was broken:** an off-by-one. The constant is 2, so the `<=` check treated "has exactly 2 sources" as "not enough", silently dropping every two-source trend before ranking.
+- **What it means:** two-source trends are kept again; the 3 failing tests (corroboration, ranking, ticket range) pass, and no other test regressed.

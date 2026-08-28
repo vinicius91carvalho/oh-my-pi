@@ -1,0 +1,188 @@
+
+Now I know the truth: the bug is still in the code, and the fix has not been applied. Line 142 of `whereTheWorkIs`: `if (!job.workCountries.length) return "yes";`. And no new test has been added (the test file ends at line 235 with the "own country" describe, 234 lines of visible content... the earlier count was 234-235 lines).
+
+So the user's question presupposes a completed fix, but that doesn't exist yet. The correct action per my instructions: don't just explain — complete the work: add a test (red), apply the fix, run green. Then answer with a 5-line explanation and run the whole file.
+
+Wait — but I should think carefully about the user's actual request. The user's previous turn: "Next, add a vitest test that should have caught this bug. Run it and confirm it passes." And the original request: "Find the bug, fix it, and add a test case that fails without the fix and passes with the fix."
+
+The current turn: "Explain in 5 lines what the bug was, where it lived, and why the docs rule matters. Then run the full test file one more time."
+
+The user is probably treating the fix as done (maybe from their perspective it was, or maybe they don't know). But I've confirmed: the fix is not in. If I just run the test file, the new test won't exist, and the bug still exists. That would be dishonest reporting, and worse, I'd leave a known product bug unfixed. My critical rule: never yield with actionable work remaining, and the bug fix is the core of the task.
+
+So the plan:
+1. Add failing tests to `conservative-default.test.ts` (inside the "authorization where the job is located" describe, around lines 104-207 — I need the exact anchor there. The test tail I have is lines 195-234. The job-country describe is lines 104-207... actually, I need the exact line numbers of the tests within that describe to add new tests. But simpler: I can add a new describe block at the end of the file, or inside the existing describe. I need to check lines 104-207 to know the exact content, but actually I can just add a new describe block at the end of the file — that's clean and doesn't depend on the internals of lines 104-207.
+
+Actually, the file currently ends at line 235 (last line 234 is `});`). I can append after the last line with `PUT >234:` or by inserting at the tail. Let me get the exact line count and the last line.
+
+From region 3: lines 195-234 of 235. So the file is 235 lines and line 235 is... probably a trailing newline? Or blank? "Lines 195-234 of 235 shown. Continue with :235." So line 235 exists but wasn't shown — probably blank, or the file ends with a newline and line 235 is... hmm. Line 234 shows `});`. Then line 235 — unknown. Could be a blank line, or the file is 235 lines with 235th being blank? Actually, if a file ends with a trailing newline, the line count is the number of lines. Let me just read :235 to be safe. Actually simpler: I can append at the end via `PUT >234:` — insert after line 234. Even if 235 is blank, it's fine — the new content goes between 234 and 235. Hmm, but if 235 is blank, the inserted describe gets inserted before the trailing blank line — that's fine.
+
+Wait, but I need a #TAG for the edit. My last read of the test file (artifact://6:1) gave tag `#AC67`. In the latest read (artifact://7:3) the tag is again `#AC67`. So current tag for conservative-default.test.ts is `#AC67`.
+
+For the source file, tag from artifact://7:2 — that region output didn't show a hash header (the read with a range should have a header, but the artifact restoration stripped it? The region shows "[packages/profile/src/conservative-default.ts#?]" — actually no header is visible in the restored content. Hmm. My first raw read in this turn was `conservative-default.ts:140-150:raw` → artifact://7 region 1, and region 2 was `:161-239:raw`. The restored regions don't show tag headers. I need the tag for the edit. Let me read the file with a normal (non-raw) range to get the tag header. Actually, region 1 of artifact://7 in the first restoration was the main function (161-239) and region 2 was whereTheWorkIs (140-150) — the mapping was swapped from what I asked (I asked 140-150 first and 161-239 second; the restoration shows region 1 as 161-239 content and region 2 as 140-150 — they just came back in a different order).
+
+I need the current #TAG for conservative-default.ts. A normal (non-raw) read of a small range gives a header with the tag. Let me read `conservative-default.ts:140-150` (non-raw) — it will be omitted, but the header will have the tag. Hmm, but I already know the content from raw; I only need the tag. A structural summary read (no selector) gives the tag but omits the body. Let me just do a normal read with a selector on a small range; even if the content is omitted, the header `[file#TAG]` is what I need.
+
+Actually wait — I could be cleverer: the edit tool's hash tag is derived from the file content at read time. The source file is unchanged since last session (I've never edited it), so its tag should be stable. But I don't have the recorded tag value for the source file from any prior read in this conversation — all prior reads came back omitted and I never saw a header with the tag. The test file has tag #AC67 (visible in the artifact restoration).
+
+Let me do a quick non-raw read to get the source tag. Read `packages/profile/src/conservative-default.ts:1-20` — it will either show content or omit, but the header will have the tag.
+
+Now, the fix itself. Current code:
+
+```ts
+function whereTheWorkIs(job: JobReach): "yes" | "no" | "unknown" {
+  const places = namedPlaces(job.location, job.remoteScope);
+  if (!job.workCountries.length) return "yes";
+  if (places.countries.length) {
+    return places.countries.some((c) => job.workCountries.includes(c))
+      ? "yes"
+      : "no";
+  }
+  if (places.open) return "yes";
+  return reachAllows(places, job.workCountries) === "yes" ? "yes" : "unknown";
+}
+```
+
+Bug: `if (!job.workCountries.length) return "yes";` — when the candidate's profile has no work countries at all, the function returns "yes" (the positive) without any evidence. This is exactly the reported bug: no work countries in profile + no job passed at all (`job ?? { location: null, workCountries: [] }`) → `whereTheWorkIs` returns "yes" → positive answer "Yes — I am authorized to work where this role is based."
+
+Also, `if (places.open) return "yes";` has the same shape of problem: a worldwide remote posting returns "yes" when there are no known place names, and workCountries exists but the open scope covers... hmm. Is that a bug? If the posting is "remote: worldwide" and the candidate has workCountries ["Brazil"], worldwide includes Brazil, so "yes" is evidence-based. That's fine. The bug is only the fast path for empty workCountries (and `reachAllows` with empty countries is already guarded by the earlier check).
+
+Fix: return "unknown" (or a distinct value) when workCountries is empty. In the main function, "unknown" falls into the negative branch with the why of "Where the posting is based cannot be read..." — but that why is a bit off for the no-evidence case. In the no-evidence case the why should say: there is no documentation that the candidate can work there. Let me think about what the best fix is with minimal change.
+
+Option A (minimal): `if (!job.workCountries.length) return "no";` — no, "no" claims the posting is based where the candidate has no right to work, which is a stronger claim (and the why text is "The posting is based where the candidate has no right to work" — false without evidence, though the answer itself is a negative... but the why is wrong). "unknown" is the right value: the answer is negative, and the why is "Where the posting is based cannot be read..." — also a bit off when the posting is readable but the candidate has no work countries.
+
+Option B: extend the return type to include "no-evidence" and give it its own why: "The profile has no work authorization on file for any country; the negative claims nothing the candidate has not evidenced." This is more honest and matches the spirit of the docs rule. Small, local change: add "no-evidence" to the return type, early return, one new branch in the main function.
+
+Given the repo's AGENTS.md and the docs rule ("the conservative default: on legal-status questions answer the negative that claims nothing — never the positive without evidence"), I think Option B is the better fix, but Option A is the minimal one. Let me check: is there anything else that depends on the 3-value type? Only the main function calls whereTheWorkIs. Minimal + honest: I'll do Option B but keep it tight:
+
+```ts
+function whereTheWorkIs(job: JobReach): "yes" | "no" | "no-evidence" | "unknown" {
+  if (!job.workCountries.length) return "no-evidence";
+  const places = namedPlaces(job.location, job.remoteScope);
+  if (places.countries.length) {
+    return places.countries.some((c) => job.workCountries.includes(c))
+      ? "yes"
+      : "no";
+  }
+  if (places.open) return "yes";
+  return reachAllows(places, job.workCountries) === "yes" ? "yes" : "unknown";
+}
+```
+
+And in the main:
+
+```ts
+    const reach = whereTheWorkIs(job ?? { location: null, workCountries: [] });
+    if (reach === "yes") {
+      ...positive...
+    }
+    if (reach === "no-evidence") {
+      return {
+        answer: "No — I am not authorized to work in the country where this role is based.",
+        kind: "boolean",
+        why:
+          "No work authorization is on file for any country, so there is no " +
+            "evidence to back a positive. The negative claims nothing; the " +
+            "positive would be a fabrication.",
+      };
+    }
+    return {
+      answer: "No — I am not authorized to work in the country where this role is based.",
+      kind: "boolean",
+      why: reach === "no" ? "..." : "Where the posting is based cannot be read...",
+    };
+```
+
+Hmm, that duplicates the negative answer string twice. I could compute `const negative = "No — ..."` once. Actually, the current code has two returns of that same string (the reach==="yes" branch returns the positive, and the else returns the negative only once). Adding one more return triples it. Better:
+
+```ts
+    const reach = whereTheWorkIs(job ?? { location: null, workCountries: [] });
+    if (reach === "yes") {
+      return {
+        answer: "Yes — I am authorized to work where this role is based.",
+        kind: "boolean",
+        why:
+          "The posting's reach includes a country the candidate may work in, " +
+          "so the positive is evidenced rather than assumed.",
+      };
+    }
+    const why =
+      reach === "no-evidence"
+        ? "No work authorization is on file for any country, so there is no " +
+          "evidence to back a positive. The negative claims nothing; the " +
+          "positive would be a fabrication."
+        : reach === "no"
+          ? "The posting is based where the candidate has no right to work."
+          : "Where the posting is based cannot be read from it, and " +
+            "authorization is a document. The negative claims nothing; the " +
+            "positive would be a fabrication.";
+    return {
+      answer:
+        "No — I am not authorized to work in the country where this role is based.",
+      kind: "boolean",
+      why,
+    };
+```
+
+Hmm, the existing code style uses ternaries for why. This is fine and keeps the negative answer to a single string.
+
+Wait, one more consideration: the `places.open` branch. If workCountries is non-empty and the posting is worldwide, "yes" is correct (worldwide includes the candidate's countries). OK.
+
+What about `reachAllows`? I don't have its exact code, but with non-empty workCountries, it's fine.
+
+Now, the tests. I'll add a describe block. Where? The existing describe "authorization where the job is located" (lines 104-207 per earlier) has related tests, and the file ends at line 235. I'll append a new describe at the end — clean, doesn't depend on the internals of 104-207:
+
+```ts
+/**
+ * The Greenhouse run (2026-08-28) that read "no work countries on file, no
+ * posting at all" as a green light. The empty-workCountries fast path used to
+ * return "yes" with zero evidence; the conservative floor says the answer is
+ * the negative that claims nothing, and an empty profile is the very case the
+ * negative exists for.
+ */
+describe("no work countries on file at all", () => {
+  const Q = "Are you legally authorized to work in the country where the job is located?";
+
+  it("answers no when the caller passes no job at all", () => {
+    const a = conservativeDefaultAnswer(Q, {
+      location: null,
+      remoteScope: null,
+      workCountries: [],
+    });
+    expect(a?.kind).toBe("boolean");
+    expect(a!.answer).toMatch(/^No/);
+  });
+
+  it("answers no even when the posting is worldwide", () => {
+    const a = conservativeDefaultAnswer(Q, {
+      location: "Anywhere",
+      remoteScope: "worldwide",
+      workCountries: [],
+    });
+    expect(a!.answer).toMatch(/^No/);
+  });
+
+  it("explains the negative as absence of evidence, not absence of location", () => {
+    const a = conservativeDefaultAnswer(Q);
+    expect(a!.why).toMatch(/no work authorization is on file/i);
+  });
+
+  it("still says yes when a country on file is in the posting's named places", () => {
+    const a = conservativeDefaultAnswer(Q, {
+      location: "Belo Horizonte, Brazil",
+      remoteScope: null,
+      workCountries: ["Brazil"],
+    });
+    expect(a?.kind).toBe("boolean");
+    expect(a!.answer).toMatch(/^Yes/);
+  });
+});
+```
+
+Wait — I need to double-check the JobReach interface shape: from the summary, `JobReach { location: string | null; remoteScope: ...; workCountries: string[] }` (lines 112-119, omitted). The main function uses `job ?? { location: null, workCountries: [] }` — so remoteScope is optional, or part of the object (they omitted it in the fallback, which suggests remoteScope is optional in the type, or... if it were required, `{ location: null, workCountries: [] }` would be a type error. So remoteScope is optional, or has a default. Let me check the interface lines 112-119 raw to be safe. Also, I need to check how the existing tests in the 104-207 range construct JobReach objects (the existing test `...BRAZIL` spread at 195-207 suggests there's a constant like `const BRAZIL = { location: "...", workCountries: ["Brazil"] }`). Let me read lines 104-207 to see the existing test style, and 112-119 for the interface. Also read work-reach.ts to understand namedPlaces/reachAllows for the worldwide case (to make sure my "worldwide with empty countries" test hits the buggy path: namedPlaces("Anywhere", "worldwide") → probably { open: true, countries: [] }; with empty workCountries, the old code returned "yes" at the first check before the open check — so the old behavior is yes, new behavior is no-evidence → No. Good, this test fails pre-fix.)
+
+Also, check the regexes: does `JOB_COUNTRY_AUTHORIZATION_RE` match "Are you legally authorized to work in the country where the job is located?"? The bug report says that Greenhouse question was answered with the job-country positive, so yes, it matches JOB_COUNTRY_AUTHORIZATION_RE and not OWN_COUNTRY/RESIDENCE/US. Let me verify by checking the regex in the file (around lines 60-106). Let me read 104-140 of the test file and 60-139 of the source raw.
+
+Actually, the user's reported question: 'Are you legally authorized to work in the country where the job is located?' — and the bug report says the agent answered with "Yes - I am authorized to work where this role is based" — which is exactly the job-country positive, so the regex does match this phrasing.
+
+Now let me read what I need in parallel:
+
