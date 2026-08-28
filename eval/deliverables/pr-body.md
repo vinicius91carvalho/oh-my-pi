@@ -231,27 +231,6 @@ One session, 4 chained turns (`-p` then `-p --continue`) on ts-veryhard, until t
 
 Mechanics proven: `-p --continue` rebuilds the session as a HISTORY block, in-turn compaction fires and the agent keeps calling tools (including `xd://` devices) afterwards. Quality on this machine: with the 20k threshold and a fresh server, p3k completed the whole 4-turn task (fix, test, explanation, second audit); with 27k, only p7k got close. With a 30k window and a 27k threshold, single turns overshoot to 36-39k (compaction only runs between turns), so on 36 GB the useful threshold is 20k.
 
-### Speed inside the agent (1,068 requests, both rounds, server-reported)
-
-The 32 t/s bench number is a 69-token prompt. Inside agent runs generation falls with context size, because every token attends over the whole KV cache:
-
-| context | generation, median |
-|---|---:|
-| 5-10k | 27.9 t/s |
-| 10-15k | 24.3 |
-| 15-20k | 21.5 |
-| 20-25k | 20.4 |
-| 25-30k | 19.8 |
-
-| preset | generation median / p90 | uncached prefill | prefix-cache hit | TTFT median |
-|---|---:|---:|---:|---:|
-| base | 21.0 / 23.4 | 95 t/s | 90% | 23-26 s |
-| p7k | 21.6 / 27.2 | 110 t/s | 85% | 19-21 s |
-| p5k | 22.6 / 28.5 | 117 t/s | 84% | 19-20 s |
-| p3k | 22.7 / 29.0 | 112 t/s | 87% | 15-19 s |
-
-The compact presets are faster per request only because they live in smaller contexts. oMLX caches in 2,048-token pages, so up to 2k tokens are re-prefilled every request on top of the new turn (the cache-hit column).
-
 ### Meter bugs found on the way (all in the harness, none in the model)
 
 1. `git status --porcelain` as "touched nothing" while the runner writes `answer.txt` into the repo: 3 tasks failed on every mode including the control.

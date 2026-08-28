@@ -50,9 +50,30 @@ The preset name is OMP's own share, rounded. "Request total" is what the server 
 | very hard: documented rule broken, covering test deleted, hidden test at scoring | 0/4 | 2/4, 29 min | 1/4, 20 min | 1/4, 22 min |
 | LSP: rename across 8 files / contract change across 6 files | 1/2 | 2/2, 22 min | 1/2, 20 min | 1/2, 12 min |
 
-Times are medians per run (30-minute cap). Speed inside the runs, server-reported over 1,068 requests: generation 28 t/s at 5-10k context falling to 20 t/s at 20-25k (the 32 t/s bench is a 69-token prompt); uncached prefill 95 t/s (base) to 110-118 t/s (compact); prefix-cache hit 84-91%.
+Times are medians per run (30-minute cap).
 
 The one bug no preset solved (8/8 runs, same diff): a docs rule says the landing-page persona may never claim years of experience; the report showed "12 anos de experiência" slipping through; every run widened the regex for the accent, kept the `\d+` (a number required), wrote a test for the reported sentence, and stopped. The hidden test's "anos de experiencia" without a number still passes validation. Symptom fixed, rule not read: the model, not the prompt size.
+
+**Speed inside the agent** (1,068 requests, both rounds, server-reported)
+
+The 32 t/s bench number is a 69-token prompt. Inside agent runs generation falls with context size, because every token attends over the whole KV cache:
+
+| context | generation, median |
+|---|---:|
+| 5-10k | 27.9 t/s |
+| 10-15k | 24.3 |
+| 15-20k | 21.5 |
+| 20-25k | 20.4 |
+| 25-30k | 19.8 |
+
+| preset | generation median / p90 | uncached prefill | prefix-cache hit | TTFT median |
+|---|---:|---:|---:|---:|
+| base | 21.0 / 23.4 | 95 t/s | 90% | 23-26 s |
+| p7k | 21.6 / 27.2 | 110 t/s | 85% | 19-21 s |
+| p5k | 22.6 / 28.5 | 117 t/s | 84% | 19-20 s |
+| p3k | 22.7 / 29.0 | 112 t/s | 87% | 15-19 s |
+
+The compact presets are faster per request only because they live in smaller contexts. oMLX caches in 2,048-token pages, so up to 2k tokens are re-prefilled every request on top of the new turn (the cache-hit column).
 
 **Same tools, different path.** Nothing is removed. With `edit` mounted, p5k/p3k fetched `xd://edit` and edited through it 22/22 times in round 2. Language servers were installed for round 2 and `xd://lsp` was listed in every preset; no run ever called it: this model does rename with grep + edit.
 
