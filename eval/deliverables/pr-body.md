@@ -18,7 +18,7 @@ Refs #1734. Five commits, each self-contained; defaults are untouched and `promp
 | `fix(tools): accept xd://<tool> as a fallback tool-call name` | none | a call literally named `xd://grep` lands on the mounted `grep` device instead of "Tool not found" |
 | `perf(prompt): stop enumerating every mounted MCP tool` | none | route block states the naming rule once per server when `createMCPToolName` reproduces every live name; catalog groups a server's tools in one row. `## MCP Tool Routes` 1,222 -> 551 tokens with one 21-tool server |
 
-### Who puts what in the prompt in the prompt
+### Who puts what in the prompt
 
 Every request starts with a system prompt. Two parties write it:
 
@@ -62,7 +62,7 @@ tools:
 
 p5k: add `edit, glob` to the list. p3k: add `grep` too.
 
-### Which preset, day to day, day to day (measured, see benchmark.md)
+### Which preset, day to day (measured, see Benchmark below)
 
 | situation | mode | why |
 |---|---|---|
@@ -124,7 +124,7 @@ Scored by shell checks (tests pass, file exists, tree clean, answer matches), no
 
 Extra probes, base vs p3k: `xd://` protocol 3/3 both; grounding (no invented sources) 6/6 both.
 
-### Real projects: 8 seeded bugs, 4 modes
+### Real projects: 8 seeded bugs, 4 presets
 
 Worktrees of two real repos: `find-best-job` (TypeScript pnpm monorepo, 1,488 TS files) and `infoproduct` (Python uv workspace, 910 files). One branch per bug. Every bug was seen failing and then passing with a reference fix before use. Pass = project's own test command green and no test file touched (very hard: the agent must also write a test; a hidden test is copied in at scoring time).
 
