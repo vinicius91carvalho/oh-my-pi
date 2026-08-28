@@ -16,14 +16,24 @@ On a 30k-window local model, 18.0.7 spends 22,643 prompt tokens before the first
 | `fix(tools): accept xd://<tool> as a fallback tool-call name` | none | a call literally named `xd://grep` lands on the mounted `grep` device instead of "Tool not found" |
 | `perf(prompt): stop enumerating every mounted MCP tool` | none | route block states the naming rule once per server when `createMCPToolName` reproduces every live name; catalog groups a server's tools in one row. `## MCP Tool Routes` 1,222 -> 551 tokens with one 21-tool server |
 
-### Measured (server `usage.prompt_tokens`, real TS monorepo, one 21-tool MCP server)
+### Presets and what they cost
 
-| config | prompt tokens | 12-task fixture | 8 real bugs (TS + Python) |
-|---|---:|---:|---:|
-| defaults | 22,643 | 11/12 | 4/8, 5/8 (hard bugs rejected by the server at 27-39k tokens) |
-| compact + `xdevForceMount: [hub, eval, task, todo, web_search]` | 10,838 | 11/12 | 7/8, 7/8 |
-| + `edit, glob` | 8,574 | 12/12 | 7/8, 6/8 |
-| + `grep` | 8,204 | 12/12 | 7/8, 6/8 |
+| preset | `config.yml` | tools left top-level | moved to `xd://` (schema fetched on demand) | OMP's share: template + schemas | my context files | request total |
+|---|---|---|---|---:|---:|---:|
+| base (upstream default) | nothing | 11 | none | 18,531 | 3,923 | **22,643** |
+| **p7k** | `promptProfile: compact` + `xdevForceMount: [hub, eval, task, todo, web_search]` | read bash edit glob grep write | hub eval task todo web_search | 6,787 | 3,923 | **10,838** |
+| p5k | p7k + `edit, glob` | read bash grep write | + edit glob | 4,416 | 3,923 | **8,574** |
+| p3k | p5k + `grep` | read bash write | + grep | 4,036 | 3,923 | **8,204** |
+| p3k + my files compacted | same | same | same | 4,033 | 1,486 | **5,886** |
+
+The preset name is OMP's own share, rounded. "Request total" is what the server counts before the first user word: OMP's share plus my `~/.omp/agent/AGENTS.md` and the project's `AGENTS.md` (3,923 tokens, untouched by the fork; the last row is me rewriting them densely with the detail moved to on-demand skills). All presets also need `tools.xdevDocs: catalog`, or the mounted tools' docs come back inline.
+
+| preset | 12-task fixture | 8 real bugs, two rounds |
+|---|---:|---:|
+| base | 11/12 | 4/8, 5/8 |
+| p7k | 11/12 | 7/8, 7/8 |
+| p5k | 12/12 | 7/8, 6/8 |
+| p3k | 12/12 | 7/8, 6/8 |
 
 **By difficulty, both rounds.**
 

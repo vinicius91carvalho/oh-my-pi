@@ -11,12 +11,22 @@ Measured the size problem and a fix, end to end, on a local model. Everything be
 - `promptProfile: compact` - same rules and every generated surface (skills, rules, context files, inventory, devices), without the personality, examples and long prose.
 - MCP catalog rows factored per server; compact profile names devices as `xd://grep`; `read xd://<tool>` ends with a worked call; a call literally named `xd://grep` resolves to the device.
 
-| preset (harness share) | request total | 12-task fixture | 8 real bugs, two rounds |
-|---|---:|---:|---:|
-| defaults (18.5k) | 22,643 | 11/12 | 4/8, 5/8 |
-| p7k: compact + `[hub, eval, task, todo, web_search]` (6.8k) | 10,838 | 11/12 | 7/8, 7/8 |
-| p5k: + `edit, glob` (4.4k) | 8,574 | 12/12 | 7/8, 6/8 |
-| p3k: + `grep` (4.0k) | 8,204 | 12/12 | 7/8, 6/8 |
+| preset | `config.yml` | tools left top-level | moved to `xd://` (schema fetched on demand) | OMP's share: template + schemas | my context files | request total |
+|---|---|---|---|---:|---:|---:|
+| base (upstream default) | nothing | 11 | none | 18,531 | 3,923 | **22,643** |
+| **p7k** | `promptProfile: compact` + `xdevForceMount: [hub, eval, task, todo, web_search]` | read bash edit glob grep write | hub eval task todo web_search | 6,787 | 3,923 | **10,838** |
+| p5k | p7k + `edit, glob` | read bash grep write | + edit glob | 4,416 | 3,923 | **8,574** |
+| p3k | p5k + `grep` | read bash write | + grep | 4,036 | 3,923 | **8,204** |
+| p3k + my files compacted | same | same | same | 4,033 | 1,486 | **5,886** |
+
+The preset name is OMP's own share, rounded. "Request total" is what the server counts before the first user word: OMP's share plus my `~/.omp/agent/AGENTS.md` and the project's `AGENTS.md` (3,923 tokens, untouched by the fork; the last row is me rewriting them densely with the detail moved to on-demand skills). All presets also need `tools.xdevDocs: catalog`, or the mounted tools' docs come back inline.
+
+| preset | 12-task fixture | 8 real bugs, two rounds |
+|---|---:|---:|
+| base | 11/12 | 4/8, 5/8 |
+| p7k | 11/12 | 7/8, 7/8 |
+| p5k | 12/12 | 7/8, 6/8 |
+| p3k | 12/12 | 7/8, 6/8 |
 
 **How the bugs were tested.** Eight bugs seeded into two real repos (a TS pnpm monorepo with 1,488 files and a Python uv workspace with 910), one branch per bug, easy to very hard (very hard = a documented business rule broken, the covering test deleted, the agent must write it back; a hidden test is copied in at scoring time). Each bug was seen failing and passing with a reference fix before use. The agent runs headless (`omp -p --auto-approve --config <preset>`), 30-minute timeout, scored by the repo's own test command plus "did not edit tests". Two extra tasks for tooling: a rename across 8 files / 4 packages (passed in all presets) and a return-type contract change across 6 files / 4 packages (only p7k finished). Language servers were installed for round 2; no run in any preset ever called `lsp`.
 
