@@ -1,0 +1,61 @@
+diff --git a/packages/profile/src/conservative-default.test.ts b/packages/profile/src/conservative-default.test.ts
+index 1ad519e..5db7f73 100644
+--- a/packages/profile/src/conservative-default.test.ts
++++ b/packages/profile/src/conservative-default.test.ts
+@@ -1,5 +1,6 @@
+ import { describe, expect, it } from "vitest";
+ import { conservativeDefaultAnswer } from "./conservative-default.js";
++import type { JobReach } from "./conservative-default.js";
+ import { resolveBooleanAnswer } from "./boolean-answer.js";
+ 
+ /**
+@@ -204,6 +205,36 @@ describe("conservativeDefaultAnswer: authorization where the job is located", ()
+     // about the US does not change with where the role is advertised.
+     expect(d!.answer).toMatch(/not authorized to work in the United States/);
+   });
++
++  /**
++   * The Greenhouse run: the candidate has no work countries on file (and the
++   * caller handed no posting at all), and the answer went out as
++   * "Yes - I am authorized to work where this role is based" — a positive
++   * with nothing behind it. The branch's floor is the negative: with no
++   * evidence of where the candidate may work it must claim nothing, for a
++   * named country, a worldwide posting, or a missing posting alike.
++   */
++  it.each([
++    [
++      "a US posting",
++      { location: "San Francisco, California, USA", workCountries: [] },
++    ],
++    [
++      "a worldwide posting",
++      { location: "Remote", remoteScope: "worldwide", workCountries: [] },
++    ],
++    ["no posting at all", undefined],
++  ])(
++    "answers %s with the negative when the profile names no work country",
++    (label, job) => {
++      const d = conservativeDefaultAnswer(
++        ASKED[0],
++        job as JobReach | undefined,
++      );
++      expect(d!.answer).toMatch(/^No/);
++      expect(d!.answer).not.toMatch(/^Yes/);
++    },
++  );
+ });
+ 
+ /**
+diff --git a/packages/profile/src/conservative-default.ts b/packages/profile/src/conservative-default.ts
+index ff11fd4..c19a664 100644
+--- a/packages/profile/src/conservative-default.ts
++++ b/packages/profile/src/conservative-default.ts
+@@ -139,7 +139,7 @@ export interface JobReach {
+  */
+ function whereTheWorkIs(job: JobReach): "yes" | "no" | "unknown" {
+   const places = namedPlaces(job.location, job.remoteScope);
+-  if (!job.workCountries.length) return "yes";
++  if (!job.workCountries.length) return "no"; // no evidence: the negative, never a positive
+   if (places.countries.length) {
+     return places.countries.some((c) => job.workCountries.includes(c))
+       ? "yes"

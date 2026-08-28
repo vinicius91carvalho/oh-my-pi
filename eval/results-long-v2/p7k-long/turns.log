@@ -3,3 +3,6 @@
 == turn 2: Now add a vitest test that would have caught this bug. Run it and make sure it passes.
    requests so far: 41
 == turn 3: Explain in 5 lines what the bug was, where it lived, and why the docs rule matters. Then run the full test file once more.
+   requests so far: 44
+== turn 4: Look for one more place in the same package that could break the same rule. If you find one, fix it and test; if not, say so.
+   requests so far: 45

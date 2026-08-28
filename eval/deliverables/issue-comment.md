@@ -30,7 +30,7 @@ The preset name is OMP's own share, rounded. "Request total" is what the server 
 | preset | fixture | 8 real bugs, round 1 -> 2 | rename / contract | 4-turn session |
 |---|---:|---:|---:|---|
 | base | 11/12 | 4/8 -> 5/8 | 1/2 | not run |
-| p7k | 11/12 | 7/8 -> 7/8 | 2/2 | fix + test after compaction, 43/44 hidden cases |
+| p7k | 11/12 | 7/8 -> 7/8 | 2/2 | 27k threshold: 43/44; 20k threshold: fix + test, 44/44 |
 | p5k | 12/12 | 7/8 -> 6/8 | 1/2 | - |
 | p3k | 12/12 | 7/8 -> 6/8 | 1/2 | 20k threshold: fix + test, 45/45 |
 

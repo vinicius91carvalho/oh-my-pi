@@ -227,9 +227,9 @@ One session, 4 chained turns (`-p` then `-p --continue`) on ts-veryhard, until t
 | p3k-long, r2 (stale dist) | 20k | 59 | yes, repeatedly (sawtooth 36k -> 12k) | 0 | survived every compaction; tests broken by a stale `dist` (meter bug 6), discarded |
 | **p3k-long, r2 rerun** | 20k | 42 | yes, request 7, then 36 more requests | 2 | **fix + test written, 45/45 including hidden cases** |
 | p7k-long, r2 (stale dist) | 20k | 27 | yes | 1 | same broken `dist`, discarded |
-| p7k-long, r2 rerun | 20k | (running) | | | |
+| **p7k-long, r2 rerun** | 20k | 45 | yes, request 6, then 39 more requests | 4 (all recovered) | **fix + test written, 44/44 including hidden cases** |
 
-Mechanics proven: `-p --continue` rebuilds the session as a HISTORY block, in-turn compaction fires and the agent keeps calling tools (including `xd://` devices) afterwards. Quality on this machine: with the 20k threshold and a fresh server, p3k completed the whole 4-turn task (fix, test, explanation, second audit); with 27k, only p7k got close. With a 30k window and a 27k threshold, single turns overshoot to 36-39k (compaction only runs between turns), so on 36 GB the useful threshold is 20k.
+Mechanics proven: `-p --continue` rebuilds the session as a HISTORY block, in-turn compaction fires and the agent keeps calling tools (including `xd://` devices) afterwards. Quality on this machine: with the 20k threshold and a fresh server, both p3k and p7k completed the whole 4-turn task (fix, test, explanation, second audit); with 27k, only p7k got close. With a 30k window and a 27k threshold, single turns overshoot to 36-39k (compaction only runs between turns), so on 36 GB the useful threshold is 20k.
 
 ### Meter bugs found on the way (all in the harness, none in the model)
 
