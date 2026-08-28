@@ -57,7 +57,7 @@ The one bug no preset solved (8/8 runs, same diff): a docs rule says the persona
 
 **Repo.** Fork + branch: https://github.com/vinicius91carvalho/oh-my-pi/tree/compact-prompt-for-local-models. Scripts, presets, every captured request: https://github.com/vinicius91carvalho/oh-my-pi/tree/local-model-eval
 
-**PR.** PR_LINK - five commits with tests. Whether it lands or not, the branch runs today.
+**PR.** https://github.com/can1357/oh-my-pi/pull/10077 - five commits with tests. Whether it lands or not, the branch runs today.
 
 **How this was produced.** Fork, harness, seeded bugs, runs and this post were done by Claude Fable 5 in Claude Code at high effort, with me setting goals and approving what ships. About two days, 80 scored runs.
 

@@ -1,4 +1,4 @@
-Measured the problem and a fix end to end on a local model; PR_LINK has the change, https://github.com/vinicius91carvalho/oh-my-pi/tree/local-model-eval has the scripts and every captured request, REDDIT_LINK is the write-up.
+Measured the problem and a fix end to end on a local model; https://github.com/can1357/oh-my-pi/pull/10077 has the change, https://github.com/vinicius91carvalho/oh-my-pi/tree/local-model-eval has the scripts and every captured request.
 
 **Why.** Local-only setup: M3 Max 36 GB, Qwen3.8-27B on oMLX (11 t/s on llama-server -> 17 on oMLX -> 32 with MTP + memory-guard/KV tuning), usable window ~32k and no truncation server-side. OMP is my harness because of what it adds to Pi (31 tools with `xd://`, `hub`, LSP/DAP, subagents, skills/rules, memory); that breadth is what the 22.6k-token door costs, and `xd://` is the mechanism that can pay for it if it is opened to the expensive tools.
 

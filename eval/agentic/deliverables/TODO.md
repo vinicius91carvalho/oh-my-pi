@@ -29,3 +29,9 @@ Ultima atualizacao: 2026-08-28 10:55 (parado a pedido do Vinicius)
 - [x] Fork: 5 commits rebaseados no upstream, 32 testes verdes, tsc limpo
 - [x] Docs: PR completo (benchmark + receitas), issue, Reddit, README; secoes "why", "como foi feito", niveis com tempos, bug nao resolvido, velocidade (Reddit)
 - [x] Branch de eval local com scripts, perfis e 1.486 requests capturadas
+
+
+## Publicado em 2026-08-28
+- [x] PR: https://github.com/can1357/oh-my-pi/pull/10077
+- [x] Comentario na issue: https://github.com/can1357/oh-my-pi/issues/1734#issuecomment-5453486342
+- [x] Reddit: postado pelo Vinicius (sem link registrado)

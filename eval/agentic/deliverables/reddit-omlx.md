@@ -57,7 +57,7 @@ Per agent preset (smaller system prompt = smaller context = faster):
 - Prefill capacity rejections: with the 27 GB guard, requests around 21-23k context got rejected or came back as HTTP 200 with an empty stream (no `usage`, no tokens). The harness read that as "the model said nothing". I had to add abort detection to the proxy to see it.
 - Process bloat with uptime: after several hours the server process sat at ~24 GB resident + 18 GB compressed and rejections started at lower context. `launchctl kickstart -k` before each long batch fixed it. Restart on a schedule if you run batches.
 - Anything else on the machine kills it. Docker Desktop's VM (~21 GB) pushed 10-16 GB into swap and the model dropped to ~1 t/s with aborted streams. Quit Docker, restart oMLX, rerun.
-- The 22.6k default system prompt of the harness left ~7k of a 30k window for the actual work. I cut it to 5.9k in a fork (different post, [PR](PR_LINK)); on this machine that was the difference between "does not fit a real monorepo" and 7/8 bugs fixed.
+- The 22.6k default system prompt of the harness left ~7k of a 30k window for the actual work. I cut it to 5.9k in a fork (different post, [PR](https://github.com/can1357/oh-my-pi/pull/10077)); on this machine that was the difference between "does not fit a real monorepo" and 7/8 bugs fixed.
 
 **Repo.** Presets, scripts and every captured request: https://github.com/vinicius91carvalho/oh-my-pi/tree/local-model-eval
 

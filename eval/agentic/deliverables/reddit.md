@@ -79,7 +79,7 @@ The compact presets are faster per request only because they live in smaller con
 
 **Repo.** Fork + branch: https://github.com/vinicius91carvalho/oh-my-pi/tree/compact-prompt-for-local-models. Scripts, presets, and every captured request: https://github.com/vinicius91carvalho/oh-my-pi/tree/local-model-eval
 
-**PR.** PR_LINK - five commits with tests. Whether it lands or not, the branch runs today.
+**PR.** https://github.com/can1357/oh-my-pi/pull/10077 - five commits with tests. Whether it lands or not, the branch runs today.
 
 **How this was produced.** Everything here (fork, harness, seeded bugs, runs, this post) was done by Claude Fable 5 in Claude Code at high effort, with me setting the goals, taking the calls and approving what ships. About two days wall clock, 80 scored runs, ~22 h of local model time, 1,486 captured requests, on the same laptop that was shipping deploys in another session.
 
