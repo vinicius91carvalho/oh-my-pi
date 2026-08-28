@@ -257,6 +257,10 @@ The compact presets are faster per request only because they live in smaller con
 - `omp compress` (the harness's own context-file compressor) stalled 35 min on the local model, zero output. Context files were compacted by hand.
 - ANE offload: 64 layers = 28.6 GB resident, server rejects a 69-token prompt; 16 layers runs but loses prefill speed and swaps 2 GB.
 
+### How this was produced
+
+The fork, the benchmark harness, the seeded bugs, every run and this write-up were done by Claude Fable 5 (Claude Code, high reasoning effort), directed by a human who set the goals, chose the trade-offs and approved what gets published. Wall clock: about two days (Aug 26-28, 2026). Local model time: 80 scored runs, ~15.5 h of agent runs plus ~6 h of long sessions, 1,486 captured requests, on a laptop that was also serving deploys from another session in the same period (hence the pause protocol and the memory findings).
+
 ### Tests
 
 - `test/xdev-force-mount.test.ts` (6): empty list, essential, pinned, transport invariant, globs, malformed entries

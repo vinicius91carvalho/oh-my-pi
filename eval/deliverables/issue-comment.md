@@ -46,4 +46,6 @@ The one bug no preset solved (8/8 runs, same diff): a docs rule says the landing
 
 **What the defaults lose is the machine.** With a 22k prompt every hard bug peaks at 27-39k tokens, where oMLX rejects or aborts the prefill on 36 GB; the same bugs peak at 13-27k on the compact presets. `xd://` devices work: `edit` through `xd://edit` 22/22 in round 2; language servers installed and listed, never called by this model.
 
+**How this was produced.** Fork, harness, seeded bugs, runs and text by Claude Fable 5 (Claude Code, high effort) under human direction; ~2 days wall clock, 80 scored runs, ~22 h of local model time, 1,486 captured requests.
+
 **Caveats.** One machine, one 27B model, one run per cell. `omp compress` stalled on the local model; the context files were compacted by hand.

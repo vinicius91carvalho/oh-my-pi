@@ -58,4 +58,6 @@ The one bug no preset solved (8/8 runs, same diff): a docs rule says the landing
 
 **PR.** PR_LINK - five commits with tests. Whether it lands or not, the branch runs today.
 
+**How this was produced.** Everything here (fork, harness, seeded bugs, runs, this post) was done by Claude Fable 5 in Claude Code at high effort, with me setting the goals, taking the calls and approving what ships. About two days wall clock, 80 scored runs, ~22 h of local model time, 1,486 captured requests, on the same laptop that was shipping deploys in another session.
+
 **Caveats.** One machine, one 27B, one harness version, one run per cell (two rounds). Tuned on 36 GB; a 128 GB Mac has no memory-guard rejections and less to gain. `omp compress` (the harness's own context-file compressor) stalled on the local model; I compacted my files by hand.
