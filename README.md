@@ -32,6 +32,60 @@ The most capable agent surface that ships. Continuously tuned by real-world use 
 > while we evaluate how open contributions go. Depending on the results, the
 > vouch system may return.
 
+## This fork: a ~7k-token system prompt for local models
+
+Upstream OMP sends ~22.6k tokens of system prompt before the first user word
+(11 tool JSON schemas alone are ~11.7k). On a 30-32k local model that leaves
+~7k for the actual work. This fork adds two settings, off by default, proposed
+upstream in [can1357/oh-my-pi#10077](https://github.com/can1357/oh-my-pi/pull/10077)
+(issue [#1734](https://github.com/can1357/oh-my-pi/issues/1734)):
+
+- `promptProfile: compact` renders a shorter bundled instruction template (same rules, no personality/examples/long prose).
+- `tools.xdevForceMount: [...]` moves the listed tools under `xd://`: their schema leaves the prompt and the model fetches it on demand with `read xd://<tool>`, then calls the tool with `write xd://<tool>`. Nothing is removed.
+
+Put this in `~/.omp/agent/config.yml` (or a project `.omp/config.yml`):
+
+```yaml
+promptProfile: compact
+tools:
+  xdevDocs: catalog        # required, or the mounted docs come back inline
+  xdevForceMount: [hub, eval, task, todo, web_search]   # "p7k": ~6.8k tokens of OMP prompt
+  # xdevForceMount: [hub, eval, task, todo, web_search, edit, glob]        # "p5k": ~4.4k
+  # xdevForceMount: [hub, eval, task, todo, web_search, edit, glob, grep]  # "p3k": ~4.0k
+compaction:
+  thresholdTokens: 20000   # for a 30k window; the summary request needs room too
+```
+
+Measured on Qwen3.8-27B (oMLX, 30k window, 36 GB M3 Max): the p7k preset fixed 7/8
+seeded bugs in two real repos where the default prompt fixed 5/8 and could not fit the
+hard ones at all. Full method, numbers and every captured request:
+[`local-model-eval`](https://github.com/vinicius91carvalho/oh-my-pi/tree/local-model-eval/eval/agentic/deliverables).
+
+Run this fork from source (needs [Bun](https://bun.sh) and a Rust toolchain for the native addon):
+
+```sh
+git clone https://github.com/vinicius91carvalho/oh-my-pi && cd oh-my-pi
+bun setup            # workspaces + native addon
+bun dev              # = omp from this source tree
+bun dev -- -p "read xd:// and list the devices"   # smoke test
+```
+
+To have `omp` on your PATH point here, drop a wrapper before the Homebrew/npm binary:
+
+```sh
+cat > ~/.local/bin/omp <<'EOF2'
+#!/usr/bin/env bash
+exec bun "$HOME/path/to/oh-my-pi/packages/coding-agent/src/cli.ts" "$@"
+EOF2
+chmod +x ~/.local/bin/omp
+```
+
+`promptProfile: full` (the default) renders byte-identical to upstream, so the fork is
+safe to use with cloud models too. Branches: `main` = upstream + the five PR commits;
+`compact-prompt-for-local-models` = the PR branch itself; `local-model-eval` = benchmark data.
+
+---
+
 ## Install
 
 **macOS · Linux**
