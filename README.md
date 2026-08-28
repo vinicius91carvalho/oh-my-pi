@@ -61,13 +61,23 @@ seeded bugs in two real repos where the default prompt fixed 5/8 and could not f
 hard ones at all. Full method, numbers and every captured request:
 [`local-model-eval`](https://github.com/vinicius91carvalho/oh-my-pi/tree/local-model-eval/eval/agentic/deliverables).
 
-Run this fork from source (needs [Bun](https://bun.sh) and a Rust toolchain for the native addon):
+Run this fork from source (needs [Bun](https://bun.sh)):
 
 ```sh
 git clone https://github.com/vinicius91carvalho/oh-my-pi && cd oh-my-pi
-bun setup            # workspaces + native addon
+bun setup            # workspaces + native addon (needs a Rust toolchain)
 bun dev              # = omp from this source tree
 bun dev -- -p "read xd:// and list the devices"   # smoke test
+```
+
+No Rust? Use the prebuilt addon from npm instead of `bun setup`:
+
+```sh
+bun install
+npm pack @oh-my-pi/pi-natives-darwin-arm64@18.0.7   # or linux-x64, linux-arm64, darwin-x64, win32-x64
+tar xzf oh-my-pi-pi-natives-darwin-arm64-18.0.7.tgz
+cp package/*.node packages/natives/native/ && rm -rf package *.tgz
+bun dev -- --version
 ```
 
 To have `omp` on your PATH point here, drop a wrapper before the Homebrew/npm binary:
