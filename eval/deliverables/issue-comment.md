@@ -1,5 +1,7 @@
 Measured the problem and a fix end to end on a local model; PR_LINK has the change, https://github.com/vinicius91carvalho/oh-my-pi/tree/local-model-eval has the scripts and every captured request, REDDIT_LINK is the write-up.
 
+**Why.** Local-only setup: M3 Max 36 GB, Qwen3.8-27B on oMLX (11 t/s on llama-server -> 17 on oMLX -> 32 with MTP + memory-guard/KV tuning), usable window ~32k and no truncation server-side. OMP is my harness because of what it adds to Pi (31 tools with `xd://`, `hub`, LSP/DAP, subagents, skills/rules, memory); that breadth is what the 22.6k-token door costs, and `xd://` is the mechanism that can pay for it if it is opened to the expensive tools.
+
 **Where the 22,643 tokens go** (18.0.7 defaults, real TS monorepo, one 21-tool MCP server, server `usage.prompt_tokens`): tool JSON schemas 11,734 (52%; `hub` 2,898), instruction template 6,160, the user's context files 3,981, MCP routes 401, misc 367. Harness share 18.5k, user share 3.9k.
 
 **Why settings could not fix it.** `tools.xdev` defers a schema to `read xd://<tool>`, but `isMountableUnderXdev()` only accepts `loadMode: "discoverable"`, and `ESSENTIAL_BUILTIN_TOOL_NAMES` + `XDEV_KEEP_TOP_LEVEL` cover 10 of the 11 tools. `setActiveTools` exists, `setActiveToolPresentation` does not: from outside the source an expensive tool can be removed, never deferred.

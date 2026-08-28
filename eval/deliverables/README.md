@@ -9,6 +9,8 @@ Fork de [oh-my-pi](https://github.com/can1357/oh-my-pi) com dois ajustes de conf
 | [reddit.md](reddit.md) | post do r/LocalLLaMA |
 | [TODO.md](TODO.md) | checklist de verificacao |
 
+Por que: rodar um agente de codigo so no laptop (M3 Max, 36 GB). Qwen3.8-27B a ~11 t/s no llama-server -> 17 no oMLX -> 32 com MTP + teto de memoria 27 GB + KV TurboQuant 3,5 bits; janela util ~32k e o oMLX nao trunca. OMP em vez do Pi puro pelo que ele adiciona (31 tools com `xd://`, `hub` para MCP, LSP/DAP, subagentes, skills, rules, memoria), e essa largura e o que custa 22,6k tokens na porta. A ideia: o lazy loading `xd://` ja existe; abrir para as tools caras, manter tudo alcancavel, medir em bugs reais.
+
 Como foi feito: fork, harness, bugs semeados, corridas e textos pelo Claude Fable 5 (Claude Code, esforço alto), com o Vinicius definindo metas, escolhas e aprovacoes. ~2 dias de relogio (26-28/08/2026), 80 corridas pontuadas, ~22 h de modelo local, 1.486 requests capturadas.
 
 Scripts: `../run-real.sh`, `../run-long.sh`, `../table-compare.py`, `../tools-used.py`, `../real/README.md`.

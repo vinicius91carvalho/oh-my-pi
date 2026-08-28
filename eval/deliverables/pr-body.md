@@ -2,6 +2,16 @@
 
 Refs #1734. Five commits, each self-contained; defaults are untouched and `promptProfile: full` renders byte-identical (33,440 bytes both sides).
 
+### Why this, in short
+
+I wanted a coding agent that runs on my own laptop: a MacBook Pro M3 Max with 36 GB, no cloud. The road to get there is most of why the prompt size matters:
+
+1. **Serving.** Qwen3.8-27B (AWQ 5 bpw, 17.4 GB) ran at ~11 t/s on `llama-server`. Switching to oMLX (Apple Silicon, continuous batching, SSD prefix cache) gave 17-18 t/s, which is exactly the memory-bandwidth limit (300 GB/s / 17.4 GB). Raising oMLX's memory guard from 24 to 27 GB fixed prefill (9 -> 137 t/s cold; the bottleneck was the prefill scratch at ~10 MB/token, not the KV cache), TurboQuant 3.5-bit KV bought headroom, and enabling MTP (the checkpoint ships a draft head, 88% acceptance) took decode to 32 t/s. ANE offload loses on 36 GB.
+2. **The window.** On this machine the usable context is ~32k: 33k tokens peak at 24.7 GB, 64k does not fit, and oMLX does not truncate (over the window is HTTP 400). Every token the harness spends before I type is gone for good.
+3. **The harness.** Pi is the minimal, clean core: agent loop, read/write/edit/bash, sessions, compaction, extensions. OMP builds on it and adds the things a real project needs: 31 tools in one namespace with `xd://` devices (lazy loading built in), `hub` for MCP servers, LSP and a debugger, subagents in worktrees, skills and rules, memory, stream rules. That breadth is what I want, and it is also what costs 22.6k tokens at the door, because ten of the eleven default tools cannot use the lazy path.
+
+So the interesting idea is not "shorter prompt". It is: OMP already has on-demand tool loading; open it to the tools that are expensive, keep everything reachable, and measure on real bugs whether a 27B model still does the job. It does.
+
 ### The problem, measured
 
 18.0.7 sends **22,643 tokens** before the first user word, measured on the wire against a local oMLX server inside a real TypeScript monorepo with an `AGENTS.md`, a user rules file and one 21-tool MCP server. JSON schemas of the 11 top-level tools 11,734 (52%; `hub` alone 2,898), instruction template 6,160, the user's own context files 3,981, MCP routes 401, misc 367. On a 30k window that leaves ~7k for the conversation.
