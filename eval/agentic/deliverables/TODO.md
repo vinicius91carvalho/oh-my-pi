@@ -3,7 +3,7 @@
 Ultima atualizacao: 2026-08-28 10:05
 
 ## Em andamento
-- [ ] Fixture 12 tarefas com p7k e o fork atual: em andamento, 6/7 (test-01 falhou: modelo editou package.json apesar do "nao mude nada")
+- [ ] Fixture 12 tarefas com p7k e o fork atual: a rodada p7k-v5 foi invalidada (check "arvore limpa" era impossivel: package.json do fixture com conserto nao commitado + answer.txt untracked; corrigido no commit 03440d6 do fixture). Rerun p7k-v6 agendado apos o very hard (fixture-rerun2.sh)
 - [ ] Very hard com a regra "Rule first" (p7k e p3k, py + ts): responde se a regra resolve o py-veryhard - ~1h30, dispara sozinho depois do fixture
 
 ## Depois que os 3 acima fecharem

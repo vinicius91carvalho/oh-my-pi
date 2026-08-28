@@ -1,0 +1,14 @@
+
+
+For an empty `items` array, `cartTotal` returns **`0`** (the integer zero), as long as `percent` is between 0 and 100.
+
+Here is the chain:
+1. `[cart.js#4]` The `reduce` starts with `0`, and with no items the callback never runs, so `subtotal` is `0`.
+2. `[discount.js#4]` `applyDiscount(0, percent)` computes `0 - (0 * percent) / 100`, which is `0`.
+
+One edge case: if `percent` is outside 0-100, it throws `RangeError` (`[discount.js#3]`) even for an empty cart, because the range check runs before the math.
+
+Summary:
+- What: empty cart returns `0`, but an out-of-range `percent` throws.
+- Why: `reduce` initial value is `0`, and the discount check happens before the math.
+- For you: calling `cartTotal([], 150)` throws, not returns `0`.

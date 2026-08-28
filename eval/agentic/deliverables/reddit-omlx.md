@@ -1,6 +1,6 @@
 # Qwen3.8-27B on a 36 GB M3 Max: 11 -> 17 -> 32 t/s with oMLX, and what a coding agent does to those numbers over 1,068 requests
 
-**Why.** I wanted a coding agent on my own laptop, no cloud. MacBook Pro M3 Max 14/30, 36 GB. Model: Qwen3.8-27B-AWQ-5.0bpw.
+**Why.** I wanted a coding agent on my own laptop, no cloud. MacBook Pro M3 Max 14/30, 36 GB. Model: [True2456/Qwen3.8-27B-AWQ-5.0bpw](https://huggingface.co/True2456/Qwen3.8-27B-AWQ-5.0bpw) (18.8 GB resident).
 
 **The speed ladder** (short prompt, 69 tokens):
 
@@ -11,6 +11,24 @@
 | oMLX | memory guard raised to 27 GB, TurboQuant KV 3.5-bit, MTP on | **32 t/s**, prefill 137 t/s |
 
 With 36 GB the usable window is ~30k tokens (`contextWindow: 30000` in the harness config). oMLX does not truncate: over the window is HTTP 400, which is the right behaviour for an agent, it just has to be planned for.
+
+**The exact oMLX setup** (0.6.3rc3, launched as a launchd service):
+
+```
+omlx-cli serve --model-dir ~/tools/qwen3.8-27b --host 127.0.0.1 --port 1337 \
+  --memory-guard-gb 27 --max-concurrent-requests 2 --hot-cache-max-size 2GB \
+  --paged-ssd-cache-dir ~/.omlx/ssd-cache --paged-ssd-cache-max-size 60GB
+```
+
+`~/.omlx/model_settings.json`:
+
+```json
+{ "Qwen3.8-27B-AWQ-5.0bpw": { "turboquant_kv_enabled": true, "turboquant_kv_bits": 3.5, "mtp_enabled": true } }
+```
+
+`~/.omlx/settings.json`, the parts that matter: `memory_guard_custom_ceiling_gb: 27`, `soft_threshold: 0.85`, `prefill_priority: "context"`, `chunked_prefill: false`, `max_concurrent_requests: 2`, `burst_decode_mode: "balanced"`, `preserve_mid_system_cache: true`, `hot_cache_max_size: 2GB`, `ssd_cache_max_size: 60GB`, `max_context_window: 32768`, `temperature: 1.0`, `top_p: 0.95`.
+
+Why 27 GB and not the default: oMLX derives the prefill cap as ceiling x soft_threshold. With 24 GB and an 18.8 GB model that left ~1.2 GB for the prefill working set; the scheduler does not refuse, it shrinks the chunk to 32 tokens and grinds (a 12.6k prompt took 23 minutes at 9 t/s). 27 GB puts the cap near 22.5 GB and stays under this Mac's Metal working-set limit (28.1 GB). Concurrency 2 instead of 8 because each in-flight request carries its own KV cache.
 
 **What an agent does to those numbers.** I ran 80 scored coding-agent runs (harness: [OMP](https://github.com/can1357/oh-my-pi), a Pi fork; 8 seeded bugs in two real repos, plus multi-turn sessions) with a logging proxy in front of oMLX, so every number below is the server's own `usage` on 1,068 requests.
 

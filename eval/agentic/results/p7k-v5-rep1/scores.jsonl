@@ -6,3 +6,7 @@
 {"id": "edit-03", "axis": "edit", "pass": true, "seconds": 566.2}
 {"id": "test-01", "axis": "run tests", "pass": false, "seconds": 81.2}
 {"id": "test-02", "axis": "run tests", "pass": true, "seconds": 99.9}
+{"id": "stop-01", "axis": "stop", "pass": false, "seconds": 30.5}
+{"id": "stop-02", "axis": "stop", "pass": false, "seconds": 63.1}
+{"id": "ask-01", "axis": "ask", "pass": false, "seconds": 626.6}
+{"id": "ask-02", "axis": "rules", "pass": true, "seconds": 268.3}

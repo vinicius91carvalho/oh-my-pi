@@ -1,0 +1,15 @@
+
+
+All 24 pass (the 23 originals plus my new test). I already proved the regression at the regex level before editing: the old pattern returned `False` for "12 anos de experiência", so `validate_landing_copy` would have let it through and `assert result.passed is False` would have failed.
+
+Done. Here is what happened.
+
+**What I did**
+- Fixed the one-line bug in `copy.py:40`: changed the regex from `experiencia` (plain `e`) to `experi[eê]ncia`. That makes the "years of experience" check match both Spanish "años de experiencia" and pt-BR "anos de experiência".
+- Added `test_validate_landing_copy_rejects_years_of_experience_in_pt_br` in `tests/test_landing_gen.py`, using your exact sentence "Marina tem 12 anos de experiência organizando casamentos."
+
+**Why it was broken**
+The check only knew the Spanish spelling. "experiência" has an accented ê; the pattern demanded a bare e, so the whole pt-BR string slipped past the credential filter. Spanish was already caught, which is why it looked fine in that market.
+
+**What it means**
+A fictional persona can no longer claim years of experience in pt-BR either, not just es-MX. The validator now blocks it deterministically in both markets, and the test locks that in so it cannot silently regress.

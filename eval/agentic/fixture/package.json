@@ -1,8 +1,5 @@
 {
   "name": "cartola",
   "version": "1.0.0",
-  "scripts": {
-    "test": "node --test 'src/**/*.test.js'"
-  },
-  "type": "module"
+  "scripts": { "test": "node --test 'src/**/*.test.js'" }
 }
