@@ -79,7 +79,7 @@ Context files count too: `~/.omp/agent/AGENTS.md` dense (1,010 tokens) + on-dema
 
 ### Compaction (long sessions)
 
-Compaction is untouched by the fork and fires on the same setting (`compaction.thresholdTokens`, here 27,000 of 30,000). The modes only change how much room is left before it fires: base has ~7.7k tokens of conversation before compaction, p7k ~19k, p3k ~22k. See benchmark.md, "long session", for the measured run.
+Compaction is untouched by the fork and fires on the same setting (`compaction.thresholdTokens`, here 27,000 of 30,000). The modes only change how much room is left before it fires: base has ~7.7k tokens of conversation before compaction, p7k ~19k, p3k ~22k. See "Long sessions" below for the measured runs.
 
 ## Benchmark
 
@@ -97,7 +97,7 @@ Compaction is untouched by the fork and fires on the same setting (`compaction.t
 
 ### Prompt size ladder (real TS monorepo, `AGENTS.md` + user file + one 21-tool MCP server)
 
-Server `usage.prompt_tokens` for the whole request. Of these, the user's own context files are 3,923 tokens in every row until the last one (1,486 after compaction); the rest is OMP's template + tool schemas. See modes.md for the split per preset.
+Server `usage.prompt_tokens` for the whole request. Of these, the user's own context files are 3,923 tokens in every row until the last one (1,486 after compaction); the rest is OMP's template + tool schemas. See "Who puts what in the prompt" above for the split per preset.
 
 | step | prompt tokens | tool schemas | rest |
 |---|---:|---:|---:|
