@@ -14,6 +14,8 @@
 
 ## 1. Prompt size ladder (real TS monorepo, `AGENTS.md` + user file + one 21-tool MCP server)
 
+Server `usage.prompt_tokens` for the whole request. Of these, the user's own context files are 3,923 tokens in every row until the last one (1,486 after compaction); the rest is OMP's template + tool schemas. See modes.md for the split per preset.
+
 | step | prompt tokens | tool schemas | rest |
 |---|---:|---:|---:|
 | upstream 18.0.7, defaults | 22,643 | 11,734 | 10,909 |
@@ -54,6 +56,31 @@ Worktrees of two real repos: `find-best-job` (TypeScript pnpm monorepo, 1,488 TS
 | py-hard | hard | `CAROUSEL_CARDS_MAX = 5` in `campaign/models.py`; 16 pydantic errors elsewhere |
 | py-veryhard | very hard | `docs/decisions.md` D07: Portuguese "anos de experiencia" claim must be blocked; only Spanish is; must write the test |
 
+### Difficulty levels
+
+| level | definition | time budget the level implies |
+|---|---|---|
+| easy | one line in one file; the failing test names the file | read the test, read the file, one edit, run tests: minutes |
+| medium | bug in one module, failing test in another package; the agent must follow the call chain | plus a grep or two and a rebuild of the touched package |
+| hard | symptom far from cause (a wrong constant or regex in a shared module; the error never names the culprit file) | plus real investigation across packages |
+| very hard | a documented business rule is broken and the test that would catch it was deleted; the report describes one symptom; the agent must find the rule in the docs, fix it fully, and write the test back; a hidden test with more cases is copied in at scoring | plus reading docs, writing tests, and getting the rule right, not just the symptom |
+| LSP | rename an exported symbol used in 4 packages (8 files) / change a function's return type and propagate it to 4 packages (6 files) | plus rebuilding packages so cross-package `tsc` and vitest pass |
+
+### Pass rate and time per level (both rounds together, 4 runs per cell; LSP tasks are round 2 only)
+
+| level | base | p7k | p5k | p3k |
+|---|---|---|---|---|
+| easy | 4/4, 8 min median (6-12) | 4/4, 5 min (2-6) | 4/4, 4 min (4-6) | 4/4, 4 min (2-6) |
+| medium | 4/4, 5 min (4-14) | 4/4, 4 min (3-5) | 4/4, 5 min (5-7) | 4/4, 18 min (9-30)* |
+| hard | 1/4, 4 min (0-14)** | 4/4, 8 min (4-20) | 4/4, 9 min (4-30) | 4/4, 7 min (4-17) |
+| very hard | 0/4, 13 min (2-30) | 2/4, 29 min (11-30) | 1/4, 20 min (7-30) | 1/4, 22 min (13-30) |
+| LSP (rename / contract) | 1/2, 19 min (16-22) | 2/2, 22 min (15-30) | 1/2, 20 min (10-30) | 1/2, 12 min (10-15) |
+
+\* p3k medium: one 30-minute run was the `xd://edit` escaping loop (fixed by commit 4); the other was 16 min of the agent saving notes to Basic Memory as the user's rules ask.
+\*\* base hard: "4 min" is misleading: 3 of the 4 runs ended in 0-5 minutes because the server rejected the prompt, not because the agent was fast.
+
+Reading: easy and medium are solved by every preset; the presets differ in time, not in outcome. Hard is where the default breaks (the machine rejects its 21-31k contexts). Very hard is where the 30-minute budget breaks: every preset finds the fix on ts-veryhard, and writing the extra test on top is what runs out the clock. The one bug no preset solved is below.
+
 Round 1 = fork commits 1-3, no language server installed. Round 2 = + commit 4 (xd:// references, device-call example, factored MCP rows), `typescript-language-server` and `pyright` installed, 2 extra LSP-shaped tasks. Timeout 30 min per task. `+Nab` = N streams the oMLX memory guard aborted mid-run (the agent recovers or not).
 
 | bug | base r1 | base r2 | p7k r1 | p7k r2 | p5k r1 | p5k r2 | p3k r1 | p3k r2 |
@@ -83,6 +110,19 @@ What the table says:
 - Aborts happen above ~25k tokens whenever the server has been up for hours (process grows to 24 GB + 18 GB compressed); a restart clears it. This is the 36 GB ceiling, and the strongest argument for a small prompt.
 
 
+
+### The bug nobody solved: py-veryhard
+
+**The rule.** `docs/decisions.md` D07 in the Python repo: the fictional persona on a landing page may never claim years of experience, and deterministic validation must block such copy. The code already blocked Spanish (`\d+\s*años de experiencia`); the seeded bug removed the Portuguese pattern and the test that covered it.
+
+**The report the agent got.** "A pt-BR bio saying 'Marina tem 12 anos de experiência organizando casamentos.' passes `validate_landing_copy`, but D07 says ... Fix it and add a pytest test that proves it."
+
+**What all 8 runs did (4 presets x 2 rounds), identically.** Found the pattern list, widened it to accept the accent (`experi[eê]ncia`), kept the leading `\d+` (a number is required), added a test with the exact sentence from the report, ran the suite green, and stopped. All 8 diffs are the same one-line regex change (three spell the accent differently); all 8 keep the `\d+`.
+
+**Why it fails.** The hidden test also sends "Marina traz anos de experiencia com casamentos reais." (no number). D07 forbids the claim, not the number. The agent fixed the symptom in the report and never went back to the rule to ask what else it forbids. The reference fix is a second pattern without `\d+`.
+
+**What it tells you.** This is the model, not the preset: same decision with 22k or 8k of prompt, with or without the compact template. It is also the most useful kind of failure to know about when you use this setup: the agent will make the reported case pass; verifying that it covered the documented rule is still your job. A prompt rule ("when a report cites a documented rule, read the rule and cover every case it names") is the next thing to try; it was not tested here.
+
 ## 4. Long session with compaction
 
 One session, 4 chained turns (`-p` then `-p --continue`) on ts-veryhard, until the context crosses `compaction.thresholdTokens` 27,000 of 30,000.
@@ -91,11 +131,34 @@ One session, 4 chained turns (`-p` then `-p --continue`) on ts-veryhard, until t
 |---|---|---|---|---|---|
 | p3k, r1 | 27k | 15 | no (never reached) | 3 | every turn ended by a memory abort at 22-24k; nothing fixed |
 | p7k, r1 | 27k | 53 | yes, in turn 1 | 3 | fix + test written, 43/44 hidden cases; kept working 47 requests after compaction |
-| p3k-long, r2 | 20k | 59 | yes, repeatedly (sawtooth 36k -> 12k) | 0 | survived every compaction; test environment was broken by a stale `dist` (see meter bugs) -> rerun in progress |
-| p7k-long, r2 | 20k | 27 | yes | 1 | same broken `dist` -> rerun in progress |
+| p3k-long, r2 (stale dist) | 20k | 59 | yes, repeatedly (sawtooth 36k -> 12k) | 0 | survived every compaction; tests broken by a stale `dist` (meter bug 6), discarded |
+| **p3k-long, r2 rerun** | 20k | 42 | yes, request 7, then 36 more requests | 2 | **fix + test written, 45/45 including hidden cases** |
+| p7k-long, r2 (stale dist) | 20k | 27 | yes | 1 | same broken `dist`, discarded |
+| p7k-long, r2 rerun | 20k | (running) | | | |
 
-Mechanics proven: `-p --continue` rebuilds the session as a HISTORY block, in-turn compaction fires and the agent keeps calling tools (including `xd://` devices) afterwards. Quality on this machine: only p7k completed the 4-turn task. With a 30k window and a 27k threshold, single turns overshoot to 36-39k (compaction only runs between turns), so on 36 GB the useful threshold is 20k.
+Mechanics proven: `-p --continue` rebuilds the session as a HISTORY block, in-turn compaction fires and the agent keeps calling tools (including `xd://` devices) afterwards. Quality on this machine: with the 20k threshold and a fresh server, p3k completed the whole 4-turn task (fix, test, explanation, second audit); with 27k, only p7k got close. With a 30k window and a 27k threshold, single turns overshoot to 36-39k (compaction only runs between turns), so on 36 GB the useful threshold is 20k.
 
+
+## Speed inside the agent (1,068 requests, both rounds, server-reported)
+
+The 32 t/s bench number is a 69-token prompt. Inside agent runs generation falls with context size, because every token attends over the whole KV cache:
+
+| context | generation, median |
+|---|---:|
+| 5-10k | 27.9 t/s |
+| 10-15k | 24.3 |
+| 15-20k | 21.5 |
+| 20-25k | 20.4 |
+| 25-30k | 19.8 |
+
+| preset | generation median / p90 | uncached prefill | prefix-cache hit | TTFT median |
+|---|---:|---:|---:|---:|
+| base | 21.0 / 23.4 | 95 t/s | 90% | 23-26 s |
+| p7k | 21.6 / 27.2 | 110 t/s | 85% | 19-21 s |
+| p5k | 22.6 / 28.5 | 117 t/s | 84% | 19-20 s |
+| p3k | 22.7 / 29.0 | 112 t/s | 87% | 15-19 s |
+
+The compact presets are faster per request only because they live in smaller contexts. oMLX caches in 2,048-token pages, so up to 2k tokens are re-prefilled every request on top of the new turn (the cache-hit column).
 
 ## Meter bugs found on the way (all in the harness, none in the model)
 

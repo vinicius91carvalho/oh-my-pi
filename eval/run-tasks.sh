@@ -10,10 +10,10 @@ set -uo pipefail
 PROFILE="${1:?perfil}"
 REP="${2:-1}"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-OMP_SRC="$HOME/github/vinicius91carvalho/oh-my-pi"
+OMP_SRC="${OMP_SRC:-$HOME/github/vinicius91carvalho/oh-my-pi}"
 BUN="$HOME/.local/share/mise/installs/bun/1.4.0/bin/bun"
 CFG="$HERE/profiles/$PROFILE.yml"
-OUT="$HERE/results/$PROFILE-rep$REP"
+OUT="$HERE/results/${RESULT_NAME:-$PROFILE}-rep$REP"
 mkdir -p "$OUT"
 : > "$OUT/scores.jsonl"
 

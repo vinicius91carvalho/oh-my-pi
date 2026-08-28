@@ -1,0 +1,104 @@
+diff --git a/packages/profile/src/conservative-default.test.ts b/packages/profile/src/conservative-default.test.ts
+index 1ad519e..af5200b 100644
+--- a/packages/profile/src/conservative-default.test.ts
++++ b/packages/profile/src/conservative-default.test.ts
+@@ -206,6 +206,56 @@ describe("conservativeDefaultAnswer: authorization where the job is located", ()
+   });
+ });
+ 
++/**
++ * The Greenhouse run that reported the bug (2026-08-28): the candidate had no
++ * work countries on file, and in one case the caller passed no posting at
++ * all - yet the answer was a positive, a claim with nothing behind it. With
++ * no evidence the negative is the only answer, in both of those shapes.
++ */
++describe("conservativeDefaultAnswer: authorization with no evidence", () => {
++  const NO_EVIDENCE =
++    "Are you legally authorized to work in the country where the job is located?";
++
++  it("answers no when the caller passed no posting at all", () => {
++    const d = conservativeDefaultAnswer(NO_EVIDENCE);
++    expect(d).not.toBeNull();
++    expect(d!.kind).toBe("boolean");
++    expect(d!.answer).toMatch(/^No/);
++    expect(resolveBooleanAnswer(d!.answer)).toBe("no");
++  });
++
++  it("answers no when the candidate has no work countries on file", () => {
++    const d = conservativeDefaultAnswer(NO_EVIDENCE, {
++      location: "San Francisco, CA, United States",
++      workCountries: [],
++    });
++    expect(d!.answer).toMatch(/^No/);
++    expect(resolveBooleanAnswer(d!.answer)).toBe("no");
++  });
++
++  it("answers no on a worldwide posting when no work countries are on file", () => {
++    // Worldwide reads as "works from home" only when the candidate has a home
++    // country on file; with none on file there is no country they are known
++    // to work in either.
++    const d = conservativeDefaultAnswer(NO_EVIDENCE, {
++      location: "Anywhere in the World",
++      remoteScope: "worldwide",
++      workCountries: [],
++    });
++    expect(d!.answer).toMatch(/^No/);
++    expect(resolveBooleanAnswer(d!.answer)).toBe("no");
++  });
++
++  it("explains the negative as missing evidence, not an unreadable posting", () => {
++    const d = conservativeDefaultAnswer(NO_EVIDENCE, {
++      location: "San Francisco, CA, United States",
++      workCountries: [],
++    });
++    expect(d!.answer).toMatch(/^No/);
++    expect(d!.why).toMatch(/no work countries/i);
++  });
++});
++
+ /**
+  * The question that had no answer at all, from the Greenhouse form that died
+  * on it (2026-08-21). "Your country" and "the country this role is based in"
+diff --git a/packages/profile/src/conservative-default.ts b/packages/profile/src/conservative-default.ts
+index ff11fd4..9f5367e 100644
+--- a/packages/profile/src/conservative-default.ts
++++ b/packages/profile/src/conservative-default.ts
+@@ -135,11 +135,13 @@ export interface JobReach {
+  *
+  * So: a named country decides; only a posting that names none falls back to
+  * "hires anywhere", which means the candidate works from home and is
+- * authorized there.
++ * authorized there. With no work countries on file at all there is nothing to
++ * compare the posting against, so it is unknown: a positive there would be a
++ * claim with no evidence behind it.
+  */
+ function whereTheWorkIs(job: JobReach): "yes" | "no" | "unknown" {
+   const places = namedPlaces(job.location, job.remoteScope);
+-  if (!job.workCountries.length) return "yes";
++  if (!job.workCountries.length) return "unknown";
+   if (places.countries.length) {
+     return places.countries.some((c) => job.workCountries.includes(c))
+       ? "yes"
+@@ -217,12 +219,16 @@ export function conservativeDefaultAnswer(
+       answer:
+         "No — I am not authorized to work in the country where this role is based.",
+       kind: "boolean",
+-      why:
+-        reach === "no"
+-          ? "The posting is based where the candidate has no right to work."
+-          : "Where the posting is based cannot be read from it, and " +
+-            "authorization is a document. The negative claims nothing; the " +
+-            "positive would be a fabrication.",
++  why:
++    reach === "no"
++      ? "The posting is based where the candidate has no right to work."
++      : (job?.workCountries.length ?? 0) === 0
++        ? "No work countries are on file for this candidate, and " +
++          "authorization is a document. The negative claims nothing; " +
++          "the positive would be a fabrication."
++        : "Where the posting is based cannot be read from it, and " +
++          "authorization is a document. The negative claims nothing; " +
++          "the positive would be a fabrication.",
+     };
+   }
+   if (DEMOGRAPHIC_RE.test(q) || DEMOGRAPHIC_PT_ES_RE.test(q)) {

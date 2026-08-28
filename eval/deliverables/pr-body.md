@@ -25,6 +25,20 @@ On a 30k-window local model, 18.0.7 spends 22,643 prompt tokens before the first
 | + `edit, glob` | 8,574 | 12/12 | 7/8, 6/8 |
 | + `grep` | 8,204 | 12/12 | 7/8, 6/8 |
 
+**By difficulty, both rounds.**
+
+| level (2 bugs each, TS + Python) | base | p7k | p5k | p3k |
+|---|---|---|---|---|
+| easy: 1 line, test names the file | 4/4, 8 min | 4/4, 5 min | 4/4, 4 min | 4/4, 4 min |
+| medium: bug in one package, test in another | 4/4, 5 min | 4/4, 4 min | 4/4, 5 min | 4/4, 18 min |
+| hard: cause far from symptom, error never names the file | 1/4, rejected by server | 4/4, 8 min | 4/4, 9 min | 4/4, 7 min |
+| very hard: documented rule broken, covering test deleted, hidden test at scoring | 0/4 | 2/4, 29 min | 1/4, 20 min | 1/4, 22 min |
+| LSP: rename across 8 files / contract change across 6 files | 1/2 | 2/2, 22 min | 1/2, 20 min | 1/2, 12 min |
+
+Times are medians per run (30-minute cap). Speed inside the runs, server-reported over 1,068 requests: generation 28 t/s at 5-10k context falling to 20 t/s at 20-25k (the 32 t/s bench is a 69-token prompt); uncached prefill 95 t/s (base) to 110-118 t/s (compact); prefix-cache hit 84-91%.
+
+The one bug no preset solved (8/8 runs, same diff): a docs rule says the landing-page persona may never claim years of experience; the report showed "12 anos de experiência" slipping through; every run widened the regex for the accent, kept the `\d+` (a number required), wrote a test for the reported sentence, and stopped. The hidden test's "anos de experiencia" without a number still passes validation. Symptom fixed, rule not read: the model, not the prompt size.
+
 `xd://` probes (read device list, edit with the mounted `edit`, plan with mounted `todo`): 3/3 on defaults and on the 3-tool config. Compaction unchanged; a 4-turn session past the threshold: p7k kept working 47 requests after compaction, fix + test landed. Scripts and captured requests: https://github.com/vinicius91carvalho/oh-my-pi/tree/local-model-eval
 
 ### Tests

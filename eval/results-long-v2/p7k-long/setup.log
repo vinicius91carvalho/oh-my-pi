@@ -1,0 +1,30 @@
+Scope: all 21 workspace projects
+Already up to date
+Done in 195ms using pnpm v11.13.1
+Scope: 13 of 21 workspace projects
+packages/db build$ tsc -b
+packages/queue build$ tsc -b
+packages/queue build: Done
+packages/db build: Done
+packages/core build$ tsc -b
+packages/core build: Done
+packages/browser build$ tsc -b
+packages/mail build$ tsc -b
+packages/llm build$ tsc -b
+packages/notify build$ tsc -b
+packages/mail build: Done
+packages/observability build$ tsc -b
+packages/browser build: Done
+packages/storage build$ tsc -b
+packages/llm build: Done
+packages/notify build: Done
+packages/observability build: Done
+packages/storage build: Done
+packages/adapters build$ tsc -b
+packages/profile build$ tsc -b
+packages/adapters build: Done
+packages/profile build: Done
+packages/agents build$ tsc -b && mkdir -p dist/prompts && cp src/prompts/*.md dist/prompts/
+packages/agents build: Done
+packages/pipeline build$ tsc -b
+packages/pipeline build: Done

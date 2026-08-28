@@ -1,10 +1,29 @@
 # The four modes
 
+**TL;DR: use p7k.** The fork adds two settings; p7k, p5k and p3k are just three preset values for them (how many tools leave the prompt), and `base` is the upstream default. Measured on real bugs, p7k keeps the default's quality (7/8 vs 4-5/8) at half the prompt; p5k/p3k save 2-3k more tokens and cost a little quality. Pick one preset, paste it in `config.yml`, done.
+
 Two settings do all the work: `promptProfile: compact` (shorter instruction template, same rules) and `tools.xdevForceMount` (move a tool's JSON schema out of the prompt; the model fetches it on demand with `read xd://<tool>`). `tools.xdevDocs: catalog` is mandatory with the second one, or the docs come back inline and the saving is zero.
 
-## Tools per mode
+## Who puts what in the prompt
 
-| mode | top-level (schema in every request) | mounted in `xd://` (fetched on demand) | first prompt, real TS monorepo | first prompt, small repo |
+Every request starts with a system prompt. Two parties write it:
+
+- **OMP (the harness)**: the instruction template + one JSON schema per top-level tool. This is what the fork shrinks. The preset name (p7k, p5k, p3k) is this share, rounded.
+- **You**: `~/.omp/agent/AGENTS.md` (your rules) and the project's `.omp/AGENTS.md`/`AGENTS.md`, plus MCP server instructions. The fork does not touch these; you can shrink them yourself (I did: 3,923 -> 1,486 tokens by moving detail into on-demand skills).
+
+Tokens counted with the model's tokenizer on the captured request (server counts run ~5% higher):
+
+| preset | OMP template | OMP tool schemas | **OMP total** | your context files | MCP block | **request total** |
+|---|---:|---:|---:|---:|---:|---:|
+| base | 6,503 | 12,028 | **18,531** | 3,923 | 78 | 22,532 |
+| p7k | 2,095 | 4,692 | **6,787** | 3,923 | 78 | 10,788 |
+| p5k | 2,131 | 2,285 | **4,416** | 3,923 | 78 | 8,417 |
+| p3k | 2,141 | 1,895 | **4,036** | 3,923 | 78 | 8,037 |
+| p3k + compacted context files | 2,138 | 1,895 | **4,033** | 1,486 | 78 | 5,597 |
+
+## Tools per preset
+
+| preset | top-level (schema in every request) | mounted in `xd://` (fetched on demand) | request total, real TS monorepo (server count) | small repo |
 |---|---|---|---|---:|
 | **base** (upstream default) | read bash edit eval glob grep task hub todo web_search write | none | 22,320 | 19,278 |
 | **p7k** | read bash edit glob grep write | hub eval task todo web_search | 10,838 | 7,888 |
