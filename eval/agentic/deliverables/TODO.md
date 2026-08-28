@@ -1,10 +1,10 @@
 # Lista de tarefas (atualizada pelo Claude a cada passo)
 
-Ultima atualizacao: 2026-08-28 10:05
+Ultima atualizacao: 2026-08-28 10:55 (parado a pedido do Vinicius)
 
 ## Em andamento
-- [ ] Fixture 12 tarefas com p7k e o fork atual: a rodada p7k-v5 foi invalidada (check "arvore limpa" era impossivel: package.json do fixture com conserto nao commitado + answer.txt untracked; corrigido no commit 03440d6 do fixture). Rerun p7k-v6 agendado apos o very hard (fixture-rerun2.sh)
-- [ ] Very hard com a regra "Rule first" (p7k e p3k, py + ts): responde se a regra resolve o py-veryhard - ~1h30, dispara sozinho depois do fixture
+- [ ] Fixture 12 tarefas com p7k e o fork atual: a rodada p7k-v5 foi invalidada (check "arvore limpa" era impossivel: package.json do fixture com conserto nao commitado + answer.txt untracked; corrigido no commit 03440d6 do fixture). Rerun p7k-v6 NAO rodou: parado em 28/08 10:55. Para rodar: `OMP_SRC=~/github/vinicius91carvalho/oh-my-pi-pr RESULT_NAME=p7k-v6 ./run-tasks.sh p7k 1`
+- [x] Very hard com a regra "Rule first": p7k py falhou (mesmo diff, nao leu docs), p7k ts falhou por timeout (releu o mesmo arquivo 10x, 3 compactacoes, diff vazio). p3k nao rodou: parado pelo Vinicius em 28/08 10:55. Veredito: a regra nao muda o modelo; sem commit 6
 
 ## Depois que os 3 acima fecharem
 - [ ] Se "Rule first" passar: commit 6 no branch do PR (template compacto) + teste; se nao: registrar que a regra sozinha nao basta
