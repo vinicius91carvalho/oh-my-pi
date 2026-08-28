@@ -1,0 +1,14 @@
+{
+  "model": "Qwen3.8-27B-AWQ-5.0bpw",
+  "messages": [
+    {
+      "role": "user",
+      "content": "say OK"
+    }
+  ],
+  "stream": true,
+  "stream_options": {
+    "include_usage": true
+  },
+  "max_tokens": 20
+}

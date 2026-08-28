@@ -1,0 +1,17 @@
+
+
+All green. Everything checks out:
+
+- **Pipeline test (the one you reported):** `posting-live.test.ts` now passes 10/10; it was failing 3.
+- **Core suite:** all 60 files, 951 tests pass, including the `posting-identity` specs for `job-boards.greenhouse.io`.
+- **Gates:** `pnpm --filter @fbj/core build` clean, `pnpm lint` clean, `pnpm typecheck` 31/31 tasks clean.
+
+The one-line fix in `packages/core/src/posting-identity.ts:89`: the host regex `/(^|\.)boards(-api)?\.greenhouse\.io$/` did not match `job-boards.greenhouse.io`, because the character before `boards` is a hyphen, and the pattern only allowed a dot or the start of the string. I changed it to `/(^|\.)(job-)?boards(-api)?\.greenhouse\.io$/` — exactly the pattern `packages/adapters/src/ats/board.ts:75` already uses for the same job, so the codebase now has one convention.
+
+What broke: `postingIdentity` returned `null` for the real Greenhouse host, so `checkPostingLive` bailed out with `unknown` before any fetch — the liveness probe was blind to Greenhouse's standard board URL (the one `seed.ts` and the adapters have always generated). The probe only ever worked on `boards.greenhouse.io` and `boards-api.greenhouse.io`.
+
+What it means: live/dead detection works again for Greenhouse postings, and `isDifferentPosting` (the guard that refuses submitting a different job) now sees both spellings of the same board as the same family, so it stays evidence-based instead of bailing on ignorance.
+
+What I did: fixed the host regex in `posting-identity.ts` to include the `job-` prefix and rebuilt `@fbj/core` so the pipeline reads the new dist.
+Why it was broken: the regex only matched `boards.greenhouse.io`, not Greenhouse's actual host `job-boards.greenhouse.io`, so every standard board URL parsed to "no identity" and the probe answered `unknown` without asking.
+What it means for you: Greenhouse postings are detected live or dead again, and the three failing tests plus the full 951-test core suite are green.

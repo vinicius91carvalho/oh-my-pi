@@ -1,0 +1,21 @@
+
+
+Done. The suite that would have caught this bug is in place and green.
+
+What is in `packages/profile/src/conservative-default.test.ts`, new describe block "no work countries on file" (4 tests):
+
+1. **No posting at all** - the exact bug-report scenario: `conservativeDefaultAnswer(q)` with no `job` argument must return the negative, and it now does.
+2. **Posting with no work countries on file** - a San Francisco posting, empty `workCountries`: must be the negative.
+3. **Worldwide posting, no work countries** - the old code returned `"yes"` on the first line before it even looked at the posting, so this one nails the empty-list path specifically.
+4. **The `why` explains it** - the recorded reason must say "no work countries", so the /answers row tells a human exactly why the answer was negative.
+
+Proof, red then green:
+
+- Before the source fix, running the file gave **4 failed, 32 passed** - the four new tests, all failing for the right reason (they got `"Yes - I am authorized..."` back).
+- After the fix (`whereTheWorkIs` returns `"unknown"` for an empty list instead of `"yes"`, plus the third `why` case), the same run gives **40 passed**.
+- Full `@fbj/profile` suite: **17 files, 395 tests passed** - nothing else regressed. The noisy log lines in that run are deliberate test fixtures (the suite feeds it broken profiles on purpose), not failures.
+
+Summary:
+- What I did: added 4 regression tests for the empty-work-countries case and confirmed they fail on the old code and pass now; full profile suite is green.
+- Why it was broken: `whereTheWorkIs` short-circuited to `"yes"` when the candidate had zero work countries on file - a positive claim with no evidence behind it.
+- What it means: that Greenhouse question can no longer answer "Yes" from nothing; it now gets the truthful "No", which claims nothing the candidate can't back.

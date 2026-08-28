@@ -1,0 +1,9 @@
+
+
+Done. All 409 tests in `@fbj/llm` pass, including the `monthlyUsdMax` suite that covers the min-only fallback, and the pipeline test you named now passes (4/4).
+
+**What was broken:** in `packages/llm/src/score-job.ts`, `monthlyUsdMax` computed the amount as `salaryMin ?? salaryMax` — the exact opposite of what its own doc comment says (`salaryMax ?? salaryMin`). For a 96k–144k USD/year range it took the 96k minimum and divided by 12, giving $8,000/mo instead of $12,000.
+
+**The fix:** one line, `const amount = job.salaryMax ?? job.salaryMin;` — the ceiling wins, and min-only postings still fall back to the minimum because `salaryMax` is null there. I rebuilt `@fbj/llm` so the pipeline reads the new code through `dist/`, then ran the test.
+
+**What it means for you:** the denormalized `jobs.salary_usd_month` column now stores the true monthly ceiling, so the jobs list filters and orders by the right number, and the salary-floor gate measures the most a posting actually offers.

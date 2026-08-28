@@ -1,0 +1,10 @@
+
+
+**1 test fails** (1 passes).
+
+The suite has 2 tests in `src/discount.test.js`. The failing one is "keeps integer cents on a fractional discount": `applyDiscount(999, 10)` returns `899.1` but the test expects `899`. The cause is a plain-math rounding bug in `discount.js`: a percent discount is doing float math, which lands you on a non-integer cents value, and the project rules say money must be integer cents. So the discount needs to be rounded to whole cents.
+
+Summary:
+- Ran the full suite: 2 tests, 1 fail, 1 pass.
+- The failure is a float bug in `discount.js`, not a broken test.
+- I changed no files, as you asked.

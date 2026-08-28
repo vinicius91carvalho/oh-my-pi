@@ -1,0 +1,9 @@
+
+
+Fixed. All 5 tests pass now.
+
+- **What I changed:** `packages/research/src/infoproduct_research/scoring.py` line 248, from `len(sources) <= MIN_CORROBORATING_SOURCES` to `len(sources) < MIN_CORROBORATING_SOURCES`.
+- **Why it was broken:** The constant says the minimum is 2 corroborating sources, but the check dropped trends that had exactly 2. So every valid two-source trend (like "dieta" and "curso" in the tests) got silently excluded, leaving empty results.
+- **What it means for you:** Two-source trends now make it into the ranking as they should, and single-source trends are still excluded, as the remaining tests confirm.
+
+What I did: changed one comparison (`<=` to `<`) in the source-corroboration check. Why it was broken: it excluded trends that met the 2-source minimum instead of only those below it. What it means: 2-source trends are now kept, 5/5 tests pass.

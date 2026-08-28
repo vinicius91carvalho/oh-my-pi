@@ -1,0 +1,9 @@
+
+
+1. The bug: in `whereTheWorkIs`, the very first check was "if the candidate has no work countries on file, say yes" (`return "yes"` when `workCountries` is empty), which asserted a positive with zero evidence.
+2. It lived in `packages/profile/src/conservative-default.ts` line 142, inside the branch that answers "Are you legally authorized to work in the country where the job is located?".
+3. That one branch fed both reported cases: a profile with no work countries, and a caller that passed no posting at all (which also defaults to an empty work-countries list).
+4. The docs rule matters because for legal-status questions the only safe floor is the negative that claims nothing; a positive needs proof, and "nothing on file" is the one state with the least proof, so it must answer "No", never "Yes".
+5. The fix swaps that early return to `"unknown"`, which routes to the existing negative answer, and adds a matching "why" message saying no work countries are on file.
+
+Test file re-run: 40/40 pass (1 file, 652ms), including the 4 new cases that fail without the fix.

@@ -1,0 +1,80 @@
+diff --git a/packages/profile/src/conservative-default.test.ts b/packages/profile/src/conservative-default.test.ts
+index 1ad519e..846572f 100644
+--- a/packages/profile/src/conservative-default.test.ts
++++ b/packages/profile/src/conservative-default.test.ts
+@@ -206,6 +206,75 @@ describe("conservativeDefaultAnswer: authorization where the job is located", ()
+   });
+ });
+ 
++/**
++ * The production bug of 2026-08-28: with a profile that holds no work country
++ * at all (and once, with no posting passed in at all), the job-country
++ * question got "Yes - I am authorized to work where this role is based". A
++ * positive with no country on file has nothing behind it, so the branch must
++ * answer with the negative - unless the posting hires worldwide, where the
++ * work-from-home doctrine makes "yes" truthful.
++ */
++describe("conservativeDefaultAnswer: no work country on file", () => {
++  const EMPTY = { workCountries: [] as string[] };
++  const ASK =
++    "Are you legally authorized to work in the country where the job is located?";
++
++  it("answers no when the posting names a country and the profile names none", () => {
++    const d = conservativeDefaultAnswer(ASK, {
++      location: "San Francisco, California, USA",
++      ...EMPTY,
++    });
++    expect(d).not.toBeNull();
++    expect(d!.kind).toBe("boolean");
++    expect(resolveBooleanAnswer(d!.answer)).toBe("no");
++  });
++
++  it("answers no when the posting names a country, even if it also hires worldwide", () => {
++    const d = conservativeDefaultAnswer(ASK, {
++      location: "New York, USA",
++      remoteScope: "worldwide",
++      ...EMPTY,
++    });
++    expect(d).not.toBeNull();
++    expect(d!.kind).toBe("boolean");
++    expect(resolveBooleanAnswer(d!.answer)).toBe("no");
++  });
++
++  it("answers no when the posting names a region but no country", () => {
++    const d = conservativeDefaultAnswer(ASK, { location: "Latin America", ...EMPTY });
++    expect(d).not.toBeNull();
++    expect(d!.kind).toBe("boolean");
++    expect(resolveBooleanAnswer(d!.answer)).toBe("no");
++  });
++
++  it("answers no when the caller passes an empty job", () => {
++    const d = conservativeDefaultAnswer(ASK, { location: null, ...EMPTY });
++    expect(d).not.toBeNull();
++    expect(d!.kind).toBe("boolean");
++    expect(resolveBooleanAnswer(d!.answer)).toBe("no");
++  });
++
++  it("answers no when the caller passes no job at all", () => {
++    const d = conservativeDefaultAnswer(ASK);
++    expect(d).not.toBeNull();
++    expect(d!.kind).toBe("boolean");
++    expect(resolveBooleanAnswer(d!.answer)).toBe("no");
++  });
++
++  it("still answers yes for a worldwide posting that names no place", () => {
++    // The fix must not over-deny: with remoteScope worldwide the work happens
++    // at home, and a candidate is authorized where they live.
++    const d = conservativeDefaultAnswer(ASK, {
++      location: "Remote",
++      remoteScope: "worldwide",
++      ...EMPTY,
++    });
++    expect(d).not.toBeNull();
++    expect(d!.kind).toBe("boolean");
++    expect(resolveBooleanAnswer(d!.answer)).toBe("yes");
++  });
++});
++
+ /**
+  * The question that had no answer at all, from the Greenhouse form that died
+  * on it (2026-08-21). "Your country" and "the country this role is based in"

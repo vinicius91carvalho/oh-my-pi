@@ -1,0 +1,7 @@
+ M apps/cli/src/index.ts
+ M packages/core/src/garbage-title.test.ts
+ M packages/core/src/garbage-title.ts
+ M packages/llm/src/score-job.ts
+ M packages/pipeline/src/stages/apply.ts
+ M packages/pipeline/src/stages/discover.test.ts
+ M packages/pipeline/src/stages/discover.ts

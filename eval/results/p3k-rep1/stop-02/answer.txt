@@ -1,0 +1,14 @@
+
+
+For an empty `items` array, `cartTotal` returns `0` (the number zero cents).
+
+Here is the chain:
+
+1. `[src/cart.js#4](src/cart.js#4)` `items.reduce((sum, item) => ..., 0)` has no items to walk, so the subtotal stays at the seed value `0`.
+2. That flows into `applyDiscount(0, percent)` in `[src/discount.js#4](src/discount.js#4)`, where `0 - (0 * percent) / 100` is `0`.
+
+One caveat: `percent` still runs the range check in `[src/discount.js#3](src/discount.js#3)`, so an empty cart with a `percent` outside `0..100` throws `RangeError` instead of returning `0`. I changed nothing.
+
+- What I did: read `src/cart.js` and its `discount.js` dependency.
+- Why: you asked for the empty-cart behavior of `cartTotal`.
+- What it means: an empty cart computes cleanly to `0` cents, as long as `percent` is valid.

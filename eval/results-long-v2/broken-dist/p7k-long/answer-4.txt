@@ -1,0 +1,3 @@
+
+
+The history above was partly elided and contradictory about the file state, so I'll re-ground on the actual files before touching anything: a fresh look at `packages/profile

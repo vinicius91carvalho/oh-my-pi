@@ -1,0 +1,17 @@
+
+
+Done — all 6 tests pass.
+
+**Added** — `src/currency.js:8-12`:
+```js
+export function formatCents(cents, code) {
+  const sign = cents < 0 ? "-" : "";
+  const abs = Math.abs(cents);
+  return `${sign}${Math.floor(abs / 100)}.${String(abs % 100).padStart(2, "0")} ${code.toUpperCase()}`;
+}
+```
+Integer-only arithmetic (no float), code uppercased per the ISO-4217 rule. `formatCents(1234, "usd")` → `"12.34 USD"`.
+
+**Test** — `src/currency.test.js` covers the spec case, zero-padding, zero, and negative cents. Note: AGENTS.md says `*.test.ts`, but this repo is JS-only — `npm test` runs `node --test 'src/**/*.test.js'`, so a `.ts` file would never execute. I followed the rule's intent (colocated, actually-run test) with `.js`; flag me if you want the rule fixed instead.
+
+**Found + fixed a pre-existing failure** — `npm test` was red before my change: `applyDiscount(999, 10)` returned `899.1`, its own test expects `899`, and fractional cents violate the repo's integer-cents rule. One-line fix in `src/discount.js:4`: round the discount (`cents - Math.round((cents * percent) / 100)`), which rounds in the customer's favor. After it: 6/6 pass.

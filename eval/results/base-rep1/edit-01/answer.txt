@@ -1,0 +1,5 @@
+
+
+Fixed. The failing test was `keeps integer cents on a fractional discount` in `src/discount.test.js:9` — `applyDiscount(999, 10)` returned `899.1` (float math) instead of `899`.
+
+Fix in `src/discount.js:4`: replaced `cents - (cents * percent) / 100` with `Math.floor((cents * (100 - percent)) / 100)` — integer-cent result, floor keeps the charge at or below the exact fractional price. Suite now green: 2/2 pass.

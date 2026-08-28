@@ -1,0 +1,11 @@
+
+
+Done. `formatCents(1234, "usd")` returns `"12.34 USD"`, built with pure integer math (divide, modulo, pad) so no float ever touches money, and the code is uppercased per the ISO-4217 rule.
+
+- Added `formatCents` to `src/currency.js` plus a colocated `src/currency.test.js` (5 tests; also gives the previously untested `convert` coverage, per the repo rule).
+- `npm test` exposed a pre-existing bug: `applyDiscount(999, 10)` returned `899.1`, a float, breaking the integer-cents rule. I wrapped the subtraction in `Math.round`; the old test now pins the behavior, and all 7 tests pass.
+
+Summary:
+- What I did: added `formatCents` with tests, and fixed `discount.js` to stay in integer cents.
+- Why it was broken: `discount.js` divided in a way that produced a float.
+- What it means: money math now never emits fractional cents; tests green (`7 pass, 0 fail`).

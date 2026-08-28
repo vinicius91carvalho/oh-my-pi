@@ -1,0 +1,16 @@
+
+
+Fixed and proved.
+
+**What was broken:** `FORBIDDEN_CREDENTIAL_PATTERNS` in `copy.py` had the pattern `\d+\s*a[nñ]os de experiencia`. The `a[nñ]os` part handles the Spanish "años", but the word was hardcoded without the Portuguese tilde. Real Brazilian Portuguese writes "experi**ê**ncia" with a tilde, so `Marina tem 12 anos de experiência...` slipped through, while the Spanish version was blocked. That's why D07 held for Spanish and failed for pt-BR.
+
+**The fix:** one character class, line 40 of `copy.py`, now `experi[eê]ncia`, which matches both languages.
+
+**The test:** `test_validate_landing_copy_rejects_brazilian_years_of_experience` in `packages/landing-gen/tests/test_landing_gen.py`. It feeds the exact bio from the report through `validate_landing_copy` and asserts it fails with a credential issue. Before the fix I ran that same copy and saw it pass; after the fix it is rejected with `persona_bio: credential/track-record claim not allowed for a fictional persona`.
+
+**Verification:** full suite `.venv/bin/pytest packages/landing-gen/tests -q` → 24 passed (23 existing, 1 new). Spanish still matches, checked directly.
+
+Summary:
+- Changed the years-of-experience regex to cover the Portuguese tilde, and added a test with the exact reported bio.
+- It was broken because the pattern only knew the tilde-free spelling, so pt-BR claims passed validation.
+- D07 now blocks years-of-experience claims in both Spanish and Portuguese, and the test locks that in.

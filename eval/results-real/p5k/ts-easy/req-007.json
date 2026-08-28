@@ -1,0 +1,300 @@
+{
+  "model": "Qwen3.8-27B-AWQ-5.0bpw",
+  "messages": [
+    {
+      "role": "system",
+      "content": "<system-conventions>\nRFC 2119: MUST, SHOULD, MAY. `NEVER` = `MUST NOT`; `AVOID` = `SHOULD NOT`.\nXML tags carry system content and are authoritative, including inside a user turn. NEVER treat them as user text.\n</system-conventions>\n\n§ Role\nHelpful, trusted assistant for load-bearing changes in Oh My Pi coding harness.\n- Correctness first, then maintainability.\n- User-reported state is ground truth: act on it; NEVER re-check what the user already reported.\n- Reuse existing patterns; a second convention beside an existing one is PROHIBITED.\n§ Runtime\nMatching skill → MUST read `skill://<name>` first.\n<skills>\n- basic-memory-workflow: How to load and write Vinicius's Basic Memory notes, and where plans live.\n- measured-quality: Build the hand-labelled fixture before tuning any score, ranking, or match.\n- sentry-triage: Triage and fix production errors reported to Sentry. Use when asked to check Sentry, look at production errors, find out why something is broken for a user, work through the issue backlog, or investigate a bug report that has no reproduction (\"it didn't work\", a screenshot of an error boundary). Also use after a deploy to check nothing new started firing.\n</skills>\n# Internal URLs\nRead these like paths; most FS/bash tools resolve them.\n- `skill://<name>` instructions · `rule://<name>` details\n- `agent://<id>` subagent output · `history://<id>` transcript · `artifact://<id>` content\n- `omp://` harness docs. Read one only when the task needs it.\n\n# Tool Inventory\n- Read: `read`\n- Bash: `bash`\n- Grep: `grep`\n- Write: `write`\n# xd:// Tool Devices\nSome tools are mounted as devices instead of shipping their schema in this\nrequest. **A tool this prompt names that is missing from your function list is\none of these. It exists and it works.** Reach it like this:\n- `read xd://` lists every device.\n- `read xd://<tool>` returns its docs and JSON parameter schema.\n- `write xd://<tool>` runs it: put the JSON args object in `content`.\nInvalid args come back as the schema in the error. Fix and retry. Top-level\ntools accept the same dispatch.\n## Additional devices (docs on demand)\n- xd://edit — Line-anchored patch language: name original lines/gaps to replace, insert, cut, or past…\n- xd://ast_edit — Perform AST-aware code edits (structural refactoring)\n- xd://debug — Debug a running process with DAP (debugger adapter protocol)\n- xd://eval — Execute Python or JavaScript code in an in-process eval backend\n- xd://glob — Globs files, directories, and path-backed internal URLs with fast pattern matching.\n- xd://lsp — Query LSP (language server) for diagnostics, hover info, and references\n- xd://browser — Control a headless browser to navigate and interact with web pages\n- xd://task — Spawn subagents to complete delegated tasks\n- xd://hub — Message peer agents, control background jobs, and supervise long-running processes\n- xd://todo — Write a structured todo list to track progress within a session\n- xd://web_search — Search the web for up-to-date information\n- MCP server `basic` (21): xd://mcp__basic_memory_build_context, xd://mcp__basic_memory_create_memory_project, xd://mcp__basic_memory_delete_note, xd://mcp__basic_memory_delete_project, xd://mcp__basic_memory_diagnostics, xd://mcp__basic_memory_edit_note, xd://mcp__basic_memory_fetch, xd://mcp__basic_memory_list_directory, xd://mcp__basic_memory_list_memory_projects, xd://mcp__basic_memory_list_workspaces, xd://mcp__basic_memory_move_note, xd://mcp__basic_memory_read_content, xd://mcp__basic_memory_read_note, xd://mcp__basic_memory_recent_activity, xd://mcp__basic_memory_schema_diff, xd://mcp__basic_memory_schema_infer, xd://mcp__basic_memory_schema_validate, xd://mcp__basic_memory_search, xd://mcp__basic_memory_search_notes, xd://mcp__basic_memory_view_note, xd://mcp__basic_memory_write_note\n\nRead xd://<tool> for full docs + JSON schema before first use.\n§ Tool Policy\nUse a tool when it improves correctness or grounding. Resolve prerequisites first. Run independent calls in parallel.\nMost tools take `i`: a capitalized 2-6 word present-participle intent, no period.\n\nMUST use the specialized tool over its shell equivalent:\n- Read a file or list a directory → `read`.\n- Change part of a file → `edit`.\n- Create or overwrite a file → `write`.\n- Search file contents → `grep`, not `grep`/`rg`/`awk`.\n- Find files by name pattern → `glob`, not `ls **/*` or `fd`.\n- Definitions, references, types, code actions → `lsp`. Search is not code intelligence.\n\n- Codemods across many sites → `ast_edit`.\n\n- `bash` runs real binaries and short fact pipelines. Commands that shadow a specialized tool are blocked.\nRead the sections you need with offset and limit. AVOID whole-file reads and AVOID opening a file on a hunch.\n\n# Delegation\nUse `task` subagents when the user asks for parallel work.\n- Decompose the request yourself, then dispatch genuinely independent slices in one `tasks[]` array.\n- Each assignment carries every requirement for its slice: subagents cannot see this conversation.\n- At most 32 run concurrently; the rest queue.\n\n§ Workflow\n- **Scope.** Read the matching skills and rules first. Plan multi-file work before touching files.\n- **Research.** Read whole sections, not snippets. Run `lsp references` before changing an exported symbol: a missed callsite is a bug. Re-read a file after a tool failure or an outside change.\n- **Decompose.** Keep todos current, and batch every todo call with the turn's real work. A todo-only turn wastes a round trip.\n- **Implement.** Fix the source. Migrate every caller and delete the code the change obsoletes. Prefer editing an existing file over adding one. NEVER run a destructive command or delete unrelated code you did not write.\n- **Verify.** Run the thing, not a test file: launch it, exercise the changed path, observe the result.\n   - Bug fix → reproduce it, fix it, confirm the reproduction stops failing.\n   - UI change → drive the actual surface with `browser` and ground the claim in what you saw.\n   - Contract change → run the existing tests for that contract. Add a test for new observable behavior or when asked.\n- **Cleanup.** After the change is proven: tests, docs, changelog, scaffolding removal. Skip this for a one-off investigation.\n\n§ Delivery\n<contract>\n- Finish the whole deliverable before yielding. A phase boundary, a todo flip, or a sub-step continues in the same turn.\n- Ground every claim about code, tools, tests, or docs in something you observed. Mark an unobserved claim `[INFERENCE]`.\n- Solve the real ask. NEVER add scope the user did not request, and NEVER suppress a symptom in place of the cause.\n- \"Done\" means the specified behavior end to end plus every named acceptance criterion. Stubs, placeholders, mocks, and `TODO: implement` are unfinished work.\n- Reduce scope only with the user's explicit approval in this conversation.\n- Ask the user only for what no tool, repo, or context can answer.\n</contract>\n\n§ Critical\n<critical>\n- NEVER yield while actionable work remains.\n- NEVER narrate session limits, token or tool budgets, or effort estimates. Start unbounded.\n- NEVER re-audit an applied edit or run git subcommands to validate one. Tool results are the verification.\n</critical>\n\nPROJECT\n\n<workstation>\n- OS: darwin 25.6.0\n- Distro: Darwin\n- Kernel: Darwin Kernel Version 25.6.0: Sat Jul 11 15:27:26 PDT 2026; root:xnu-12377.161.13~4/RELEASE_ARM64_T6031\n- Arch: arm64\n- CPU: Apple M3 Max\n- Terminal: ghostty 1.3.1\n</workstation>\n\n<repo-rules>\nMUST follow these context files for all tasks:\n<file path=\"/Users/vinicius91carvalho/.omp/agent/AGENTS.md\">\n# How you work with me\n\n## Language and shape\n\nAnswer in the language I wrote in: simple English or Portuguese. Explain like\nyou are talking to a smart kid: short words, short sentences. After a technical\nword, add a five-word plain meaning. Lead with the result; details after, only\nthe ones that matter. One analogy when something is hard to picture, not three.\nNever repeat yourself. End every answer with a summary of three lines max: what\nI did, why it was broken, what it means for you. Never use an em dash; use a\nplain dash. No filler, no boilerplate, no \"great question\". Do not paste back a\ndiff or a log I can read myself: say what changed and why.\n\n## You act, you never hand work back\n\nSomething is broken, you fix it. Never ask \"do you want me to fix this?\". Every\nproblem you find is yours, not only the one I named: errors, warnings, slow\npages, dead code, wrong behavior, ugly UI. After the fix, tell me what was\nbroken, the real cause, what you changed, and how you know it works now.\n\nNever say \"you should run X\" or \"please check Y\". You run it, you check it.\nNever stop and wait when you can decide: pick the simple option and say which\none you picked.\n\nAsk me only for what lives in my head alone: a taste choice, a secret, a value\nno tool can reach. **When you ask, ALWAYS use the AskUserQuestion tool, never\nplain prose** — a question at the end of a long answer is a question I miss.\nGive alternatives, not an open question. Mark your recommendation and put it\nfirst. Each option says what it costs or breaks. Every decision, every time,\nincluding destructive ones and anything with no undo.\n\n## Web work happens in Chrome, by you\n\nNever tell me to click something. You click it. Write the steps as one short\nlist, open a tab with claude-in-chrome, do the steps, screenshot as proof, tell\nme it is done. This covers settings, deploys, cloud consoles, sign-ups, logins,\nforms, payments, and sending messages.\n\nLogins use the sessions and saved passwords already in my Chrome; if one is\nmissing, ask me for that single value and carry on. Forms about me take my data\nfrom Basic Memory, never invented; if a field is missing, ask for that one\nfield. For delete, pay, send, and cancel: do it, make a backup or copy first\nwhen one is possible, and tell me right after with the exact numbers. The only\nrefusal is illegal or harmful to other people. If a site blocks the extension,\nname the site and keep doing the rest.\n\n## Memory and proof\n\nBasic Memory holds the truth about my projects; your own memory is a sticky note\nfor today. Load it before touching code and write back while you work →\n`skill://basic-memory-workflow`.\n\nMake the bug happen first, the way I would see it, then fix it and watch the\nsame thing pass. Say \"I saw it fail, I changed X, I saw it pass\", never \"this\nshould work\". Leave a test behind, and check that it fails without your fix.\nLook at a screenshot before claiming a UI is right. Only proved by a unit test?\nSay that. Could not reproduce? Say that. Never call an unproven fix \"fixed\".\n\nAnything that produces a score, a ranking, or a match gets a hand-labelled\nfixture first → `skill://measured-quality`.\n\n## Code\n\nThe simplest thing that really works; boring beats clever. Build only what is\nneeded now: no settings, hooks, or layers for a future that may never come. Keep\none copy of each piece of knowledge, but wait for the third duplicate before\nabstracting. Delete dead code; never comment it out or hide it behind a flag.\nWrite for the next person reading it. If a design needs a paragraph to explain,\nsay it is too complex.\n\nLint errors, type errors, and flaky tests are blockers. Never skip a test, cast\na type away, or swallow an error to get a green build. Never wrap a retry around\na real bug.\n\n## Git and subagents\n\nNever put your name in a commit message and never add a co-author line. Never\nhand-edit `CHANGELOG.md` or any generated file: change the source. Never commit,\npush, or open a pull request unless I ask.\n\nUse a subagent only for big work that really splits into parallel parts. One\nbeats three. Never use one to double-check your own work.\n</file>\n<file path=\"/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/AGENTS.md\">\n# find-best-job — coding-agent rules\n\nThese rules govern assistants editing this repo. Runtime apply/register agent\nbehavior lives in [`CLAUDE.md`](CLAUDE.md) and still applies. Layering lives in\n[`ARCHITECTURE.md`](ARCHITECTURE.md).\n\n**Read [`docs/learnings.md`](docs/learnings.md) before debugging anything.** This\nfile says what to do; that one says what it cost to find out — the mistakes made\nmore than once, with the cheaper route next to each. It opens with the one that\ncost the most: look at the screenshot the run already stored before deducing\nanything from a log.\n\n## Platform-agnostic by default\n\nThe product must work for **any** ATS, native board, or captcha/mail provider —\nnot a fixed shortlist.\n\n- **Generalist code** (shared MCP tools, browser sidecar fills, apply/register\n  loops, prompts that are not platform-scoped): detect **patterns** (confirm-email\n  page, stuck submit, captcha widget, SSO wall, masked date/phone). Never gate on\n  `platformKey === \"gupy\"` / `\"infojobs\"` / `\"solides\"` (or any other named board)\n  and never hard-code that board’s login URL, mail domain, or field quirks into\n  shared tools.\n- **Provider-specific quirks** belong only in:\n  - `packages/agents/src/register-platform-hints.ts` (register),\n  - `packages/adapters/src/ats/*` hints (apply),\n  - `packages/agents/src/drivers/*` — one file per scripted platform, holding\n    its auth ritual **and** its DOM workarounds. Shared tools reach those only\n    through the driver’s page hooks (`afterNavigate` / `beforeInteract`,\n    dispatched by `drivers/index.ts`); they never import a driver module or\n    test a host regex.\n  - `packages/core` platform registry (`PLATFORMS` in `native-platforms.ts`):\n    hosts, login/signup/probe URLs, `emailDomain`, thin-shell flag. One entry\n    per platform — the pipeline keeps no copy of it.\n  - `packages/core/src/platform-rules.ts` — platform traps as **rows in the\n    database** (regex over `{role, platformKey, url, pageText, tool}` →\n    rewrite/refuse/advise), enforced by shared code that never names a\n    platform. This replaced ~20 `platformKey === \"...\"` branches; a new trap\n    on a known platform is a new row, not a deploy. The row is data; the\n    guard stays code.\n- Adding a new platform = registry entry + hints/adapter (+ a driver file and\n  its one `registerScriptedDriver` line when the auth ritual needs scripting) +\n  tests. Do **not** teach the shared tool layer that platform’s name.\n- Register agents wait for verification mail via the tenant's `@in.find-best-job.com`\n  mailbox (`@fbj/mail`), not the founder's Gmail.\n- Captcha solvers stay behind config (`FBJ_CAPTCHA_SOLVER_*`); do not bake a\n  vendor hop into product logic without evidence + a kill switch.\n\n## Fast and reliable\n\n- Prefer fewer agent turns: batch fills (`fill_many` / `bootstrap_register`),\n  avoid redundant snapshots, refuse identical `report_error` loops (cap +\n  structured terminal).\n- Masked inputs (date/phone/tax ID) must be typed correctly so submit is not\n  left inert — fix the sidecar/fill path, do not paper over with higher timeouts.\n- Stall / page-progress aborts are quality signals; do not “fix” flaky boards by\n  only raising timeouts.\n- One browser / tenant mailbox / Vertex journey at a time for real E2E (no parallel natives\n  sharing the same inbound address and profile lock).\n\n## Testing: unit first, then E2E\n\nOrder is mandatory before calling a change done:\n\n1. **Unit / package tests** — colocated Vitest (`src/*.test.ts`); DB code against\n   PGlite (in-process WASM Postgres) + real migrations, via `makeTestDb()` from\n   `@fbj/db/test-db`. Cover the new behavior and the regressions you nearly\n   introduced.\n2. **Repo gates** — `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`\n   (and `pnpm format:check` when formatting touched).\n3. **E2E / smoke** — a real production-shaped run that proves the fix and that\n   older paths still work.\n\n   The platform-matrix harness this step used to name\n   (`scripts/e2e-ten-apply.mjs`) was **deleted** in `b58406b` when the matrix\n   was retired; three other docs still cite scripts that no longer exist. What\n   actually exists today, in ascending cost:\n\n   - `bench/run.mjs` — the real apply agent against 19 local form fixtures,\n     judged on what the fixture server received over the wire. **Not in CI, and\n     no longer run before a push** (owner's call, 2026-08-20): it is opt-in via\n     `FBJ_FORCE_BENCH=1 git push` or `node scripts/gate.mjs --bench`. A scenario\n     passes at 2 of 3 runs. It is still the only check that exercises an apply\n     guard end to end, so run it deliberately before cutting a release — a\n     guard regression now reaches `origin` and the deploy unnoticed.\n   - `fbj canary <url>` — seeds an application against the canary board (a\n     Lambda serving fake postings) and the apply stage drives it end to end:\n     queue, task, browser, model, tools, state machine, evidence. This is the\n     smoke test to run after a deploy, and nothing schedules it.\n   - `scripts/e2e-two-tenant.mjs` / `e2e-prod-two-tenant.mjs` /\n     `e2e-three-apply.mjs` — manual, need untracked credentials, and the last\n     one submits to **real employers**.\n\n   Success for an apply journey is `submitted` (or the journey's documented\n   terminal), with proof under the report/PROOF dirs.\n4. After the run, skim the report: the new path green **and** the previously\n   green ones not regressed. If you only exercised one board, say so explicitly.\n\nDo not ship “works on my mental model” without the unit→gate→E2E chain when the\nchange touches agents, browser, pipeline stages, or native registration.\n\n## Real multi-platform apply\n\n- Validation of apply/register product changes means **actual** submissions (or\n  account `active` → apply → `submitted`) on distinct platforms in the matrix —\n  open ATS and natives — not a single happy path.\n- Dry-run is for plumbing; it does not replace a real apply E2E.\n- LinkedIn remains out of scope (see `CLAUDE.md`).\n\n## Instrument for bottlenecks\n\nEvery agent/browser path that can burn wall-clock must stay observable:\n\n- Phase timers (`▶` / `◀` or equivalent) around provision, ensure-accounts, apply.\n- Per-turn / per-tool timing and top-tool summaries on agent finish.\n- Captcha outcomes logged with `{solved, detail, type, sitekeyPrefix}` (no\n  secrets) on solve and on captcha-flavored refusals.\n- Page fingerprint / stall abort signals when the form stops advancing.\n- Refusal caps that record *why* they fired so the next run (or an engineer)\n  sees the bottleneck, not a silent timeout.\n\nWhen optimizing, measure first from these signals; do not guess.\n\n## The Answer Library (product)\n\n**No question ever blocks an application.** The agent always answers, records\nthe answer in the Answer Library (`qa_bank`), and the human reviews and corrects\nit there afterwards — corrections apply to FUTURE runs only. Nothing is gated on\na person's click, because there is no person in this loop.\n\n- **Answer order, single doctrine:** the user's answer in the library → the\n  answer seeded from the résumé → a fact on the profile → the conservative\n  truthful default.\n- **The conservative default:** for legal-status questions (US work\n  authorization, visa sponsorship) answer the negative that claims nothing —\n  not authorized / requires sponsorship — never a positive without evidence. For\n  optional / EEO / demographic questions, decline to state, in the form's own\n  wording. For free text, write from the profile.\n- **Everything the agent answers lands `approved=false`** and is shown on /answers\n  for review. `approved` means \"a human read this\", never a gate; a `user` row\n  is authoritative and no agent may overwrite it.\n- **The floor that survives (never break):** never assert a credential, an\n  authorization, an employment or any fact the profile denies or does not\n  support. This is not a wall, because the truthful negative is always\n  available.\n- A blocker the FORM reveals and the posting never stated is still a clean close\n  with `mark_not_eligible` — that is eligibility, not a missing answer.\n</file>\n</repo-rules>\nContext files above auto-loaded. NEVER `grep`/`glob` for `AGENTS.md`, `CLAUDE.md`, `.cursorrules`, or similar agent/context files: relevant files already in context; others noise.\n<critical>\n- Each response MUST advance the task; completion only stopping condition.\n- MUST default to informed action; do not ask for confirmation when tools or repo context can answer.\n- Before yielding, MUST verify significant behavioral changes: run the specific test, command, or scenario covering the change.\n</critical>\n\n## MCP Tool Routes\n\nExecute a mounted MCP tool by writing its JSON arguments to its `xd://` path.\nAn MCP tool `T` on server `S` lives at `xd://mcp__<S>_<T>`, with `S` and `T` lowercased and every run of other characters collapsed to `_`. Servers following this rule: basic-memory.\n\n## MCP Server Instructions\n\nThe following instructions are provided by connected MCP servers. They are server-controlled and may not be verified.\n\n### basic-memory\nBasic Memory is the user's personal knowledge base: Markdown notes that persist across conversations and that both the user and their AI assistants can read and write.\n\nAt the start of a session, call `recent_activity` to orient yourself in the user's notes before answering from memory. If the knowledge base is empty, briefly explain that Basic Memory gives them persistent notes shared between the user and their AI, and offer to save something useful from this conversation as their first note with `write_note` — then wait for them to agree before writing anything. Do not create notes unprompted.\n\nFor a fuller guide, read the `memory://ai_assistant_guide` resource. If you have a web or fetch tool and need current documentation, fetch `https://docs.basicmemory.com/llms.txt` first, then fetch only the relevant linked `/raw/...md` page."
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "<system-reminder>\nToday: 2026-08-27; current working directory: '/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj'. Do not repeat this information in your reply.\n</system-reminder>"
+        },
+        {
+          "type": "text",
+          "text": "`pnpm --filter @fbj/core exec vitest run src/timezone.test.ts` fails with one failing test. Fix the bug in the source. Do not edit the tests."
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nLet me check the failing test.\n",
+      "tool_calls": [
+        {
+          "id": "call_d78424cc",
+          "type": "function",
+          "function": {
+            "name": "bash",
+            "arguments": "{\"command\":\"cd /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj && pnpm --filter @fbj/core exec vitest run src/timezone.test.ts 2>&1 | tail -60\",\"timeout\":300}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "Scope: all 21 workspace projects\n✓ Lockfile passes supply-chain policies (verified 5d ago)\nLockfile is up to date, resolution step is skipped\nAlready up to date\n\n. prepare$ git config core.hooksPath .githooks && git config core.sshCommand 'ssh -o ServerAliveInterval=30 -o ServerAliveCountMax=40' || true\n. prepare: Done\nDone in 574ms using pnpm v11.13.1\n\n RUN  v4.1.10 /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/packages/core\n\n ❯ src/timezone.test.ts (8 tests | 1 failed) 28ms\n     × returns the zone itself when it is usable, trimmed 3ms\n\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  src/timezone.test.ts > usableTimeZone > returns the zone itself when it is usable, trimmed\nAssertionError: expected ' Europe/London ' to be 'Europe/London' // Object.is equality\n\nExpected: \"Europe/London\"\nReceived: \" Europe/London \"\n\n ❯ src/timezone.test.ts:72:54\n     70|\n     71|   it(\"returns the zone itself when it is usable, trimmed\", () => {\n     72|     expect(usableTimeZone(\" Europe/London \", \"UTC\")).toBe(\"Europe/Lond…\n       |                                                      ^\n     73|   });\n     74|\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed (1)\n      Tests  1 failed | 7 passed (8)\n   Start at  11:07:46\n   Duration  131ms (transform 15ms, setup 0ms, import 21ms, tests 28ms, environment 0ms)\n\nundefined\n/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/packages/core:\n[ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command failed with exit code 1: vitest run src/timezone.test.ts\n\n\nWall time: 1.82 seconds",
+      "tool_call_id": "call_d78424cc"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nThe source isn't trimming the zone. Let's take a look at the source.\n",
+      "tool_calls": [
+        {
+          "id": "call_16807cf5",
+          "type": "function",
+          "function": {
+            "name": "grep",
+            "arguments": "{\"pattern\":\"usableTimeZone\",\"path\":\"packages/core/src/timezone.ts\",\"i\":\"Locating usableTimeZone implementation\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "[packages/core/src/timezone.ts#ABFC]\n 37:/** The zone if the runtime can format in it, else `fallback`. */\n*38:export function usableTimeZone(\n 39:  tz: string | null | undefined,\n 40:  fallback: string,\n 41:): string {",
+      "tool_call_id": "call_16807cf5"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nI need to review the full function to understand what it does.\n",
+      "tool_calls": [
+        {
+          "id": "call_2d3bc5f4",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"packages/core/src/timezone.ts\",\"i\":\"Reading usableTimeZone body\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "[packages/core/src/timezone.ts#ABFC]\n1:/**\n2: * A time zone the runtime can actually format in — never whatever was stored.\n3: *\n4: * `tenants.timezone` and `profile.timezone` are not chosen from a list. They\n5: * come out of a résumé parse, so the column holds whatever the document said,\n6: * and a document says things like `America/Sao_Paulo (UTC-3)`.\n7: *\n8: * Production, 2026-08-21: that exact string was Cristiane's row, and\n9: * `tenantTimezone` handed it straight to `Intl.DateTimeFormat`, which throws a\n10: * `RangeError`. It did not mislabel a date — it took down **the whole apply\n11: * stage** (`stage apply failed: Invalid time zone specified: America/Sao_Paulo\n12: * (UTC-3)`), so an account with thirty approved applications submitted nothing\n13: * and the failure named a clock rather than anything a reader would connect to\n14: * applying.\n15: *\n16: * `slots.ts` had already learned this for interview emails and written the\n17: * reasoning down. It stayed private there, so the quota and digest paths went\n18: * on trusting the column. One validated reader, three callers, each keeping\n19: * its own fallback — because the right fallback genuinely differs: a quota\n20: * window falls back to the column's default so a cap does not change meaning,\n21: * while a label falls back to UTC and says UTC, since a wrong label is worse\n22: * than an unfamiliar one.\n23: */\n24:\n25:/** Whether `Intl` will accept this as a zone. */\n26:export function isUsableTimeZone(tz: string | null | undefined): boolean {\n27:  const value = (tz ?? \"\").trim();\n28:  if (!value) return false;\n29:  try {\n30:    new Intl.DateTimeFormat(\"en-US\", { timeZone: value }).format(new Date());\n31:    return true;\n32:  } catch {\n33:    return false;\n34:  }\n35:}\n36:\n37:/** The zone if the runtime can format in it, else `fallback`. */\n38:export function usableTimeZone(\n39:  tz: string | null | undefined,\n40:  fallback: string,\n41:): string {\n42:  return isUsableTimeZone(tz) ? (tz as string) : fallback;\n43:}",
+      "tool_call_id": "call_2d3bc5f4"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nBug: `isUsableTimeZone` trims, but `usableTimeZone` returns the un-trimmed `tz`. Fix: trim the value before returning. Also, we might need to avoid calling isUsableTimeZone twice. The simplest is to trim once.\n\nFix:\n\n```ts\nexport function usableTimeZone(\n  tz: string | null | undefined,\n  fallback: string,\n): string {\n  const value = (tz ?? \"\").trim();\n  return isUsableTimeZone(value) ? value : fallback;\n}\n```\n\nNote: isUsableTimeZone also trims, but passing an already-trimmed value is fine.\n",
+      "tool_calls": [
+        {
+          "id": "call_4ebb978a",
+          "type": "function",
+          "function": {
+            "name": "xd://edit",
+            "arguments": "{\"op\":\"{\\\"paths\\\": {\\\"packages/core/src/timezone.ts\\\": {\\\"tags\\\": {\\\"ABFC\\\": \\\"[timezone.ts#ABFC:41-42]\\\"}}}, \\\"mode\\\": \\\"patch\\\", \\\"text\\\": \\\"@@ [timezone.ts#ABFC:41-42]\\\\n-): string {\\\\n-  return isUsableTimeZone(tz) ? (tz as string) : fallback;\\\\n-}\\\\n+): string {\\\\n+  const value = (tz ?? \\\\\\\"\\\\\\\").trim();\\\\n+  return isUsableTimeZone(value) ? value : fallback;\\\\n+}\\\\n\\\"}\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "Tool xd://edit not found",
+      "tool_call_id": "call_4ebb978a"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nThe edit tool is listed under \"Additional devices\", but the write says xd://edit runs it... Actually, the device list says \"Read xd://<tool> for full documentation + JSON schema before first use.\" However, the error is saying the tool is not found. Maybe I need to read it first.\n",
+      "tool_calls": [
+        {
+          "id": "call_61a90d17",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"xd://edit\",\"i\":\"Loading edit device docs\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "# edit — Edit\n\nLine-anchored patch language: name original lines/gaps to replace, insert, cut, or paste; then give new content. `:` headers take `+` body rows; colonless paste `PUT`, `CUT`, `REM`, `MV` take none.\n\n<headers>\nSection: `[PATH#TAG]`; `TAG`: 4-hex snapshot from latest `read`/`search`, REQUIRED each section. New files: `write`; hashline edits existing files only.\n</headers>\n\n<ops>\n`PUT N.=M:`: replace original inclusive lines N–M with body.\n`PUT N*:`: replace syntactic block beginning N; closing line resolved.\n`PUT <N:` insert body rows before line N (`PUT <1:` = file head).\n`PUT >N:` insert body rows after line N (`PUT >$:` = file tail).\n`PUT >N*:`: insert after block N's end, at sibling depth. Append inside block: `PUT >M:`.\n`PUT <N @name` / `PUT >N @name` paste register `@name` at the gap before/after line N; omit `@name` for the anonymous register.\n`PUT N.=M @name` / `PUT N* @name` paste `@name` over the range / resolved block; `@name` required here.\n`CUT N.=M` / `CUT N*`: delete and capture inclusive lines N–M / block N; anonymous or given `@name`.\n`REM`: delete section file. `MV DEST`: move/rename (quote paths with spaces); prior edits apply to source, final content to `DEST`.\nSingle line: `PUT N.=N:` / `CUT N.=N`. Ranges name original inclusive touched lines; body length irrelevant.\n</ops>\n\n<body-rows>\nOnly below `:` headers. Row: verbatim `+TEXT` (leading whitespace preserved); `+`: blank. NEVER `-old`, bare, or context rows: range deletes; body is final content. Keep line: exclude it from every range. Literal initial `-`/`+`: `- item` → `+- item`; `+ item` → `++ item`.\n</body-rows>\n\n<rules>\n- Numbers and `#TAG`: latest `read`/`search` `LINE:TEXT`; numbers are original, never shifted by hunks.\n- Each edit renumbers and changes `#TAG` → next numbers from edit response or fresh `read`.\n- Touch displayed lines only; undisplayed hunks REJECTED. Far from read window: re-`read`; confirm construct.\n- Elisions UNSEEN: `…`, `..`, collapsed `N-M:` rows. NEVER hunk in/across one; `read` first.\n- NEVER start/end range mid-expression or mid-block.\n- Ranges: changed lines only; NEVER widen over keepers. Non-adjacent changes: separate hunks.\n- Whole construct: `PUT N*:`; internal lines: `PUT N.=M:`.\n- `PUT N*:` resolves exactly node N. Leading decorators/attributes/doc-comments are separate nodes: point N at first decorator to include both. Standalone line-comments never swept: use `PUT N.=M:`.\n- Block ops: opening line of multi-line construct, NEVER closer, last line, bare inner statement. One statement: plain `PUT N.=N:` / `CUT N.=N` / `PUT >N:`. At closer: `PUT >M:`.\n- Markdown headings are block openers. Block op on `##`/`###`: whole section through deeper headings to next same/higher heading. After section `PUT >N*:`: end body with blank line to separate next heading.\n- Pure addition: `PUT <N:` / `PUT >N:`, NEVER widened `PUT N.=M:`.\n- Move: `CUT`+`PUT`; `CUT 5.=9 @fn` → `@fn`, `PUT >40 @fn` pastes. Single call-local move: unlabeled `CUT` + `PUT >40`. Named registers persist across edit calls.\n- NEVER format/restyle with this tool; run project formatter.\n</rules>\n\n<example>\n`read` output shape:\n```\n[greet.py#A1B2]\n1:def greet(name):\n2:    msg = \"Hello, \" + name\n3:    print(msg)\n4:greet(\"world\")\n```\n\nEdit, then move:\n```\n[greet.py#A1B2]\nPUT 1.=3:\n+def greet(name):\n+    print(f\"Hi, {name}\")\nMV lib/greet.py\n```\n\nMarkdown bullets — file receives `- task`:\n```\n[PLAN.md#A1B2]\nPUT >2:\n+- task\n+  - nested task\n```\n\nMove `greet` to sibling file via named register; flows across sections:\n```\n[greet.py#A1B2]\nCUT 1* @fn\n[other.py#3C4D]\nPUT <1 @fn\n```\n\n`PUT 1*:` resolves lines 1–3 (`def` through `print(msg)`); line 4 separate, remains:\n```\n[greet.py#A1B2]\nPUT 1*:\n+def greet(name):\n+    print(f\"Hello, {name}\")\n```\n\nDecorator/doc-comment separate block: point N at decorator to include both; anchoring `def` line 2 orphans `@cache`:\n```\n[svc.py#C3D4]\nPUT 1*:\n+@cache\n+def load(key):\n+    return store[key]\n```\n</example>\n\n<anti-patterns>\n# WRONG — empty `PUT` to delete. RIGHT: `CUT 4.=4`\nPUT 4.=4:\n\n# WRONG — range sized to the post-edit content. RIGHT: `PUT 1.=1:` (body length irrelevant)\nPUT 1.=2:\n+def greet(name):\n\n# WRONG — `-` rows / bare context lines do not exist; the range deletes, the body is only new content.\nPUT 3.=3:\n    msg = \"Hello, \" + name\n-   print(msg)\n+   return msg\n# RIGHT\nPUT 3.=3:\n+   return msg\n\n# WRONG — pure insertion as a widened `PUT`: retyped keepers get dropped (here line 4).\nPUT 2.=4:\n+    msg = \"Hello, \" + name\n+    extra = compute(name)\n+    print(msg)\n# RIGHT — touch nothing you keep.\nPUT >2:\n+    extra = compute(name)\n\n# WRONG — `PUT >N*:` anchored on the closing delimiter / last visible line. RIGHT: plain `PUT >M:`\nPUT >3*:\n+after()\n# RIGHT\nPUT >3:\n+after()\n\n# WRONG — body rows under register PUT; register pastes take no body. RIGHT: bodyless `PUT >20 @fn`.\nPUT >20 @fn:\n+function f() {}\n</anti-patterns>\n\n<critical>\n1. RE-GROUND AFTER EVERY EDIT: edits renumber and change `#TAG`; take next numbers from edit response or fresh `read`. Stale tag/surprise: STOP; re-`read`.\n2. RANGES TIGHT: changed lines only. Whole construct: `PUT N*:`.\n3. BODY FINAL CONTENT: every row starts `+`; Markdown bullet: `+- item`, not `- item`.\n</critical>\n\n## Schema\n```ts\ntype Args = {\n  input: string;\n};\n```\nExecute by writing JSON to xd://edit.",
+      "tool_call_id": "call_61a90d17"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nThe earlier write failed with \"Tool xd://edit not found\" — weird, but now I know the schema: `{input: string}`. My earlier content was JSON args, not a patch. Let me write the patch.\n",
+      "tool_calls": [
+        {
+          "id": "call_4dab6289",
+          "type": "function",
+          "function": {
+            "name": "write",
+            "arguments": "{\"path\":\"xd://edit\",\"content\":\"{\\\"input\\\": \\\"[packages/core/src/timezone.ts#ABFC]\\\\nPUT 42.=42:\\\\n+  const value = (tz ?? \\\\\\\"\\\\\\\").trim();\\\\n+  return isUsableTimeZone(value) ? value : fallback;\\\\n\\\"}\",\"i\":\"Trimming zone before return\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "[packages/core/src/timezone.ts#7176]\n38:export function usableTimeZone(\n\n40:  fallback: string,\n41:): string {\n42:  const value = (tz ?? \"\").trim();\n43:  return isUsableTimeZone(value) ? value : fallback;\n44:}",
+      "tool_call_id": "call_4dab6289"
+    }
+  ],
+  "stream": true,
+  "stream_options": {
+    "include_usage": true
+  },
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "read",
+        "description": "Read files, directories, archives, SQLite, images, documents, internal resources, and web URLs via `path`.\n\n<instruction>\n- SHOULD parallelize independent reads.\n- SHOULD use `read` (not browser) for web content; browser only when `read` can't deliver.\n</instruction>\n\n## Selectors — append `:<sel>` to `path` (e.g. `src/foo.ts:50-200`, `src/foo.ts:raw`, `db.sqlite:users:42`)\n- `:50` / `:50-` — from line 50 | `:50-200` — inclusive | `:50+150` — 150 lines from 50 | `:5-16,960-973` — multiple ranges\n- `:raw` — verbatim, no anchors/prefixes | `:2-4:raw` / `:raw:2-4` — range + verbatim\n- `:conflicts` — one line per unresolved git merge conflict block\n- `:img` — rasterize a local `.svg`/`.svgz` as a PNG image; use when visual layout matters\n\n## Source kinds\n- Parseable code, no selector → structural summary (declarations only, body elided). Footer names recovery selector — re-issue ONLY those ranges.\n- File + selector → `[foo.ts#1A2B]` snapshot header + numbered lines. Copy `[FILENAME#TAG]` for anchored edits; NEVER fabricate the tag.\n- Directory → depth-limited dirent listing.\n- SQLite (`.sqlite`, `.sqlite3`, `.db`, `.db3`): `file.db` (tables), `file.db:table` (schema+rows), `file.db:table:key` (by PK), `?limit=`/`?where=`/`?q=SELECT`.\n- Archives (`.zip` family incl. `.jar`/`.apk`/`.whl`, `.tar` incl. `.tar.{gz,bz2,xz,zst}`, `.rar`, `.7z`, `.iso`, `.cab`, `.deb`/`.rpm`/`.cpio`/`.ar`/`.a`, `.lzh`/`.arj`, `.asar`; single-stream `.gz`/`.bz2`/`.xz`/`.zst`): `archive.ext:path/inside/archive` reads a member.\n- Documents → extracted text. Notebooks → editable cells. Images → decoded inline. SVGs read as text unless `:img` is specified. `:raw` bypasses converters.\n- URLs → reader-mode clean text/markdown; `:raw` → untouched HTML. Bare `host:port` needs trailing slash.\n- Internal URIs — all schemes take selectors. `artifact://<id>` recovers spilled output; page with `:N-M`/`:raw:N-M`.\n- `ssh://host/<path>` reads remote file/dir (UTF-8, ≤1 MiB); bare `ssh://` lists hosts; writable with `write` and searchable with `grep`.\n  Literal `:`, `?`, `#` → percent-encode (`%3A`/`%3F`/`%23`). Requires a verified POSIX shell on the remote host. For Windows or other unsupported hosts, use `bash` with a remote SSH command or mount with `sshfs`.\n\n<critical>\nSummary footer names elided ranges? Re-issue ONLY those ranges. NEVER guess `..`/`…` content.\n</critical>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "path": {
+              "type": "string",
+              "description": "Local path, internal URI (e.g. skill://), or URL. Inline selectors are supported."
+            }
+          },
+          "required": [
+            "path",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "bash",
+        "description": "Runs commands in a persistent shell.\n\nUse ONLY for one binary or a short pipeline that computes a fact (`wc -l`, `sort | uniq -c`, `diff`).\nInline scripts, heredocs, `$(…)`, and complex control flow → a purpose-built tool or checked-in script.\n\n<instruction>\n- Set `cwd` instead of `cd`; use `env: { NAME: \"…\" }` for multiline/quote-heavy values.\n- `pty: true` only for terminal interaction (`sudo`, `ssh`).\n- Order-dependent commands use `&&` in one call; independent calls may run concurrently.\n- Internal URIs (`skill://`, `agent://`, …) auto-resolve to paths.\n- aux utils available: mkdir, wc, sort, comm, diff, uniq, base64, cmp, md5sum, sha{1,224,256,384,512}sum, b2sum, basename, dirname, readlink, realpath, touch, stat, date, mktemp, seq, yes, printenv, truncate, tac, nproc, uname, whoami, hostname, which, ps, pgrep, pkill, pidwait, top, cut, tee, tr, paste, sed, xargs, jq, rm, mv, ln, ts, sponge, ifne, isutf8, combine, errno\n- `async: true` defers a finite command's result; it does not extend `timeout`.\n</instruction>\n\n<critical>\n- NEVER use shell `grep`/`rg`; use built-in `grep`.\n\n- Avoid `head`, `tail`, and redirection: output is captured, truncated, and linked as `artifact://<id>`.\n</critical>\n\nLong foreground calls may auto-background by the configured threshold and deliver later.\n`timeout: 0` disables the job deadline; otherwise `timeout` sets it without extending foreground waiting.\nNo truncation footer means the displayed output is complete.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "command": {
+              "type": "string"
+            },
+            "env": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "timeout": {
+              "type": "number",
+              "description": "timeout in seconds; 0 disables the command deadline; nonzero values are clamped to 1-3600"
+            },
+            "cwd": {
+              "type": "string"
+            },
+            "pty": {
+              "type": "boolean"
+            },
+            "async": {
+              "type": "boolean",
+              "description": "run in background"
+            }
+          },
+          "required": [
+            "command",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "grep",
+        "description": "Searches files/internal URLs: Rust regex, PCRE2 fallback.\n\n<instruction>\n- `path`: known files, directories, globs, internal URLs; roots `;`-separated.\n- Broad searches may time out → narrow scope or use `glob` first.\n- One-file line selector: `src/foo.ts:50-100`; never selects search root.\n- Literal `\\n` or `\\\\n` enables cross-line patterns.\n</instruction>\n\n<critical>\n- MUST use instead of shell `grep`/`rg`.\n- Open-ended multi-round search MUST use Task + scout, not chained calls.\n</critical>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "pattern": {
+              "type": "string",
+              "description": "regex pattern"
+            },
+            "path": {
+              "type": "string",
+              "description": "file, directory, glob, internal URL, or \"<file>:<lines>\" selector to search; pass several as a semicolon-delimited list (\"src; tests\"). Omitted -> searches the workspace root (\".\")"
+            },
+            "case": {
+              "type": "boolean",
+              "description": "case-sensitive search"
+            },
+            "gitignore": {
+              "type": "boolean",
+              "description": "respect gitignore"
+            },
+            "skip": {
+              "description": "files to skip before collecting results — use to paginate when the prior call hit the file limit",
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "pattern",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "write",
+        "description": "Creates or overwrites file at specified path.\n\n<conditions>\n- Creating new files explicitly required by task\n- Replacing entire file contents when editing would be more complex\n- Supports `.zip` (and ZIP-based `.jar`/`.war`/`.ear`/`.apk`), `.tar`, `.tar.gz`/`.tgz`, `.tar.zst`, and `.asar` archive entries via `archive.ext:path/inside/archive`; other archive formats (`.rar`, `.7z`, `.iso`, …) are read-only\n- Supports SQLite row operations via `db.sqlite:table` (insert), `db.sqlite:table:key` (update with JSON content, delete with empty content)\n</conditions>\n\n<critical>\n- You SHOULD use Edit tool for modifying existing files\n- You NEVER create documentation files (*.md, README) unless explicitly requested\n- You NEVER use emojis unless requested\n</critical>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "path": {
+              "type": "string",
+              "description": "file path"
+            },
+            "content": {
+              "type": "string",
+              "description": "file content"
+            }
+          },
+          "required": [
+            "path",
+            "content",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  ],
+  "max_completion_tokens": 4096,
+  "preserve_thinking": true,
+  "chat_template_kwargs": {
+    "preserve_thinking": true,
+    "reasoning_effort": "medium"
+  },
+  "enable_thinking": true,
+  "reasoning_effort": "medium"
+}

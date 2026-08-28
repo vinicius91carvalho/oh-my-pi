@@ -1,0 +1,9 @@
+
+ RUN  v4.1.10 /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/packages/profile
+
+
+ Test Files  2 passed (2)
+      Tests  41 passed (41)
+   Start at  10:46:59
+   Duration  737ms (transform 521ms, setup 0ms, import 1.24s, tests 60ms, environment 0ms)
+

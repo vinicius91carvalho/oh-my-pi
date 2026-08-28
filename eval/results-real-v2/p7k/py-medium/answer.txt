@@ -1,0 +1,9 @@
+
+
+All 24 tests pass, including `test_brazilian_thousands_use_a_dot` which now shows `R$ 1.290`.
+
+**What I did:** In `format_price` (locales.py), the integer branch now routes its US-style comma through the same `\x00` sentinel as the decimal branch, so the thousands separator gets swapped to the market's symbol instead of staying a comma.
+
+**Why it was broken:** The comma from `f"{int(value):,}"` was never converted, so pt-BR kept `1,290`. es-MX never showed it because its thousands separator is also a comma.
+
+**What it means:** Brazilian (and any future market) landing pages now write prices the way that market writes them, and the existing test locks that in.

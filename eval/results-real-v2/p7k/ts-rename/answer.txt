@@ -1,0 +1,25 @@
+
+
+Done. The rename is complete and verified.
+
+What I changed, file by file:
+
+- `packages/core/src/garbage-title.ts` — the definition
+- `packages/core/src/garbage-title.test.ts` — import, the `describe` name, and every assertion
+- `packages/llm/src/score-job.ts` — import and the call in `titleUncaptured`
+- `packages/pipeline/src/stages/discover.ts` — import and both call sites
+- `packages/pipeline/src/stages/discover.test.ts` — import, comment, and assertion
+- `packages/pipeline/src/stages/apply.ts` — the comment
+- `apps/cli/src/index.ts` — import and the sweep call
+
+Checks, all run and observed green:
+
+1. `pnpm --filter './packages/*' build` — built clean.
+2. `pnpm --filter './packages/*' exec tsc --noEmit` — no type errors.
+3. Tests of every touched package, full suites: `@fbj/core` 951 passed, `@fbj/llm` 409 passed, `@fbj/pipeline` all passed, `@fbj/cli` 14 passed.
+4. A final search for the old name across `packages/` and `apps/` (including ignored files) finds it only inside `dist/` build output, which your rule excludes. One stray occurrence in the core test's last block had slipped past the first pass; I caught it on re-read and fixed it before the build.
+
+Summary:
+- I renamed `looksLikeGarbageTitle` to `isGarbageTitle` in all 7 source files, rebuilt the packages, and re-ran every touched test suite.
+- The original state was a single defined name; nothing was broken, it was a plain rename.
+- For you: the new name `isGarbageTitle` is the only one left in the codebase, types and all tests pass, and behavior is unchanged.

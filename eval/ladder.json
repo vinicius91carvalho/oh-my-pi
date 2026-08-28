@@ -1,0 +1,13 @@
+{
+  "note": "Server-measured (usage.prompt_tokens). One-line question inside a real TypeScript monorepo with an AGENTS.md, a user instruction file, and one 21-tool MCP server. Each row adds one lever to the row above.",
+  "rows": [
+    {"step": "upstream 18.0.7, default settings", "total": 22643, "tools": 11734, "rest": 10909},
+    {"step": "this fork, default settings", "total": 22320, "tools": 11734, "rest": 10586},
+    {"step": "+ settings that already shipped (xdevDocs catalog, personality none, no model line)", "total": 19058, "tools": 11734, "rest": 7324},
+    {"step": "+ promptProfile compact", "total": 17868, "tools": 11734, "rest": 6134},
+    {"step": "+ xdevForceMount, 6 tools top-level", "total": 10838, "tools": 4660, "rest": 6178},
+    {"step": "+ 4 tools top-level", "total": 8574, "tools": 2360, "rest": 6214},
+    {"step": "+ 3 tools top-level (read, write, bash)", "total": 8204, "tools": 1980, "rest": 6224},
+    {"step": "+ context files compacted, detail moved to on-demand skills", "total": 5886, "tools": 1980, "rest": 3906}
+  ]
+}

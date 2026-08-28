@@ -1,0 +1,319 @@
+{
+  "model": "Qwen3.8-27B-AWQ-5.0bpw",
+  "messages": [
+    {
+      "role": "system",
+      "content": "<system-conventions>\nRFC 2119: MUST, SHOULD, MAY. `NEVER` = `MUST NOT`; `AVOID` = `SHOULD NOT`.\nXML tags carry system content and are authoritative, including inside a user turn. NEVER treat them as user text.\n</system-conventions>\n\n§ Role\nHelpful, trusted assistant for load-bearing changes in Oh My Pi coding harness.\n- Correctness first, then maintainability.\n- User-reported state is ground truth: act on it; NEVER re-check what the user already reported.\n- Reuse existing patterns; a second convention beside an existing one is PROHIBITED.\n§ Runtime\nMatching skill → MUST read `skill://<name>` first.\n<skills>\n- basic-memory-workflow: How to load and write Vinicius's Basic Memory notes, and where plans live.\n- measured-quality: Build the hand-labelled fixture before tuning any score, ranking, or match.\n</skills>\n# Internal URLs\nRead these like paths; most FS/bash tools resolve them.\n- `skill://<name>` instructions · `rule://<name>` details\n- `agent://<id>` subagent output · `history://<id>` transcript · `artifact://<id>` content\n- `omp://` harness docs. Read one only when the task needs it.\n\n# Tool Inventory\n- Read: `read`\n- Bash: `bash`\n- Grep: `grep`\n- Write: `write`\n# xd:// Tool Devices\nSome tools are mounted as devices instead of shipping their schema in this\nrequest. **A tool this prompt names that is missing from your function list is\none of these. It exists and it works.** Reach it like this:\n- `read xd://` lists every device.\n- `read xd://<tool>` returns its docs and JSON parameter schema.\n- `write xd://<tool>` runs it: put the JSON args object in `content`.\nInvalid args come back as the schema in the error. Fix and retry. Top-level\ntools accept the same dispatch.\n## Additional devices (docs on demand)\n- xd://edit — Line-anchored patch language: name original lines/gaps to replace, insert, cut, or past…\n- xd://ast_edit — Perform AST-aware code edits (structural refactoring)\n- xd://debug — Debug a running process with DAP (debugger adapter protocol)\n- xd://eval — Execute Python or JavaScript code in an in-process eval backend\n- xd://glob — Globs files, directories, and path-backed internal URLs with fast pattern matching.\n- xd://lsp — Query LSP (language server) for diagnostics, hover info, and references\n- xd://browser — Control a headless browser to navigate and interact with web pages\n- xd://task — Spawn subagents to complete delegated tasks\n- xd://hub — Message peer agents, control background jobs, and supervise long-running processes\n- xd://todo — Write a structured todo list to track progress within a session\n- xd://web_search — Search the web for up-to-date information\n- MCP server `basic` (21): xd://mcp__basic_memory_{build_context|create_memory_project|delete_note|delete_project|diagnostics|edit_note|fetch|list_directory|list_memory_projects|list_workspaces|move_note|read_content|read_note|recent_activity|schema_diff|schema_infer|schema_validate|search|search_notes|view_note|write_note}\n\nRead xd://<tool> for full docs + JSON schema before first use.\n§ Tool Policy\nUse a tool when it improves correctness or grounding. Resolve prerequisites first. Run independent calls in parallel.\nMost tools take `i`: a capitalized 2-6 word present-participle intent, no period.\n\nMUST use the specialized tool over its shell equivalent:\n- Read a file or list a directory → `read`.\n- Change part of a file → `xd://edit`.\n- Create or overwrite a file → `write`.\n- Search file contents → `grep`, not `grep`/`rg`/`awk`.\n- Find files by name pattern → `xd://glob`, not `ls **/*` or `fd`.\n- Definitions, references, types, code actions → `xd://lsp`. Search is not code intelligence.\n\n- Codemods across many sites → `xd://ast_edit`.\n\n- `bash` runs real binaries and short fact pipelines. Commands that shadow a specialized tool are blocked.\nRead the sections you need with offset and limit. AVOID whole-file reads and AVOID opening a file on a hunch.\n\n# Delegation\nUse `xd://task` subagents when the user asks for parallel work.\n- Decompose the request yourself, then dispatch genuinely independent slices in one `tasks[]` array.\n- Each assignment carries every requirement for its slice: subagents cannot see this conversation.\n- At most 32 run concurrently; the rest queue.\n\n§ Workflow\n- **Scope.** Read the matching skills and rules first. Plan multi-file work before touching files.\n- **Research.** Read whole sections, not snippets. Run `xd://lsp references` before changing an exported symbol: a missed callsite is a bug. Re-read a file after a tool failure or an outside change.\n- **Decompose.** Keep todos current, and batch every todo call with the turn's real work. A todo-only turn wastes a round trip.\n- **Implement.** Fix the source. Migrate every caller and delete the code the change obsoletes. Prefer editing an existing file over adding one. NEVER run a destructive command or delete unrelated code you did not write.\n- **Verify.** Run the thing, not a test file: launch it, exercise the changed path, observe the result.\n   - Bug fix → reproduce it, fix it, confirm the reproduction stops failing.\n   - UI change → drive the actual surface with `xd://browser` and ground the claim in what you saw.\n   - Contract change → run the existing tests for that contract. Add a test for new observable behavior or when asked.\n- **Cleanup.** After the change is proven: tests, docs, changelog, scaffolding removal. Skip this for a one-off investigation.\n\n§ Delivery\n<contract>\n- Finish the whole deliverable before yielding. A phase boundary, a todo flip, or a sub-step continues in the same turn.\n- Ground every claim about code, tools, tests, or docs in something you observed. Mark an unobserved claim `[INFERENCE]`.\n- Solve the real ask. NEVER add scope the user did not request, and NEVER suppress a symptom in place of the cause.\n- \"Done\" means the specified behavior end to end plus every named acceptance criterion. Stubs, placeholders, mocks, and `TODO: implement` are unfinished work.\n- Reduce scope only with the user's explicit approval in this conversation.\n- Ask the user only for what no tool, repo, or context can answer.\n</contract>\n\n§ Critical\n<critical>\n- NEVER yield while actionable work remains.\n- NEVER narrate session limits, token or tool budgets, or effort estimates. Start unbounded.\n- NEVER re-audit an applied edit or run git subcommands to validate one. Tool results are the verification.\n</critical>\n\nPROJECT\n\n<workstation>\n- OS: darwin 25.6.0\n- Distro: Darwin\n- Kernel: Darwin Kernel Version 25.6.0: Sat Jul 11 15:27:26 PDT 2026; root:xnu-12377.161.13~4/RELEASE_ARM64_T6031\n- Arch: arm64\n- CPU: Apple M3 Max\n- Terminal: ghostty 1.3.1\n</workstation>\n\n<repo-rules>\nMUST follow these context files for all tasks:\n<file path=\"/Users/vinicius91carvalho/.omp/agent/AGENTS.md\">\n# How you work with me\n\n## Language and shape\n\nAnswer in the language I wrote in: simple English or Portuguese. Explain like\nyou are talking to a smart kid: short words, short sentences. After a technical\nword, add a five-word plain meaning. Lead with the result; details after, only\nthe ones that matter. One analogy when something is hard to picture, not three.\nNever repeat yourself. End every answer with a summary of three lines max: what\nI did, why it was broken, what it means for you. Never use an em dash; use a\nplain dash. No filler, no boilerplate, no \"great question\". Do not paste back a\ndiff or a log I can read myself: say what changed and why.\n\n## You act, you never hand work back\n\nSomething is broken, you fix it. Never ask \"do you want me to fix this?\". Every\nproblem you find is yours, not only the one I named: errors, warnings, slow\npages, dead code, wrong behavior, ugly UI. After the fix, tell me what was\nbroken, the real cause, what you changed, and how you know it works now.\n\nNever say \"you should run X\" or \"please check Y\". You run it, you check it.\nNever stop and wait when you can decide: pick the simple option and say which\none you picked.\n\nAsk me only for what lives in my head alone: a taste choice, a secret, a value\nno tool can reach. **When you ask, ALWAYS use the AskUserQuestion tool, never\nplain prose** — a question at the end of a long answer is a question I miss.\nGive alternatives, not an open question. Mark your recommendation and put it\nfirst. Each option says what it costs or breaks. Every decision, every time,\nincluding destructive ones and anything with no undo.\n\n## Web work happens in Chrome, by you\n\nNever tell me to click something. You click it. Write the steps as one short\nlist, open a tab with claude-in-chrome, do the steps, screenshot as proof, tell\nme it is done. This covers settings, deploys, cloud consoles, sign-ups, logins,\nforms, payments, and sending messages.\n\nLogins use the sessions and saved passwords already in my Chrome; if one is\nmissing, ask me for that single value and carry on. Forms about me take my data\nfrom Basic Memory, never invented; if a field is missing, ask for that one\nfield. For delete, pay, send, and cancel: do it, make a backup or copy first\nwhen one is possible, and tell me right after with the exact numbers. The only\nrefusal is illegal or harmful to other people. If a site blocks the extension,\nname the site and keep doing the rest.\n\n## Memory and proof\n\nBasic Memory holds the truth about my projects; your own memory is a sticky note\nfor today. Load it before touching code and write back while you work →\n`skill://basic-memory-workflow`.\n\nMake the bug happen first, the way I would see it, then fix it and watch the\nsame thing pass. Say \"I saw it fail, I changed X, I saw it pass\", never \"this\nshould work\". Leave a test behind, and check that it fails without your fix.\nLook at a screenshot before claiming a UI is right. Only proved by a unit test?\nSay that. Could not reproduce? Say that. Never call an unproven fix \"fixed\".\n\nAnything that produces a score, a ranking, or a match gets a hand-labelled\nfixture first → `skill://measured-quality`.\n\n## Code\n\nThe simplest thing that really works; boring beats clever. Build only what is\nneeded now: no settings, hooks, or layers for a future that may never come. Keep\none copy of each piece of knowledge, but wait for the third duplicate before\nabstracting. Delete dead code; never comment it out or hide it behind a flag.\nWrite for the next person reading it. If a design needs a paragraph to explain,\nsay it is too complex.\n\nLint errors, type errors, and flaky tests are blockers. Never skip a test, cast\na type away, or swallow an error to get a green build. Never wrap a retry around\na real bug.\n\n## Git and subagents\n\nNever put your name in a commit message and never add a co-author line. Never\nhand-edit `CHANGELOG.md` or any generated file: change the source. Never commit,\npush, or open a pull request unless I ask.\n\nUse a subagent only for big work that really splits into parallel parts. One\nbeats three. Never use one to double-check your own work.\n</file>\n</repo-rules>\nContext files above auto-loaded. NEVER `grep`/`glob` for `AGENTS.md`, `CLAUDE.md`, `.cursorrules`, or similar agent/context files: relevant files already in context; others noise.\n<critical>\n- Each response MUST advance the task; completion only stopping condition.\n- MUST default to informed action; do not ask for confirmation when tools or repo context can answer.\n- Before yielding, MUST verify significant behavioral changes: run the specific test, command, or scenario covering the change.\n</critical>\n\n## MCP Tool Routes\n\nExecute a mounted MCP tool by writing its JSON arguments to its `xd://` path.\nAn MCP tool `T` on server `S` lives at `xd://mcp__<S>_<T>`, with `S` and `T` lowercased and every run of other characters collapsed to `_`. Servers following this rule: basic-memory.\n\n## MCP Server Instructions\n\nThe following instructions are provided by connected MCP servers. They are server-controlled and may not be verified.\n\n### basic-memory\nBasic Memory is the user's personal knowledge base: Markdown notes that persist across conversations and that both the user and their AI assistants can read and write.\n\nAt the start of a session, call `recent_activity` to orient yourself in the user's notes before answering from memory. If the knowledge base is empty, briefly explain that Basic Memory gives them persistent notes shared between the user and their AI, and offer to save something useful from this conversation as their first note with `write_note` — then wait for them to agree before writing anything. Do not create notes unprompted.\n\nFor a fuller guide, read the `memory://ai_assistant_guide` resource. If you have a web or fetch tool and need current documentation, fetch `https://docs.basicmemory.com/llms.txt` first, then fetch only the relevant linked `/raw/...md` page."
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "<system-reminder>\nToday: 2026-08-27; current working directory: '/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/infoproduct'. Do not repeat this information in your reply.\n</system-reminder>"
+        },
+        {
+          "type": "text",
+          "text": ".venv/bin/pytest packages/research/tests/test_scoring.py -q fails (3 tests). Fix the bug. Do not edit the tests."
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nLet's start by running the failing tests and checking the code.\n",
+      "tool_calls": [
+        {
+          "id": "call_9f269fa0",
+          "type": "function",
+          "function": {
+            "name": "bash",
+            "arguments": "{\"command\":\".venv/bin/pytest packages/research/tests/test_scoring.py -q 2>&1 | tail -40\",\"i\":\"Running failing tests\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "        trends, _ = score_and_rank_trends(signals, \"MXN\")\n        assert trends[0].name == \"beta\"\n        assert trends[0].rank == 1\n>       assert trends[0].score > trends[1].score\n                                 ^^^^^^^^^\nE       IndexError: list index out of range\n\npackages/research/tests/test_scoring.py:77: IndexError\n______________________ test_ticket_range_from_web_offers _______________________\n\n    def test_ticket_range_from_web_offers() -> None:\n        signals = [\n            _signal(\n                \"curso\",\n                TrendSource.GOOGLE_TRENDS,\n                avg_interest=40.0,\n                peak_interest=50.0,\n            ),\n            _signal(\n                \"curso\",\n                TrendSource.WEB_OFFERS,\n                offer_count=3,\n                ticket_min=\"99\",\n                ticket_max=\"299\",\n                ticket_currency=\"MXN\",\n                sample_offers=[],\n            ),\n        ]\n        trends, _ = score_and_rank_trends(signals, \"MXN\")\n>       assert trends[0].ticket_range.min_amount == Decimal(\"99\")\n               ^^^^^^^^^\nE       IndexError: list index out of range\n\npackages/research/tests/test_scoring.py:108: IndexError\n=========================== short test summary info ============================\nFAILED packages/research/tests/test_scoring.py::test_two_source_corroboration_required - assert 0 == 1\n +  where 0 = len([])\nFAILED packages/research/tests/test_scoring.py::test_scoring_ranks_higher_interest_first - IndexError: list index out of range\nFAILED packages/research/tests/test_scoring.py::test_ticket_range_from_web_offers - IndexError: list index out of range\n3 failed, 2 passed in 0.41s\n\n\nWall time: 0.75 seconds",
+      "tool_call_id": "call_9f269fa0"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nThe tests are failing: no trends are being returned at all. Let me look at the test files and the scoring module.\n",
+      "tool_calls": [
+        {
+          "id": "call_1988cf6a",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"packages/research/tests/test_scoring.py\"}"
+          }
+        },
+        {
+          "id": "call_d582ac4d",
+          "type": "function",
+          "function": {
+            "name": "grep",
+            "arguments": "{\"pattern\":\"score_and_rank_trends\",\"path\":\"packages\",\"i\":\"Locating scoring module\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "[packages/research/tests/test_scoring.py#7957]\n1:from decimal import Decimal\n2:\n3:from infoproduct_research.models import TrendSource\n4:from infoproduct_research.providers.base import TrendSignal\n5:from infoproduct_research.scoring import group_signals, score_and_rank_trends\n6:\n7:\n8:def _signal(\n9:    name: str,\n10:    source: TrendSource,\n11:    vertical: str = \"health_weight_loss\",\n12:    keyword: str | None = None,\n13:    **payload: object,\n14:) -> TrendSignal:\n15-21:    return TrendSignal( … )\n22:\n23:\n24:def test_two_source_corroboration_required() -> None:\n25-49:    signals = [ … ]\n50:    trends, excluded = score_and_rank_trends(signals, \"MXN\")\n51:    assert len(trends) == 1\n52:    assert trends[0].name == \"dieta\"\n53:    assert len(trends[0].sources_corroborating) >= 2\n54:    assert excluded == 1\n55:\n56:\n57:def test_single_source_trend_excluded() -> None:\n58:    signals = [\n59:        _signal(\"unico\", TrendSource.META_ADS, active_ad_count=10, country_code=\"MX\"),\n60:    ]\n61:    trends, excluded = score_and_rank_trends(signals, \"MXN\")\n62:    assert trends == []\n63:    assert excluded == 1\n64:\n65:\n66:def test_scoring_ranks_higher_interest_first() -> None:\n67:    signals = [\n…\n77:    assert trends[0].score > trends[1].score\n78:\n79:\n80:def test_group_signals_merges_similar_names() -> None:\n81:    signals = [\n…\n86:    assert len(groups) == 1\n87:\n88:\n89:def test_ticket_range_from_web_offers() -> None:\n90:    signals = [\n…\n109:    assert trends[0].ticket_range.max_amount == Decimal(\"299\")\n\n[…59ln elided; re-read needed ranges, e.g. packages/research/tests/test_scoring.py:15-21,25-49]",
+      "tool_call_id": "call_1988cf6a"
+    },
+    {
+      "role": "tool",
+      "content": "# packages/research/\n\n## src/infoproduct_research/\n### pipeline.py#594C\n 17:from infoproduct_research.providers.duckduckgo import DEFAULT_CURRENCY\n*18:from infoproduct_research.scoring import apply_llm_analysis_placeholder, score_and_rank_trends\n 19:from infoproduct_research.verticals import filter_verticals, keywords_for_country\n 20:\n 21:logger = logging.getLogger(__name__)\n...\n 75:    currency = DEFAULT_CURRENCY.get(country_code.upper(), profile.currency)\n*76:    trends, excluded = score_and_rank_trends(all_signals, currency)\n 77:\n 78:    if not trends:\n 79:        msg = \"No trends passed the 2-source corroboration rule. Check provider_status for details.\"\n### scoring.py#E181\n 237:\n*238:def score_and_rank_trends(\n 239:    signals: list[TrendSignal],\n 240:    default_currency: str,\n 241:) -> tuple[list[TrendEntry], int]:\n\n## tests/\n### test_scoring.py#7957\n 4:from infoproduct_research.providers.base import TrendSignal\n*5:from infoproduct_research.scoring import group_signals, score_and_rank_trends\n 6:\n 7:\n 8:def _signal(\n...\n 49:    ]\n*50:    trends, excluded = score_and_rank_trends(signals, \"MXN\")\n 51:    assert len(trends) == 1\n 52:    assert trends[0].name == \"dieta\"\n 53:    assert len(trends[0].sources_corroborating) >= 2\n...\n 60:    ]\n*61:    trends, excluded = score_and_rank_trends(signals, \"MXN\")\n 62:    assert trends == []\n 63:    assert excluded == 1\n 64:\n...\n 73:    ]\n*74:    trends, _ = score_and_rank_trends(signals, \"MXN\")\n 75:    assert trends[0].name == \"beta\"\n 76:    assert trends[0].rank == 1\n 77:    assert trends[0].score > trends[1].score\n...\n 106:    ]\n*107:    trends, _ = score_and_rank_trends(signals, \"MXN\")\n 108:    assert trends[0].ticket_range.min_amount == Decimal(\"99\")\n 109:    assert trends[0].ticket_range.max_amount == Decimal(\"299\")",
+      "tool_call_id": "call_d582ac4d"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nInteresting — the `test_single_source_trend_excluded` test passes (it expects `trends == []`). But the other tests also receive an empty list. Wait, in test_two_source_corroboration, it expects 1 trend but receives 0. In test_scoring_ranks, trends[0] exists? No — IndexError on trends[1]... wait, the index error on line 77 is trends[1], but does that mean trends[0] was fine? Actually, `assert trends[0].name == \"beta\"` passed, and `trends[0].rank == 1` passed, and then trends[1] raised IndexError. So in the ranking test there's exactly 1 trend. In the ticket test, IndexError on trends[0] → empty list.\n\nHmm, so the behavior differs per test. Let me read the entire scoring module and the test details (lines 25-49, 66-77, 89-109).\n",
+      "tool_calls": [
+        {
+          "id": "call_c67d495c",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"packages/research/src/infoproduct_research/scoring.py\"}"
+          }
+        },
+        {
+          "id": "call_1cf25c84",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"packages/research/tests/test_scoring.py:24-49,57-77,80-87,89-109\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "[packages/research/tests/test_scoring.py#7957]\n24:def test_two_source_corroboration_required() -> None:\n25:    signals = [\n26:        _signal(\n27:            \"dieta\",\n28:            TrendSource.GOOGLE_TRENDS,\n29:            avg_interest=55.0,\n30:            peak_interest=80.0,\n31:            rising_queries=[\"dieta keto\"],\n32:            related_queries=[\"plan alimenticio\"],\n33:        ),\n34:        _signal(\n35:            \"dieta\",\n36:            TrendSource.WEB_OFFERS,\n37:            offer_count=5,\n38:            ticket_min=\"49\",\n39:            ticket_max=\"199\",\n40:            ticket_currency=\"MXN\",\n41:            sample_offers=[],\n42:        ),\n43:        _signal(\n44:            \"solo google\",\n45:            TrendSource.GOOGLE_TRENDS,\n46:            avg_interest=30.0,\n47:            peak_interest=40.0,\n48:        ),\n49:    ]\n…\n54:    assert excluded == 1\n…\n57:def test_single_source_trend_excluded() -> None:\n58:    signals = [\n59:        _signal(\"unico\", TrendSource.META_ADS, active_ad_count=10, country_code=\"MX\"),\n60:    ]\n61:    trends, excluded = score_and_rank_trends(signals, \"MXN\")\n62:    assert trends == []\n63:    assert excluded == 1\n64:\n65:\n66:def test_scoring_ranks_higher_interest_first() -> None:\n67:    signals = [\n68:        _signal(\"alpha\", TrendSource.GOOGLE_TRENDS, avg_interest=20.0, peak_interest=25.0),\n69:        _signal(\"alpha\", TrendSource.WEB_OFFERS, offer_count=2, sample_offers=[]),\n70:        _signal(\"beta\", TrendSource.GOOGLE_TRENDS, avg_interest=70.0, peak_interest=90.0),\n71:        _signal(\"beta\", TrendSource.META_ADS, active_ad_count=40, country_code=\"MX\"),\n72:        _signal(\"beta\", TrendSource.WEB_OFFERS, offer_count=8, sample_offers=[]),\n73:    ]\n74:    trends, _ = score_and_rank_trends(signals, \"MXN\")\n75:    assert trends[0].name == \"beta\"\n76:    assert trends[0].rank == 1\n77:    assert trends[0].score > trends[1].score\n…\n80:def test_group_signals_merges_similar_names() -> None:\n81:    signals = [\n82:        _signal(\"Perder Peso\", TrendSource.GOOGLE_TRENDS),\n83:        _signal(\"perder peso\", TrendSource.WEB_OFFERS, offer_count=1, sample_offers=[]),\n84:    ]\n85:    groups = group_signals(signals)\n86:    assert len(groups) == 1\n87:\n…\n89:def test_ticket_range_from_web_offers() -> None:\n90:    signals = [\n91:        _signal(\n92:            \"curso\",\n93:            TrendSource.GOOGLE_TRENDS,\n94:            avg_interest=40.0,\n95:            peak_interest=50.0,\n96:        ),\n97:        _signal(\n98:            \"curso\",\n99:            TrendSource.WEB_OFFERS,\n100:            offer_count=3,\n101:            ticket_min=\"99\",\n102:            ticket_max=\"299\",\n103:            ticket_currency=\"MXN\",\n104:            sample_offers=[],\n105:        ),\n106:    ]\n107:    trends, _ = score_and_rank_trends(signals, \"MXN\")\n108:    assert trends[0].ticket_range.min_amount == Decimal(\"99\")\n109:    assert trends[0].ticket_range.max_amount == Decimal(\"299\")",
+      "tool_call_id": "call_1cf25c84"
+    },
+    {
+      "role": "tool",
+      "content": "[packages/research/src/infoproduct_research/scoring.py#E181]\n1:import logging\n…\n19:from infoproduct_research.providers.base import TrendSignal\n20:\n21:logger = logging.getLogger(__name__)\n22:\n23:MIN_CORROBORATING_SOURCES = 2\n24:MAX_TRENDS = 10\n25:\n26:\n27:def normalize_trend_name(name: str) -> str:\n28:    text = unicodedata.normalize(\"NFKD\", name.lower())\n…\n32:    return text\n33:\n34:\n35:def _name_similar(a: str, b: str) -> bool:\n36:    na, nb = normalize_trend_name(a), normalize_trend_name(b)\n…\n46:    return overlap >= 0.6\n47:\n48:\n49:def group_signals(signals: list[TrendSignal]) -> dict[str, list[TrendSignal]]:\n50:    groups: dict[str, list[TrendSignal]] = {}\n…\n65:    return groups\n66:\n67:\n68:def build_metrics(signals: list[TrendSignal]) -> TrendMetrics:\n69:    gt: GoogleTrendsMetrics | None = None\n…\n127:    )\n128:\n129:\n130:def compute_saturation(metrics: TrendMetrics) -> SaturationSignal:\n131:    interest = metrics.google_trends.avg_interest if metrics.google_trends else None\n…\n162:    )\n163:\n164:\n165:def compute_ticket_range(metrics: TrendMetrics, default_currency: str) -> TicketRange:\n166:    web = metrics.web_offers\n…\n174:    return TicketRange(currency=default_currency, sample_count=0)\n175:\n176:\n177:def compute_score(metrics: TrendMetrics, source_count: int) -> float:\n178:    score = float(source_count) * 10.0\n…\n188:    return round(score, 2)\n189:\n190:\n191:def demand_supply_analysis(metrics: TrendMetrics, saturation: SaturationSignal) -> str:\n192:    parts: list[str] = []\n…\n208:    return \" \".join(parts)\n209:\n210:\n211:def recommendation_for(\n…\n216:) -> tuple[str, str]:\n217:    if saturation.level == SaturationLevel.LOW and source_count >= 3:\n…\n235:    return rec, rationale\n236:\n237:\n238:def score_and_rank_trends(\n…\n241:) -> tuple[list[TrendEntry], int]:\n242:    groups = group_signals(signals)\n…\n289:    return ranked, excluded\n290:\n291:\n292:def apply_llm_analysis_placeholder(report_data: dict[str, Any]) -> dict[str, Any] | None:\n293:    \"\"\"Extension point for future LLM-based trend narrative analysis.\n…\n298:    return None\n\n[…234ln elided; re-read needed ranges, e.g. packages/research/src/infoproduct_research/scoring.py:2-18,29-31]",
+      "tool_call_id": "call_c67d495c"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nInteresting — `test_single_source_trend_excluded` is passing, which means `score_and_rank_trends` is working in the single-source case (empty list). But it's failing in other cases. The test uses the `_signal` helper, and its body is elided (lines 15-21). Let me read the elided ranges: scoring.py lines 2-18, 29-31, 36-45, 50-65, 69-127, 131-162, 166-174, 178-188, 192-208, 217-235, 242-289, 293-298. Also test lines 15-21.\n\nLet me read all of scoring.py.\n",
+      "tool_calls": [
+        {
+          "id": "call_f13197ce",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"packages/research/src/infoproduct_research/scoring.py:1-18,29-46,50-65,68-128,130-175,177-189,211-235,238-290\"}"
+          }
+        },
+        {
+          "id": "call_f41053c5",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"packages/research/tests/test_scoring.py:8-22\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "[packages/research/tests/test_scoring.py#7957]\n7:\n8:def _signal(\n9:    name: str,\n10:    source: TrendSource,\n11:    vertical: str = \"health_weight_loss\",\n12:    keyword: str | None = None,\n13:    **payload: object,\n14:) -> TrendSignal:\n15:    return TrendSignal(\n16:        name=name,\n17:        vertical=vertical,\n18:        source=source,\n19:        keyword=keyword or name,\n20:        payload=dict(payload),\n21:    )\n22:\n23:\n24:def test_two_source_corroboration_required() -> None:\n25:    signals = [\n…\n49:    ]\n…\n54:    assert excluded == 1\n\n[Showing lines 7-25 of 109. Use :26 to continue]",
+      "tool_call_id": "call_f41053c5"
+    },
+    {
+      "role": "tool",
+      "content": "[packages/research/src/infoproduct_research/scoring.py#E181]\n1:import logging\n2:import re\n3:import unicodedata\n4:from decimal import Decimal\n5:from typing import Any\n6:\n7:from infoproduct_research.models import (\n8:    GoogleTrendsMetrics,\n9:    MetaAdsMetrics,\n10:    SaturationLevel,\n11:    SaturationSignal,\n12:    TicketRange,\n13:    TikTokMetrics,\n14:    TrendEntry,\n15:    TrendMetrics,\n16:    TrendSource,\n17:    WebOffersMetrics,\n18:)\n…\n27:def normalize_trend_name(name: str) -> str:\n28:    text = unicodedata.normalize(\"NFKD\", name.lower())\n29:    text = \"\".join(ch for ch in text if not unicodedata.combining(ch))\n30:    text = re.sub(r\"[^a-z0-9\\s]\", \" \", text)\n31:    text = re.sub(r\"\\s+\", \" \", text).strip()\n32:    return text\n33:\n34:\n35:def _name_similar(a: str, b: str) -> bool:\n36:    na, nb = normalize_trend_name(a), normalize_trend_name(b)\n37:    if na == nb:\n38:        return True\n39:    if na in nb or nb in na:\n40:        return True\n41:    words_a = set(na.split())\n42:    words_b = set(nb.split())\n43:    if not words_a or not words_b:\n44:        return False\n45:    overlap = len(words_a & words_b) / min(len(words_a), len(words_b))\n46:    return overlap >= 0.6\n…\n49:def group_signals(signals: list[TrendSignal]) -> dict[str, list[TrendSignal]]:\n50:    groups: dict[str, list[TrendSignal]] = {}\n51:    keys: list[str] = []\n52:\n53:    for signal in signals:\n54:        assigned = False\n55:        for key in keys:\n56:            if _name_similar(key, signal.name) or _name_similar(key, signal.keyword):\n57:                groups[key].append(signal)\n58:                assigned = True\n59:                break\n60:        if not assigned:\n61:            key = normalize_trend_name(signal.name) or normalize_trend_name(signal.keyword)\n62:            keys.append(key)\n63:            groups[key] = [signal]\n64:\n65:    return groups\n…\n68:def build_metrics(signals: list[TrendSignal]) -> TrendMetrics:\n69:    gt: GoogleTrendsMetrics | None = None\n70:    meta: MetaAdsMetrics | None = None\n71:    tiktok: TikTokMetrics | None = None\n72:    web: WebOffersMetrics | None = None\n73:\n74:    for signal in signals:\n75:        payload = signal.payload\n76:        if signal.source == TrendSource.GOOGLE_TRENDS and gt is None:\n77:            gt = GoogleTrendsMetrics(\n78:                keyword=signal.keyword,\n79:                avg_interest=float(payload.get(\"avg_interest\", 0)),\n80:                peak_interest=float(payload.get(\"peak_interest\", 0)),\n81:                rising_queries=list(payload.get(\"rising_queries\", [])),\n82:                related_queries=list(payload.get(\"related_queries\", [])),\n83:            )\n84:        elif signal.source == TrendSource.META_ADS and meta is None:\n85:            meta = MetaAdsMetrics(\n86:                keyword=signal.keyword,\n87:                active_ad_count=int(payload.get(\"active_ad_count\", 0)),\n88:                country_code=str(payload.get(\"country_code\", \"\")),\n89:            )\n90:        elif signal.source == TrendSource.TIKTOK and tiktok is None:\n91:            tiktok = TikTokMetrics(\n92:                keyword=signal.keyword,\n93:                hashtag=payload.get(\"hashtag\"),\n94:                trend_score=payload.get(\"trend_score\"),\n95:                rank=payload.get(\"rank\"),\n96:            )\n97:        elif signal.source == TrendSource.WEB_OFFERS and web is None:\n98:            offers_raw = payload.get(\"sample_offers\", [])\n99:            from infoproduct_research.models import CompetitorOffer\n100:\n101:            offers = [\n102:                CompetitorOffer(\n103:                    title=o.get(\"title\", \"\"),\n104:                    url=o.get(\"url\", \"\"),\n105:                    price_amount=Decimal(o[\"price_amount\"]) if o.get(\"price_amount\") else None,\n106:                    price_currency=o.get(\"price_currency\"),\n107:                    snippet=o.get(\"snippet\"),\n108:                )\n109:                for o in offers_raw\n110:            ]\n111:            t_min = payload.get(\"ticket_min\")\n112:            t_max = payload.get(\"ticket_max\")\n113:            web = WebOffersMetrics(\n114:                keyword=signal.keyword,\n115:                offer_count=int(payload.get(\"offer_count\", 0)),\n116:                ticket_min=Decimal(t_min) if t_min else None,\n117:                ticket_max=Decimal(t_max) if t_max else None,\n118:                ticket_currency=payload.get(\"ticket_currency\"),\n119:                sample_offers=offers,\n120:            )\n121:\n122:    return TrendMetrics(\n123:        google_trends=gt,\n124:        meta_ads=meta,\n125:        tiktok=tiktok,\n126:        web_offers=web,\n127:    )\n128:\n…\n130:def compute_saturation(metrics: TrendMetrics) -> SaturationSignal:\n131:    interest = metrics.google_trends.avg_interest if metrics.google_trends else None\n132:    ad_density = metrics.meta_ads.active_ad_count if metrics.meta_ads else None\n133:\n134:    if ad_density is not None and interest is not None:\n135:        if ad_density >= 50 and interest >= 40:\n136:            level = SaturationLevel.HIGH\n137:            rationale = (\n138:                \"High ad density combined with strong search interest \"\n139:                \"suggests a crowded market.\"\n140:            )\n141:        elif ad_density >= 20 or interest >= 60:\n142:            level = SaturationLevel.MODERATE\n143:            rationale = \"Moderate competition with visible demand; differentiation is required.\"\n144:        else:\n145:            level = SaturationLevel.LOW\n146:            rationale = \"Lower ad density relative to interest indicates room for new entrants.\"\n147:    elif ad_density is not None:\n148:        level = SaturationLevel.HIGH if ad_density >= 30 else SaturationLevel.MODERATE\n149:        rationale = \"Saturation estimated from ad density only (search interest unavailable).\"\n150:    elif interest is not None:\n151:        level = SaturationLevel.HIGH if interest >= 70 else SaturationLevel.LOW\n152:        rationale = \"Saturation estimated from search interest only (ad density unavailable).\"\n153:    else:\n154:        level = SaturationLevel.MODERATE\n155:        rationale = \"Insufficient ad and search signals; treating saturation as moderate.\"\n156:\n157:    return SaturationSignal(\n158:        level=level,\n159:        ad_density=ad_density,\n160:        search_interest=interest,\n161:        rationale=rationale,\n162:    )\n163:\n164:\n165:def compute_ticket_range(metrics: TrendMetrics, default_currency: str) -> TicketRange:\n166:    web = metrics.web_offers\n167:    if web and (web.ticket_min is not None or web.ticket_max is not None):\n168:        return TicketRange(\n169:            min_amount=web.ticket_min,\n170:            max_amount=web.ticket_max,\n171:            currency=web.ticket_currency or default_currency,\n172:            sample_count=web.offer_count,\n173:        )\n174:    return TicketRange(currency=default_currency, sample_count=0)\n175:\n…\n177:def compute_score(metrics: TrendMetrics, source_count: int) -> float:\n178:    score = float(source_count) * 10.0\n179:    if metrics.google_trends:\n180:        score += metrics.google_trends.avg_interest * 0.4\n181:        score += len(metrics.google_trends.rising_queries) * 2\n182:    if metrics.meta_ads:\n183:        score += min(metrics.meta_ads.active_ad_count, 100) * 0.1\n184:    if metrics.tiktok and metrics.tiktok.trend_score is not None:\n185:        score += metrics.tiktok.trend_score * 0.2\n186:    if metrics.web_offers:\n187:        score += min(metrics.web_offers.offer_count, 20) * 1.5\n188:    return round(score, 2)\n189:\n…\n211:def recommendation_for(\n212:    name: str,\n213:    saturation: SaturationSignal,\n214:    ticket: TicketRange,\n215:    source_count: int,\n216:) -> tuple[str, str]:\n217:    if saturation.level == SaturationLevel.LOW and source_count >= 3:\n218:        rec = \"Strong candidate\"\n219:        rationale = (\n220:            f\"{name} shows corroborated demand with manageable competition. \"\n221:            f\"Ticket range {ticket.min_amount}-{ticket.max_amount} {ticket.currency} is viable.\"\n222:        )\n223:    elif saturation.level == SaturationLevel.HIGH:\n224:        rec = \"Proceed with caution\"\n225:        rationale = (\n226:            f\"{name} has validated demand but high saturation. \"\n227:            \"Requires a sharp unique angle or sub-niche to compete profitably.\"\n228:        )\n229:    else:\n230:        rec = \"Worth testing\"\n231:        rationale = (\n232:            f\"{name} has {source_count} corroborating sources with moderate competition. \"\n233:            \"Suitable for a low-budget validation campaign.\"\n234:        )\n235:    return rec, rationale\n…\n238:def score_and_rank_trends(\n239:    signals: list[TrendSignal],\n240:    default_currency: str,\n241:) -> tuple[list[TrendEntry], int]:\n242:    groups = group_signals(signals)\n243:    entries: list[TrendEntry] = []\n244:    excluded = 0\n245:\n246:    for _key, group in groups.items():\n247:        sources = {s.source for s in group}\n248:        if len(sources) <= MIN_CORROBORATING_SOURCES:\n249:            excluded += 1\n250:            logger.debug(\n251:                \"Excluding trend %r: only %d source(s) %s\",\n252:                group[0].name,\n253:                len(sources),\n254:                sources,\n255:            )\n256:            continue\n257:\n258:        display_name = max(group, key=lambda s: len(s.name)).name\n259:        vertical = group[0].vertical\n260:        metrics = build_metrics(group)\n261:        saturation = compute_saturation(metrics)\n262:        ticket = compute_ticket_range(metrics, default_currency)\n263:        score = compute_score(metrics, len(sources))\n264:        analysis = demand_supply_analysis(metrics, saturation)\n265:        rec, rationale = recommendation_for(display_name, saturation, ticket, len(sources))\n266:\n267:        entries.append(\n268:            TrendEntry.model_construct(\n269:                rank=1,\n270:                name=display_name,\n271:                vertical=vertical,\n272:                sources_corroborating=sorted(sources, key=lambda s: s.value),\n273:                metrics=metrics,\n274:                saturation_signal=saturation,\n275:                ticket_range=ticket,\n276:                demand_supply_analysis=analysis,\n277:                recommendation=rec,\n278:                recommendation_rationale=rationale,\n279:                score=score,\n280:            )\n281:        )\n282:\n283:    entries.sort(key=lambda e: e.score, reverse=True)\n284:    ranked = entries[:MAX_TRENDS]\n285:\n286:    for idx, entry in enumerate(ranked, start=1):\n287:        entry.rank = idx\n288:\n289:    return ranked, excluded\n290:",
+      "tool_call_id": "call_f13197ce"
+    },
+    {
+      "role": "assistant",
+      "content": "\n\nI found the bug: line 248 of `scoring.py` excludes trends with 2 or more sources using `<=`, when it should only exclude trends with fewer than 2 sources, which is why every two-source trend is being dropped.\n\n",
+      "reasoning_content": "\nHere's the bug: line 248 `if len(sources) <= MIN_CORROBORATING_SOURCES: excluded += 1; continue`. `MIN_CORROBORATING_SOURCES = 2`. So trends with 2 or more sources get excluded. What we actually want is: exclude when there are fewer than 2 sources, i.e., `len(sources) < MIN_CORROBORATING_SOURCES`.\n\nVerification: test_two_source_corroboration_required: \"dieta\" has 2 sources (GOOGLE_TRENDS + WEB_OFFERS). With `<=`, it gets excluded → trends is empty, excluded = 2. The test expects 1 trend and excluded=1. With `<`, dieta stays (2 sources, not < 2), and \"solo google\" has 1 source → excluded = 1. ✓\n\ntest_single_source: \"unico\" has 1 source → excluded=1, trends=[]. ✓ (This was passing even with the bug, since 1 <= 2 is also true).\n\ntest_scoring_ranks: alpha has 2 sources, beta has 3. With `<`, both remain. Beta's score: 3*10 + 70*0.4 + 0 rising + min(40,100)*0.1 + 8*1.5 = 30+28+4+12=74. Alpha: 20 + 8 + 3 = 31. Beta is first. ✓\n\ntest_ticket_range: curso has 2 sources → stays, ticket min 99 max 299. ✓\n\nAlso, should I check whether TrendEntry.model_construct's rank gets mutated... no problem.\n\nFix: change `<=` on line 248 to `<`. Also, the log message \"only %d source(s)\" — with `<` it becomes \"only 1 source(s)\", which is fine.\n\nApplying the edit. Using xd://edit.\n",
+      "tool_calls": [
+        {
+          "id": "call_f8064ae7",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"xd://edit\",\"i\":\"Checking edit tool docs\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "# edit — Edit\n\nLine-anchored patch language: name original lines/gaps to replace, insert, cut, or paste; then give new content. `:` headers take `+` body rows; colonless paste `PUT`, `CUT`, `REM`, `MV` take none.\n\n<headers>\nSection: `[PATH#TAG]`; `TAG`: 4-hex snapshot from latest `read`/`search`, REQUIRED each section. New files: `write`; hashline edits existing files only.\n</headers>\n\n<ops>\n`PUT N.=M:`: replace original inclusive lines N–M with body.\n`PUT N*:`: replace syntactic block beginning N; closing line resolved.\n`PUT <N:` insert body rows before line N (`PUT <1:` = file head).\n`PUT >N:` insert body rows after line N (`PUT >$:` = file tail).\n`PUT >N*:`: insert after block N's end, at sibling depth. Append inside block: `PUT >M:`.\n`PUT <N @name` / `PUT >N @name` paste register `@name` at the gap before/after line N; omit `@name` for the anonymous register.\n`PUT N.=M @name` / `PUT N* @name` paste `@name` over the range / resolved block; `@name` required here.\n`CUT N.=M` / `CUT N*`: delete and capture inclusive lines N–M / block N; anonymous or given `@name`.\n`REM`: delete section file. `MV DEST`: move/rename (quote paths with spaces); prior edits apply to source, final content to `DEST`.\nSingle line: `PUT N.=N:` / `CUT N.=N`. Ranges name original inclusive touched lines; body length irrelevant.\n</ops>\n\n<body-rows>\nOnly below `:` headers. Row: verbatim `+TEXT` (leading whitespace preserved); `+`: blank. NEVER `-old`, bare, or context rows: range deletes; body is final content. Keep line: exclude it from every range. Literal initial `-`/`+`: `- item` → `+- item`; `+ item` → `++ item`.\n</body-rows>\n\n<rules>\n- Numbers and `#TAG`: latest `read`/`search` `LINE:TEXT`; numbers are original, never shifted by hunks.\n- Each edit renumbers and changes `#TAG` → next numbers from edit response or fresh `read`.\n- Touch displayed lines only; undisplayed hunks REJECTED. Far from read window: re-`read`; confirm construct.\n- Elisions UNSEEN: `…`, `..`, collapsed `N-M:` rows. NEVER hunk in/across one; `read` first.\n- NEVER start/end range mid-expression or mid-block.\n- Ranges: changed lines only; NEVER widen over keepers. Non-adjacent changes: separate hunks.\n- Whole construct: `PUT N*:`; internal lines: `PUT N.=M:`.\n- `PUT N*:` resolves exactly node N. Leading decorators/attributes/doc-comments are separate nodes: point N at first decorator to include both. Standalone line-comments never swept: use `PUT N.=M:`.\n- Block ops: opening line of multi-line construct, NEVER closer, last line, bare inner statement. One statement: plain `PUT N.=N:` / `CUT N.=N` / `PUT >N:`. At closer: `PUT >M:`.\n- Markdown headings are block openers. Block op on `##`/`###`: whole section through deeper headings to next same/higher heading. After section `PUT >N*:`: end body with blank line to separate next heading.\n- Pure addition: `PUT <N:` / `PUT >N:`, NEVER widened `PUT N.=M:`.\n- Move: `CUT`+`PUT`; `CUT 5.=9 @fn` → `@fn`, `PUT >40 @fn` pastes. Single call-local move: unlabeled `CUT` + `PUT >40`. Named registers persist across edit calls.\n- NEVER format/restyle with this tool; run project formatter.\n</rules>\n\n<example>\n`read` output shape:\n```\n[greet.py#A1B2]\n1:def greet(name):\n2:    msg = \"Hello, \" + name\n3:    print(msg)\n4:greet(\"world\")\n```\n\nEdit, then move:\n```\n[greet.py#A1B2]\nPUT 1.=3:\n+def greet(name):\n+    print(f\"Hi, {name}\")\nMV lib/greet.py\n```\n\nMarkdown bullets — file receives `- task`:\n```\n[PLAN.md#A1B2]\nPUT >2:\n+- task\n+  - nested task\n```\n\nMove `greet` to sibling file via named register; flows across sections:\n```\n[greet.py#A1B2]\nCUT 1* @fn\n[other.py#3C4D]\nPUT <1 @fn\n```\n\n`PUT 1*:` resolves lines 1–3 (`def` through `print(msg)`); line 4 separate, remains:\n```\n[greet.py#A1B2]\nPUT 1*:\n+def greet(name):\n+    print(f\"Hello, {name}\")\n```\n\nDecorator/doc-comment separate block: point N at decorator to include both; anchoring `def` line 2 orphans `@cache`:\n```\n[svc.py#C3D4]\nPUT 1*:\n+@cache\n+def load(key):\n+    return store[key]\n```\n</example>\n\n<anti-patterns>\n# WRONG — empty `PUT` to delete. RIGHT: `CUT 4.=4`\nPUT 4.=4:\n\n# WRONG — range sized to the post-edit content. RIGHT: `PUT 1.=1:` (body length irrelevant)\nPUT 1.=2:\n+def greet(name):\n\n# WRONG — `-` rows / bare context lines do not exist; the range deletes, the body is only new content.\nPUT 3.=3:\n    msg = \"Hello, \" + name\n-   print(msg)\n+   return msg\n# RIGHT\nPUT 3.=3:\n+   return msg\n\n# WRONG — pure insertion as a widened `PUT`: retyped keepers get dropped (here line 4).\nPUT 2.=4:\n+    msg = \"Hello, \" + name\n+    extra = compute(name)\n+    print(msg)\n# RIGHT — touch nothing you keep.\nPUT >2:\n+    extra = compute(name)\n\n# WRONG — `PUT >N*:` anchored on the closing delimiter / last visible line. RIGHT: plain `PUT >M:`\nPUT >3*:\n+after()\n# RIGHT\nPUT >3:\n+after()\n\n# WRONG — body rows under register PUT; register pastes take no body. RIGHT: bodyless `PUT >20 @fn`.\nPUT >20 @fn:\n+function f() {}\n</anti-patterns>\n\n<critical>\n1. RE-GROUND AFTER EVERY EDIT: edits renumber and change `#TAG`; take next numbers from edit response or fresh `read`. Stale tag/surprise: STOP; re-`read`.\n2. RANGES TIGHT: changed lines only. Whole construct: `PUT N*:`.\n3. BODY FINAL CONTENT: every row starts `+`; Markdown bullet: `+- item`, not `- item`.\n</critical>\n\n## Schema\n```ts\ntype Args = {\n  input: string;\n};\n```\nExecute by writing JSON to xd://edit.\nExample: write(path=\"xd://edit\", content=\"{\\\"input\\\":\\\"[src/app.ts#1A2B]\\\\nPUT 3.=3:\\\\n+  return value;\\\"}\") — one JSON object, newlines inside strings as \\n.",
+      "tool_call_id": "call_f8064ae7"
+    }
+  ],
+  "stream": true,
+  "stream_options": {
+    "include_usage": true
+  },
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "read",
+        "description": "Read files, directories, archives, SQLite, images, documents, internal resources, and web URLs via `path`.\n\n<instruction>\n- SHOULD parallelize independent reads.\n- SHOULD use `read` (not browser) for web content; browser only when `read` can't deliver.\n</instruction>\n\n## Selectors — append `:<sel>` to `path` (e.g. `src/foo.ts:50-200`, `src/foo.ts:raw`, `db.sqlite:users:42`)\n- `:50` / `:50-` — from line 50 | `:50-200` — inclusive | `:50+150` — 150 lines from 50 | `:5-16,960-973` — multiple ranges\n- `:raw` — verbatim, no anchors/prefixes | `:2-4:raw` / `:raw:2-4` — range + verbatim\n- `:conflicts` — one line per unresolved git merge conflict block\n- `:img` — rasterize a local `.svg`/`.svgz` as a PNG image; use when visual layout matters\n\n## Source kinds\n- Parseable code, no selector → structural summary (declarations only, body elided). Footer names recovery selector — re-issue ONLY those ranges.\n- File + selector → `[foo.ts#1A2B]` snapshot header + numbered lines. Copy `[FILENAME#TAG]` for anchored edits; NEVER fabricate the tag.\n- Directory → depth-limited dirent listing.\n- SQLite (`.sqlite`, `.sqlite3`, `.db`, `.db3`): `file.db` (tables), `file.db:table` (schema+rows), `file.db:table:key` (by PK), `?limit=`/`?where=`/`?q=SELECT`.\n- Archives (`.zip` family incl. `.jar`/`.apk`/`.whl`, `.tar` incl. `.tar.{gz,bz2,xz,zst}`, `.rar`, `.7z`, `.iso`, `.cab`, `.deb`/`.rpm`/`.cpio`/`.ar`/`.a`, `.lzh`/`.arj`, `.asar`; single-stream `.gz`/`.bz2`/`.xz`/`.zst`): `archive.ext:path/inside/archive` reads a member.\n- Documents → extracted text. Notebooks → editable cells. Images → decoded inline. SVGs read as text unless `:img` is specified. `:raw` bypasses converters.\n- URLs → reader-mode clean text/markdown; `:raw` → untouched HTML. Bare `host:port` needs trailing slash.\n- Internal URIs — all schemes take selectors. `artifact://<id>` recovers spilled output; page with `:N-M`/`:raw:N-M`.\n- `ssh://host/<path>` reads remote file/dir (UTF-8, ≤1 MiB); bare `ssh://` lists hosts; writable with `write` and searchable with `grep`.\n  Literal `:`, `?`, `#` → percent-encode (`%3A`/`%3F`/`%23`). Requires a verified POSIX shell on the remote host. For Windows or other unsupported hosts, use `bash` with a remote SSH command or mount with `sshfs`.\n\n<critical>\nSummary footer names elided ranges? Re-issue ONLY those ranges. NEVER guess `..`/`…` content.\n</critical>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "path": {
+              "type": "string",
+              "description": "Local path, internal URI (e.g. skill://), or URL. Inline selectors are supported."
+            }
+          },
+          "required": [
+            "path",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "bash",
+        "description": "Runs commands in a persistent shell.\n\nUse ONLY for one binary or a short pipeline that computes a fact (`wc -l`, `sort | uniq -c`, `diff`).\nInline scripts, heredocs, `$(…)`, and complex control flow → a purpose-built tool or checked-in script.\n\n<instruction>\n- Set `cwd` instead of `cd`; use `env: { NAME: \"…\" }` for multiline/quote-heavy values.\n- `pty: true` only for terminal interaction (`sudo`, `ssh`).\n- Order-dependent commands use `&&` in one call; independent calls may run concurrently.\n- Internal URIs (`skill://`, `agent://`, …) auto-resolve to paths.\n- aux utils available: mkdir, wc, sort, comm, diff, uniq, base64, cmp, md5sum, sha{1,224,256,384,512}sum, b2sum, basename, dirname, readlink, realpath, touch, stat, date, mktemp, seq, yes, printenv, truncate, tac, nproc, uname, whoami, hostname, which, ps, pgrep, pkill, pidwait, top, cut, tee, tr, paste, sed, xargs, jq, rm, mv, ln, ts, sponge, ifne, isutf8, combine, errno\n- `async: true` defers a finite command's result; it does not extend `timeout`.\n</instruction>\n\n<critical>\n- NEVER use shell `grep`/`rg`; use built-in `grep`.\n\n- Avoid `head`, `tail`, and redirection: output is captured, truncated, and linked as `artifact://<id>`.\n</critical>\n\nLong foreground calls may auto-background by the configured threshold and deliver later.\n`timeout: 0` disables the job deadline; otherwise `timeout` sets it without extending foreground waiting.\nNo truncation footer means the displayed output is complete.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "command": {
+              "type": "string"
+            },
+            "env": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "timeout": {
+              "type": "number",
+              "description": "timeout in seconds; 0 disables the command deadline; nonzero values are clamped to 1-3600"
+            },
+            "cwd": {
+              "type": "string"
+            },
+            "pty": {
+              "type": "boolean"
+            },
+            "async": {
+              "type": "boolean",
+              "description": "run in background"
+            }
+          },
+          "required": [
+            "command",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "grep",
+        "description": "Searches files/internal URLs: Rust regex, PCRE2 fallback.\n\n<instruction>\n- `path`: known files, directories, globs, internal URLs; roots `;`-separated.\n- Broad searches may time out → narrow scope or use `glob` first.\n- One-file line selector: `src/foo.ts:50-100`; never selects search root.\n- Literal `\\n` or `\\\\n` enables cross-line patterns.\n</instruction>\n\n<critical>\n- MUST use instead of shell `grep`/`rg`.\n- Open-ended multi-round search MUST use Task + scout, not chained calls.\n</critical>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "pattern": {
+              "type": "string",
+              "description": "regex pattern"
+            },
+            "path": {
+              "type": "string",
+              "description": "file, directory, glob, internal URL, or \"<file>:<lines>\" selector to search; pass several as a semicolon-delimited list (\"src; tests\"). Omitted -> searches the workspace root (\".\")"
+            },
+            "case": {
+              "type": "boolean",
+              "description": "case-sensitive search"
+            },
+            "gitignore": {
+              "type": "boolean",
+              "description": "respect gitignore"
+            },
+            "skip": {
+              "description": "files to skip before collecting results — use to paginate when the prior call hit the file limit",
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "pattern",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "write",
+        "description": "Creates or overwrites file at specified path.\n\n<conditions>\n- Creating new files explicitly required by task\n- Replacing entire file contents when editing would be more complex\n- Supports `.zip` (and ZIP-based `.jar`/`.war`/`.ear`/`.apk`), `.tar`, `.tar.gz`/`.tgz`, `.tar.zst`, and `.asar` archive entries via `archive.ext:path/inside/archive`; other archive formats (`.rar`, `.7z`, `.iso`, …) are read-only\n- Supports SQLite row operations via `db.sqlite:table` (insert), `db.sqlite:table:key` (update with JSON content, delete with empty content)\n</conditions>\n\n<critical>\n- You SHOULD use Edit tool for modifying existing files\n- You NEVER create documentation files (*.md, README) unless explicitly requested\n- You NEVER use emojis unless requested\n</critical>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "path": {
+              "type": "string",
+              "description": "file path"
+            },
+            "content": {
+              "type": "string",
+              "description": "file content"
+            }
+          },
+          "required": [
+            "path",
+            "content",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  ],
+  "max_completion_tokens": 4096,
+  "preserve_thinking": true,
+  "chat_template_kwargs": {
+    "preserve_thinking": true,
+    "reasoning_effort": "medium"
+  },
+  "enable_thinking": true,
+  "reasoning_effort": "medium"
+}

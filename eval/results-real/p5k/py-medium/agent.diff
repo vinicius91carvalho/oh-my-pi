@@ -1,0 +1,37 @@
+diff --git a/packages/landing-gen/src/infoproduct_landing_gen/locales.py b/packages/landing-gen/src/infoproduct_landing_gen/locales.py
+index 1ac1510..027114c 100644
+--- a/packages/landing-gen/src/infoproduct_landing_gen/locales.py
++++ b/packages/landing-gen/src/infoproduct_landing_gen/locales.py
+@@ -145,6 +145,16 @@ def locale_pack(locale: str | None) -> LocalePack:
+     return _DEFAULT
+ 
+ 
++def _group_digits(digits: str, separator: str) -> str:
++    """Group digits in threes, from the right: 1290 -> 1<sep>290."""
++    grouped: list[str] = []
++    for i, digit in enumerate(reversed(digits)):
++        if i and i % 3 == 0:
++            grouped.append(separator)
++        grouped.append(digit)
++    return "".join(reversed(grouped))
++
++
+ def format_price(amount: float | int, currency: str, pack: LocalePack) -> str:
+     """Write a price the way its market writes it.
+ 
+@@ -153,9 +163,11 @@ def format_price(amount: float | int, currency: str, pack: LocalePack) -> str:
+     """
+     value = float(amount)
+     if value.is_integer():
+-        body = f"{int(value):,}"
++        body = _group_digits(str(int(value)), pack.thousands_separator)
+     else:
+-        body = f"{value:,.2f}".replace(",", "\x00")
+-    body = body.replace(".", pack.decimal_separator)
+-    body = body.replace("\x00", pack.thousands_separator)
++        integer_digits, fraction = f"{value:.2f}".split(".")
++        body = (
++            f"{_group_digits(integer_digits, pack.thousands_separator)}"
++            f"{pack.decimal_separator}{fraction}"
++        )
+     return f"{pack.price_prefix}{body}{pack.price_suffix}"

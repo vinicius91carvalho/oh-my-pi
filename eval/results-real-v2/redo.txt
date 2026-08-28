@@ -1,0 +1,4 @@
+p5k ts-easy
+p7k ts-contract
+base ts-rename
+base ts-contract

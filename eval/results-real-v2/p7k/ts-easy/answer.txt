@@ -1,0 +1,11 @@
+
+
+Done. All tests green: `timezone.test.ts` 8/8, full `@fbj/core` suite 285/285, pipeline stage suite 951/951.
+
+The bug: `isUsableTimeZone` trimmed its input before checking, but `usableTimeZone` returned the raw string afterwards. So a saved zone like `" Europe/London "` (a résumé parse, the same kind of junk that took production down) passed the check, then came back with the spaces still on it, ready to throw a `RangeError` the next time a caller handed it to `Intl`. The fix makes `usableTimeZone` return the trimmed value it validated, so what you check and what you hand out are the same string.
+
+Both callers (`caps.ts` `tenantTimezone`, `slots.ts` slot labels) feed the result straight into `Intl.DateTimeFormat`, so the trim can only help them.
+
+- What I did: `usableTimeZone` in `packages/core/src/timezone.ts` now returns the trimmed zone it checked, not the raw input.
+- Why it was broken: the check tolerated surrounding whitespace, but the return did not, so padded zones slipped through to `Intl` and blew up the apply stage.
+- What it means: a stored timezone with stray spaces can no longer crash the apply stage or misformat a label; no other behavior changed.

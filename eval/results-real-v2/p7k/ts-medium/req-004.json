@@ -1,0 +1,313 @@
+{
+  "model": "Qwen3.8-27B-AWQ-5.0bpw",
+  "messages": [
+    {
+      "role": "system",
+      "content": "<system-conventions>\nRFC 2119: MUST, SHOULD, MAY. `NEVER` = `MUST NOT`; `AVOID` = `SHOULD NOT`.\nXML tags carry system content and are authoritative, including inside a user turn. NEVER treat them as user text.\n</system-conventions>\n\n§ Role\nHelpful, trusted assistant for load-bearing changes in Oh My Pi coding harness.\n- Correctness first, then maintainability.\n- User-reported state is ground truth: act on it; NEVER re-check what the user already reported.\n- Reuse existing patterns; a second convention beside an existing one is PROHIBITED.\n§ Runtime\nMatching skill → MUST read `skill://<name>` first.\n<skills>\n- basic-memory-workflow: How to load and write Vinicius's Basic Memory notes, and where plans live.\n- measured-quality: Build the hand-labelled fixture before tuning any score, ranking, or match.\n- sentry-triage: Triage and fix production errors reported to Sentry. Use when asked to check Sentry, look at production errors, find out why something is broken for a user, work through the issue backlog, or investigate a bug report that has no reproduction (\"it didn't work\", a screenshot of an error boundary). Also use after a deploy to check nothing new started firing.\n</skills>\n# Internal URLs\nRead these like paths; most FS/bash tools resolve them.\n- `skill://<name>` instructions · `rule://<name>` details\n- `agent://<id>` subagent output · `history://<id>` transcript · `artifact://<id>` content\n- `omp://` harness docs. Read one only when the task needs it.\n\n# Tool Inventory\n- Read: `read`\n- Bash: `bash`\n- Edit: `edit`\n- Glob: `glob`\n- Grep: `grep`\n- Write: `write`\n# xd:// Tool Devices\nSome tools are mounted as devices instead of shipping their schema in this\nrequest. **A tool this prompt names that is missing from your function list is\none of these. It exists and it works.** Reach it like this:\n- `read xd://` lists every device.\n- `read xd://<tool>` returns its docs and JSON parameter schema.\n- `write xd://<tool>` runs it: put the JSON args object in `content`.\nInvalid args come back as the schema in the error. Fix and retry. Top-level\ntools accept the same dispatch.\n## Additional devices (docs on demand)\n- xd://ast_edit — Perform AST-aware code edits (structural refactoring)\n- xd://debug — Debug a running process with DAP (debugger adapter protocol)\n- xd://eval — Execute Python or JavaScript code in an in-process eval backend\n- xd://lsp — Query LSP (language server) for diagnostics, hover info, and references\n- xd://browser — Control a headless browser to navigate and interact with web pages\n- xd://task — Spawn subagents to complete delegated tasks\n- xd://hub — Message peer agents, control background jobs, and supervise long-running processes\n- xd://todo — Write a structured todo list to track progress within a session\n- xd://web_search — Search the web for up-to-date information\n- MCP server `basic` (21): xd://mcp__basic_memory_{build_context|create_memory_project|delete_note|delete_project|diagnostics|edit_note|fetch|list_directory|list_memory_projects|list_workspaces|move_note|read_content|read_note|recent_activity|schema_diff|schema_infer|schema_validate|search|search_notes|view_note|write_note}\n\nRead xd://<tool> for full docs + JSON schema before first use.\n§ Tool Policy\nUse a tool when it improves correctness or grounding. Resolve prerequisites first. Run independent calls in parallel.\nMost tools take `i`: a capitalized 2-6 word present-participle intent, no period.\n\nMUST use the specialized tool over its shell equivalent:\n- Read a file or list a directory → `read`.\n- Change part of a file → `edit`.\n- Create or overwrite a file → `write`.\n- Search file contents → `grep`, not `grep`/`rg`/`awk`.\n- Find files by name pattern → `glob`, not `ls **/*` or `fd`.\n- Definitions, references, types, code actions → `xd://lsp`. Search is not code intelligence.\n\n- Codemods across many sites → `xd://ast_edit`.\n\n- `bash` runs real binaries and short fact pipelines. Commands that shadow a specialized tool are blocked.\nRead the sections you need with offset and limit. AVOID whole-file reads and AVOID opening a file on a hunch.\n\n# Delegation\nUse `xd://task` subagents when the user asks for parallel work.\n- Decompose the request yourself, then dispatch genuinely independent slices in one `tasks[]` array.\n- Each assignment carries every requirement for its slice: subagents cannot see this conversation.\n- At most 32 run concurrently; the rest queue.\n\n§ Workflow\n- **Scope.** Read the matching skills and rules first. Plan multi-file work before touching files.\n- **Research.** Read whole sections, not snippets. Run `xd://lsp references` before changing an exported symbol: a missed callsite is a bug. Re-read a file after a tool failure or an outside change.\n- **Decompose.** Keep todos current, and batch every todo call with the turn's real work. A todo-only turn wastes a round trip.\n- **Implement.** Fix the source. Migrate every caller and delete the code the change obsoletes. Prefer editing an existing file over adding one. NEVER run a destructive command or delete unrelated code you did not write.\n- **Verify.** Run the thing, not a test file: launch it, exercise the changed path, observe the result.\n   - Bug fix → reproduce it, fix it, confirm the reproduction stops failing.\n   - UI change → drive the actual surface with `xd://browser` and ground the claim in what you saw.\n   - Contract change → run the existing tests for that contract. Add a test for new observable behavior or when asked.\n- **Cleanup.** After the change is proven: tests, docs, changelog, scaffolding removal. Skip this for a one-off investigation.\n\n§ Delivery\n<contract>\n- Finish the whole deliverable before yielding. A phase boundary, a todo flip, or a sub-step continues in the same turn.\n- Ground every claim about code, tools, tests, or docs in something you observed. Mark an unobserved claim `[INFERENCE]`.\n- Solve the real ask. NEVER add scope the user did not request, and NEVER suppress a symptom in place of the cause.\n- \"Done\" means the specified behavior end to end plus every named acceptance criterion. Stubs, placeholders, mocks, and `TODO: implement` are unfinished work.\n- Reduce scope only with the user's explicit approval in this conversation.\n- Ask the user only for what no tool, repo, or context can answer.\n</contract>\n\n§ Critical\n<critical>\n- NEVER yield while actionable work remains.\n- NEVER narrate session limits, token or tool budgets, or effort estimates. Start unbounded.\n- NEVER re-audit an applied edit or run git subcommands to validate one. Tool results are the verification.\n</critical>\n\nPROJECT\n\n<workstation>\n- OS: darwin 25.6.0\n- Distro: Darwin\n- Kernel: Darwin Kernel Version 25.6.0: Sat Jul 11 15:27:26 PDT 2026; root:xnu-12377.161.13~4/RELEASE_ARM64_T6031\n- Arch: arm64\n- CPU: Apple M3 Max\n- Terminal: ghostty 1.3.1\n</workstation>\n\n<repo-rules>\nMUST follow these context files for all tasks:\n<file path=\"/Users/vinicius91carvalho/.omp/agent/AGENTS.md\">\n# How you work with me\n\n## Language and shape\n\nAnswer in the language I wrote in: simple English or Portuguese. Explain like\nyou are talking to a smart kid: short words, short sentences. After a technical\nword, add a five-word plain meaning. Lead with the result; details after, only\nthe ones that matter. One analogy when something is hard to picture, not three.\nNever repeat yourself. End every answer with a summary of three lines max: what\nI did, why it was broken, what it means for you. Never use an em dash; use a\nplain dash. No filler, no boilerplate, no \"great question\". Do not paste back a\ndiff or a log I can read myself: say what changed and why.\n\n## You act, you never hand work back\n\nSomething is broken, you fix it. Never ask \"do you want me to fix this?\". Every\nproblem you find is yours, not only the one I named: errors, warnings, slow\npages, dead code, wrong behavior, ugly UI. After the fix, tell me what was\nbroken, the real cause, what you changed, and how you know it works now.\n\nNever say \"you should run X\" or \"please check Y\". You run it, you check it.\nNever stop and wait when you can decide: pick the simple option and say which\none you picked.\n\nAsk me only for what lives in my head alone: a taste choice, a secret, a value\nno tool can reach. **When you ask, ALWAYS use the AskUserQuestion tool, never\nplain prose** — a question at the end of a long answer is a question I miss.\nGive alternatives, not an open question. Mark your recommendation and put it\nfirst. Each option says what it costs or breaks. Every decision, every time,\nincluding destructive ones and anything with no undo.\n\n## Web work happens in Chrome, by you\n\nNever tell me to click something. You click it. Write the steps as one short\nlist, open a tab with claude-in-chrome, do the steps, screenshot as proof, tell\nme it is done. This covers settings, deploys, cloud consoles, sign-ups, logins,\nforms, payments, and sending messages.\n\nLogins use the sessions and saved passwords already in my Chrome; if one is\nmissing, ask me for that single value and carry on. Forms about me take my data\nfrom Basic Memory, never invented; if a field is missing, ask for that one\nfield. For delete, pay, send, and cancel: do it, make a backup or copy first\nwhen one is possible, and tell me right after with the exact numbers. The only\nrefusal is illegal or harmful to other people. If a site blocks the extension,\nname the site and keep doing the rest.\n\n## Memory and proof\n\nBasic Memory holds the truth about my projects; your own memory is a sticky note\nfor today. Load it before touching code and write back while you work →\n`skill://basic-memory-workflow`.\n\nMake the bug happen first, the way I would see it, then fix it and watch the\nsame thing pass. Say \"I saw it fail, I changed X, I saw it pass\", never \"this\nshould work\". Leave a test behind, and check that it fails without your fix.\nLook at a screenshot before claiming a UI is right. Only proved by a unit test?\nSay that. Could not reproduce? Say that. Never call an unproven fix \"fixed\".\n\nAnything that produces a score, a ranking, or a match gets a hand-labelled\nfixture first → `skill://measured-quality`.\n\n## Code\n\nThe simplest thing that really works; boring beats clever. Build only what is\nneeded now: no settings, hooks, or layers for a future that may never come. Keep\none copy of each piece of knowledge, but wait for the third duplicate before\nabstracting. Delete dead code; never comment it out or hide it behind a flag.\nWrite for the next person reading it. If a design needs a paragraph to explain,\nsay it is too complex.\n\nLint errors, type errors, and flaky tests are blockers. Never skip a test, cast\na type away, or swallow an error to get a green build. Never wrap a retry around\na real bug.\n\n## Git and subagents\n\nNever put your name in a commit message and never add a co-author line. Never\nhand-edit `CHANGELOG.md` or any generated file: change the source. Never commit,\npush, or open a pull request unless I ask.\n\nUse a subagent only for big work that really splits into parallel parts. One\nbeats three. Never use one to double-check your own work.\n</file>\n<file path=\"/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/AGENTS.md\">\n# find-best-job — coding-agent rules\n\nThese rules govern assistants editing this repo. Runtime apply/register agent\nbehavior lives in [`CLAUDE.md`](CLAUDE.md) and still applies. Layering lives in\n[`ARCHITECTURE.md`](ARCHITECTURE.md).\n\n**Read [`docs/learnings.md`](docs/learnings.md) before debugging anything.** This\nfile says what to do; that one says what it cost to find out — the mistakes made\nmore than once, with the cheaper route next to each. It opens with the one that\ncost the most: look at the screenshot the run already stored before deducing\nanything from a log.\n\n## Platform-agnostic by default\n\nThe product must work for **any** ATS, native board, or captcha/mail provider —\nnot a fixed shortlist.\n\n- **Generalist code** (shared MCP tools, browser sidecar fills, apply/register\n  loops, prompts that are not platform-scoped): detect **patterns** (confirm-email\n  page, stuck submit, captcha widget, SSO wall, masked date/phone). Never gate on\n  `platformKey === \"gupy\"` / `\"infojobs\"` / `\"solides\"` (or any other named board)\n  and never hard-code that board’s login URL, mail domain, or field quirks into\n  shared tools.\n- **Provider-specific quirks** belong only in:\n  - `packages/agents/src/register-platform-hints.ts` (register),\n  - `packages/adapters/src/ats/*` hints (apply),\n  - `packages/agents/src/drivers/*` — one file per scripted platform, holding\n    its auth ritual **and** its DOM workarounds. Shared tools reach those only\n    through the driver’s page hooks (`afterNavigate` / `beforeInteract`,\n    dispatched by `drivers/index.ts`); they never import a driver module or\n    test a host regex.\n  - `packages/core` platform registry (`PLATFORMS` in `native-platforms.ts`):\n    hosts, login/signup/probe URLs, `emailDomain`, thin-shell flag. One entry\n    per platform — the pipeline keeps no copy of it.\n  - `packages/core/src/platform-rules.ts` — platform traps as **rows in the\n    database** (regex over `{role, platformKey, url, pageText, tool}` →\n    rewrite/refuse/advise), enforced by shared code that never names a\n    platform. This replaced ~20 `platformKey === \"...\"` branches; a new trap\n    on a known platform is a new row, not a deploy. The row is data; the\n    guard stays code.\n- Adding a new platform = registry entry + hints/adapter (+ a driver file and\n  its one `registerScriptedDriver` line when the auth ritual needs scripting) +\n  tests. Do **not** teach the shared tool layer that platform’s name.\n- Register agents wait for verification mail via the tenant's `@in.find-best-job.com`\n  mailbox (`@fbj/mail`), not the founder's Gmail.\n- Captcha solvers stay behind config (`FBJ_CAPTCHA_SOLVER_*`); do not bake a\n  vendor hop into product logic without evidence + a kill switch.\n\n## Fast and reliable\n\n- Prefer fewer agent turns: batch fills (`fill_many` / `bootstrap_register`),\n  avoid redundant snapshots, refuse identical `report_error` loops (cap +\n  structured terminal).\n- Masked inputs (date/phone/tax ID) must be typed correctly so submit is not\n  left inert — fix the sidecar/fill path, do not paper over with higher timeouts.\n- Stall / page-progress aborts are quality signals; do not “fix” flaky boards by\n  only raising timeouts.\n- One browser / tenant mailbox / Vertex journey at a time for real E2E (no parallel natives\n  sharing the same inbound address and profile lock).\n\n## Testing: unit first, then E2E\n\nOrder is mandatory before calling a change done:\n\n1. **Unit / package tests** — colocated Vitest (`src/*.test.ts`); DB code against\n   PGlite (in-process WASM Postgres) + real migrations, via `makeTestDb()` from\n   `@fbj/db/test-db`. Cover the new behavior and the regressions you nearly\n   introduced.\n2. **Repo gates** — `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`\n   (and `pnpm format:check` when formatting touched).\n3. **E2E / smoke** — a real production-shaped run that proves the fix and that\n   older paths still work.\n\n   The platform-matrix harness this step used to name\n   (`scripts/e2e-ten-apply.mjs`) was **deleted** in `b58406b` when the matrix\n   was retired; three other docs still cite scripts that no longer exist. What\n   actually exists today, in ascending cost:\n\n   - `bench/run.mjs` — the real apply agent against 19 local form fixtures,\n     judged on what the fixture server received over the wire. **Not in CI, and\n     no longer run before a push** (owner's call, 2026-08-20): it is opt-in via\n     `FBJ_FORCE_BENCH=1 git push` or `node scripts/gate.mjs --bench`. A scenario\n     passes at 2 of 3 runs. It is still the only check that exercises an apply\n     guard end to end, so run it deliberately before cutting a release — a\n     guard regression now reaches `origin` and the deploy unnoticed.\n   - `fbj canary <url>` — seeds an application against the canary board (a\n     Lambda serving fake postings) and the apply stage drives it end to end:\n     queue, task, browser, model, tools, state machine, evidence. This is the\n     smoke test to run after a deploy, and nothing schedules it.\n   - `scripts/e2e-two-tenant.mjs` / `e2e-prod-two-tenant.mjs` /\n     `e2e-three-apply.mjs` — manual, need untracked credentials, and the last\n     one submits to **real employers**.\n\n   Success for an apply journey is `submitted` (or the journey's documented\n   terminal), with proof under the report/PROOF dirs.\n4. After the run, skim the report: the new path green **and** the previously\n   green ones not regressed. If you only exercised one board, say so explicitly.\n\nDo not ship “works on my mental model” without the unit→gate→E2E chain when the\nchange touches agents, browser, pipeline stages, or native registration.\n\n## Real multi-platform apply\n\n- Validation of apply/register product changes means **actual** submissions (or\n  account `active` → apply → `submitted`) on distinct platforms in the matrix —\n  open ATS and natives — not a single happy path.\n- Dry-run is for plumbing; it does not replace a real apply E2E.\n- LinkedIn remains out of scope (see `CLAUDE.md`).\n\n## Instrument for bottlenecks\n\nEvery agent/browser path that can burn wall-clock must stay observable:\n\n- Phase timers (`▶` / `◀` or equivalent) around provision, ensure-accounts, apply.\n- Per-turn / per-tool timing and top-tool summaries on agent finish.\n- Captcha outcomes logged with `{solved, detail, type, sitekeyPrefix}` (no\n  secrets) on solve and on captcha-flavored refusals.\n- Page fingerprint / stall abort signals when the form stops advancing.\n- Refusal caps that record *why* they fired so the next run (or an engineer)\n  sees the bottleneck, not a silent timeout.\n\nWhen optimizing, measure first from these signals; do not guess.\n\n## The Answer Library (product)\n\n**No question ever blocks an application.** The agent always answers, records\nthe answer in the Answer Library (`qa_bank`), and the human reviews and corrects\nit there afterwards — corrections apply to FUTURE runs only. Nothing is gated on\na person's click, because there is no person in this loop.\n\n- **Answer order, single doctrine:** the user's answer in the library → the\n  answer seeded from the résumé → a fact on the profile → the conservative\n  truthful default.\n- **The conservative default:** for legal-status questions (US work\n  authorization, visa sponsorship) answer the negative that claims nothing —\n  not authorized / requires sponsorship — never a positive without evidence. For\n  optional / EEO / demographic questions, decline to state, in the form's own\n  wording. For free text, write from the profile.\n- **Everything the agent answers lands `approved=false`** and is shown on /answers\n  for review. `approved` means \"a human read this\", never a gate; a `user` row\n  is authoritative and no agent may overwrite it.\n- **The floor that survives (never break):** never assert a credential, an\n  authorization, an employment or any fact the profile denies or does not\n  support. This is not a wall, because the truthful negative is always\n  available.\n- A blocker the FORM reveals and the posting never stated is still a clean close\n  with `mark_not_eligible` — that is eligibility, not a missing answer.\n</file>\n</repo-rules>\nContext files above auto-loaded. NEVER `grep`/`glob` for `AGENTS.md`, `CLAUDE.md`, `.cursorrules`, or similar agent/context files: relevant files already in context; others noise.\n<critical>\n- Each response MUST advance the task; completion only stopping condition.\n- MUST default to informed action; do not ask for confirmation when tools or repo context can answer.\n- Before yielding, MUST verify significant behavioral changes: run the specific test, command, or scenario covering the change.\n</critical>\n\n## MCP Tool Routes\n\nExecute a mounted MCP tool by writing its JSON arguments to its `xd://` path.\nAn MCP tool `T` on server `S` lives at `xd://mcp__<S>_<T>`, with `S` and `T` lowercased and every run of other characters collapsed to `_`. Servers following this rule: basic-memory.\n\n## MCP Server Instructions\n\nThe following instructions are provided by connected MCP servers. They are server-controlled and may not be verified.\n\n### basic-memory\nBasic Memory is the user's personal knowledge base: Markdown notes that persist across conversations and that both the user and their AI assistants can read and write.\n\nAt the start of a session, call `recent_activity` to orient yourself in the user's notes before answering from memory. If the knowledge base is empty, briefly explain that Basic Memory gives them persistent notes shared between the user and their AI, and offer to save something useful from this conversation as their first note with `write_note` — then wait for them to agree before writing anything. Do not create notes unprompted.\n\nFor a fuller guide, read the `memory://ai_assistant_guide` resource. If you have a web or fetch tool and need current documentation, fetch `https://docs.basicmemory.com/llms.txt` first, then fetch only the relevant linked `/raw/...md` page."
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "<system-reminder>\nToday: 2026-08-27; current working directory: '/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj'. Do not repeat this information in your reply.\n</system-reminder>"
+        },
+        {
+          "type": "text",
+          "text": "Running `pnpm --filter @fbj/llm build && pnpm --filter @fbj/pipeline exec vitest run src/salary-usd.test.ts` fails: the monthly USD ceiling for a salary range comes out too low (e.g. 8000 instead of 12000 for a 96k-144k/year USD range). Find and fix the bug. Do not edit the tests. Packages import each other through dist/, so rebuild the package you change before re-running the test."
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nFirst, let's find the salary-usd test and the related code.\n",
+      "tool_calls": [
+        {
+          "id": "call_a1c3919c",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"packages/pipeline/src/salary-usd.test.ts\",\"i\":\"Reading the failing test\"}"
+          }
+        },
+        {
+          "id": "call_fe807220",
+          "type": "function",
+          "function": {
+            "name": "grep",
+            "arguments": "{\"pattern\":\"monthly\",\"path\":\"packages/pipeline/src\",\"i\":\"Finding salary code\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "[packages/pipeline/src/salary-usd.test.ts#84B7]\n1:import { describe, expect, it } from \"vitest\";\n2:import { salaryUsdMonthOf } from \"./salary-usd.js\";\n3:\n4:/**\n5: * The denormalized `jobs.salary_usd_month` is what the jobs list filters and\n6: * orders by ACROSS pages, so it has to agree with the scorer's own\n7: * normalization (`monthlyUsdMax`) — same rates, same period rules, same\n8: * refusal to guess an unknown currency.\n9: */\n10:describe(\"salaryUsdMonthOf\", () => {\n11:  it(\"normalizes a yearly USD range to its monthly ceiling\", () => {\n12:    expect(\n13:      salaryUsdMonthOf({\n14:        min: 96_000,\n15:        max: 144_000,\n16:        currency: \"USD\",\n17:        period: \"year\",\n18:      }),\n19:    ).toBe(12_000);\n20:  });\n21:\n22:  it(\"converts a BRL monthly range through the indicative rate\", () => {\n23:    expect(\n24:      salaryUsdMonthOf({\n25:        min: 8_000,\n26:        max: 15_000,\n27:        currency: \"BRL\",\n28:        period: \"month\",\n29:      }),\n30:    ).toBeCloseTo(2_850, 0);\n31:  });\n32:\n33:  it(\"returns null when nothing is listed or the currency is unknown\", () => {\n34:    expect(salaryUsdMonthOf(undefined)).toBeNull();\n35:    expect(salaryUsdMonthOf({})).toBeNull();\n36:    expect(\n37:      salaryUsdMonthOf({ max: 50_000, currency: \"PHP\", period: \"year\" }),\n38:    ).toBeNull();\n39:  });\n40:\n41:  it(\"decides an unstated period by magnitude, on the raw amount\", () => {\n42:    expect(salaryUsdMonthOf({ max: 120_000, currency: \"USD\" })).toBe(10_000);\n43:    expect(salaryUsdMonthOf({ max: 9_000, currency: \"USD\" })).toBe(9_000);\n44:  });\n45:});",
+      "tool_call_id": "call_a1c3919c"
+    },
+    {
+      "role": "tool",
+      "content": "# packages/pipeline/src/\n## salary-usd.test.ts#84B7\n 6: * orders by ACROSS pages, so it has to agree with the scorer's own\n*7: * normalization (`monthlyUsdMax`) — same rates, same period rules, same\n 8: * refusal to guess an unknown currency.\n 9: */\n 10:describe(\"salaryUsdMonthOf\", () => {\n*11:  it(\"normalizes a yearly USD range to its monthly ceiling\", () => {\n 12:    expect(\n 13:      salaryUsdMonthOf({\n 14:        min: 96_000,\n...\n 21:\n*22:  it(\"converts a BRL monthly range through the indicative rate\", () => {\n 23:    expect(\n 24:      salaryUsdMonthOf({\n 25:        min: 8_000,\n## salary-usd.ts#72BE\n 1:import type { SalaryInfo } from \"@fbj/adapters\";\n*2:import { monthlyUsdMax } from \"@fbj/llm\";\n 3:\n 4:/**\n 5: * `jobs.salary_usd_month` for a posting's salary block — the range ceiling in\n*6: * monthly USD, or null when nothing is listed or the currency is beyond the\n 7: * rate table. One call site per place the salary columns are written, so the\n 8: * denormalized column can never disagree with the fields it summarizes.\n 9: */\n...\n 13:  if (!salary || (salary.min == null && salary.max == null)) return null;\n*14:  return monthlyUsdMax({\n 15:    salaryMin: salary.min ?? null,\n 16:    salaryMax: salary.max ?? null,\n 17:    salaryCurrency: salary.currency ?? null,\n 18:    salaryPeriod: salary.period ?? null,\n*19:  } as Parameters<typeof monthlyUsdMax>[0]);\n 20:}\n\n## stages/\n### apply-caps.test.ts#C3A1\n 251:    await tenantOn(\"free\");\n*252:    const monthly = PLAN_LIMITS.free.perMonth;\n*253:    for (let i = 0; i < monthly; i++) {\n 254:      const id = nanoid();\n 255:      await db.insert(jobs).values({\n 256:        id: `m_job_${id}`,\n...\n 322:    await saveSetting(\n*323:      \"paid_monthly_cost_cap_usd\",\n*324:      DEFAULT_SETTINGS.paid_monthly_cost_cap_usd,\n 325:    );\n*326:    await spend(DEFAULT_SETTINGS.paid_monthly_cost_cap_usd + 1);\n 327:    await approved();\n 328:\n 329:    const result = await run();\n...\n 459:    //\n*460:    // The amounts stay under the account's own monthly ceiling on purpose:\n 461:    // beta is bounded by the paid ceiling now (it used to be bounded by\n 462:    // nothing), and spending past it would stop this application for a reason\n 463:    // that has nothing to do with the per-application budget under test.\n### apply.ts#E2B2\n 779:    }\n*780:    // The monthly ceiling is what makes the free plan a trial rather than a\n 781:    // slow subscription: twenty a month, at most three a day. Checked\n 782:    // separately from the daily cap because hitting it means something\n 783:    // different — the day resets tomorrow, the month does not.\n...\n 786:        { plan: cap.plan, monthLimit: cap.monthLimit, used: cap.monthUsed },\n*787:        \"apply: monthly plan allowance used up — stopping\",\n 788:      );\n 789:      counts.skipped_cap += 1;\n 790:      break;\n### score.ts#7104\n 682:      }\n*683:      // Already monthly USD by the model's own contract; ceiling preferred,\n*684:      // same as monthlyUsdMax.\n 685:      fill.salaryUsdMonth = Math.round(\n 686:        o.stated.salaryMaxUsdMonth ?? o.stated.salaryMinUsdMonth,\n 687:      );",
+      "tool_call_id": "call_fe807220"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nThe bug is probably in `monthlyUsdMax` inside @fbj/llm. Let's go find it.\n",
+      "tool_calls": [
+        {
+          "id": "call_a742e8c6",
+          "type": "function",
+          "function": {
+            "name": "grep",
+            "arguments": "{\"pattern\":\"monthlyUsdMax\",\"path\":\"packages/llm/src\",\"i\":\"Finding monthlyUsdMax implementation\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "# packages/llm/src/\n## score-job.gates.test.ts#7C16\n 31:  isUsLockedLocation,\n*32:  monthlyUsdMax,\n 33:  nonVacancyTitle,\n 34:  postingAgeDays,\n 35:  resolveVerdict,\n...\n 327:// ---------------------------------------------------------------------------\n*328:// monthlyUsdMax\n 329:// ---------------------------------------------------------------------------\n 330:\n*331:describe(\"monthlyUsdMax — normalising an advertised range\", () => {\n 332:  const job = (over: Partial<ScorableJob>): ScorableJob => ({\n 333:    id: \"job_norm_1\",\n 334:    title: \"Senior Full Stack Developer\",\n...\n 350:    expect(\n*351:      monthlyUsdMax(\n 352:        job({ salaryMax, salaryCurrency: \"USD\", salaryPeriod: period }),\n 353:      ),\n 354:    ).toBeCloseTo(expected, 0);\n...\n 369:    expect(\n*370:      monthlyUsdMax(job({ salaryMax, salaryCurrency: \"USD\" })),\n 371:    ).toBeCloseTo(expected, 1);\n 372:  });\n 373:\n...\n 388:    expect(\n*389:      monthlyUsdMax(\n 390:        job({ salaryMax, salaryCurrency: cur, salaryPeriod: \"month\" }),\n 391:      ),\n 392:    ).toBeCloseTo(expected, 0);\n...\n 396:    expect(\n*397:      monthlyUsdMax(\n 398:        job({\n 399:          salaryMax: 12_000,\n 400:          salaryCurrency: \"PHP\",\n...\n 412:    expect(\n*413:      monthlyUsdMax(job({ salaryMax: 15_000, salaryCurrency: \"BRL\" })),\n 414:    ).toBeCloseTo(2_850, 0);\n 415:  });\n 416:\n...\n 418:    expect(\n*419:      monthlyUsdMax(job({ salaryMax: 9_000, salaryCurrency: \"usd\" })),\n 420:    ).toBe(9_000);\n*421:    expect(monthlyUsdMax(job({ salaryMax: 9_000, salaryCurrency: \"$\" }))).toBe(\n 422:      9_000,\n 423:    );\n 424:    // Unstated currency on a US-facing board: treated as USD, which is what the\n 425:    // adapters that leave it null mean.\n*426:    expect(monthlyUsdMax(job({ salaryMax: 9_000 }))).toBe(9_000);\n 427:  });\n 428:\n 429:  it(\"falls back to the minimum when the posting published no maximum\", () => {\n...\n 432:    // min itself.\n*433:    expect(monthlyUsdMax(job({ salaryMin: 8_000, salaryMax: null }))).toBe(\n 434:      8_000,\n 435:    );\n 436:  });\n...\n 438:  it(\"returns null when the posting published no figures at all\", () => {\n*439:    expect(monthlyUsdMax(job({}))).toBeNull();\n 440:  });\n 441:});\n 442:\n## score-job.ts#49D3\n 257: */\n*258:export function monthlyUsdMax(job: ScorableJob): number | null {\n 259:  const amount = job.salaryMin ?? job.salaryMax;\n 260:  if (amount == null) return null;\n 261:  const usd = toUsd(amount, job.salaryCurrency ?? \"USD\");\n...\n 904:  const haystack = `${job.title ?? \"\"}\\n${job.location ?? \"\"}\\n${job.description ?? \"\"}`;\n*905:  const monthly = monthlyUsdMax(job);\n 906:\n 907:  let capMaybe = false;\n 908:  for (const rule of rules) {\n...\n 2093:  const floor = candidate.salaryFloorUsdMonth ?? 0;\n*2094:  const stated = monthlyUsdMax(job);\n 2095:  if (floor > 0 && stated != null && stated >= floor) return none;\n 2096:\n 2097:  // The posting's own location text, and deliberately NOT the model's\n...\n 2443:  const monthly =\n*2444:    monthlyUsdMax(job) ??\n 2445:    guarded.stated.salaryMaxUsdMonth ??\n 2446:    guarded.stated.salaryMinUsdMonth;\n 2447:  if (monthly == null || monthly >= floor) return none;",
+      "tool_call_id": "call_a742e8c6"
+    },
+    {
+      "role": "assistant",
+      "content": "\n\nFound the suspect at `packages/llm/src/score-job.ts:259` — it uses `salaryMin` first. Let me read the full function.\n\n",
+      "reasoning_content": "\nfound it — `packages/llm/src/score-job.ts:258-261`. `const amount = job.salaryMin ?? job.salaryMax;` — it's using the minimum value (MIN), not the maximum value (MAX). The function name is monthlyUsdMax, so it should use `job.salaryMax ?? job.salaryMin`. In the case of 96k–144k, min is 96000 → 8000 per month. The expected value is 12000 from the max of 144000.\n\nTo confirm the intended behavior, I'll check the test's expected values: `score-job.gates.test.ts` lines 340–355: `job({ salaryMax, ... })` — salaryMax only. So the implementation uses `salaryMin ?? salaryMax`, which means when both are present it becomes min. But the test only sets salaryMax. And at line 433, `salaryMin: 8_000, salaryMax: null` → 8000, which matches `min ?? max`… no wait, if it were `max ?? min` then with max=null and min=8000 → 8000, so that also matches. So flipping the order to `salaryMax ?? salaryMin` fixes the bug while still passing the existing tests.\n\nTo check the conversion and period logic, I'll read the entire function.\n",
+      "tool_calls": [
+        {
+          "id": "call_73a11f5c",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"packages/llm/src/score-job.ts:200-330\",\"i\":\"Reading monthlyUsdMax implementation\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "[packages/llm/src/score-job.ts#49D3]\n199:export const MIN_DESCRIPTION_CHARS = 200;\n200:\n201:/** True when the posting's text is absent or too short to state anything. */\n202:export function descriptionUncaptured(job: ScorableJob): boolean {\n203:  return (job.description ?? \"\").trim().length < MIN_DESCRIPTION_CHARS;\n204:}\n205:\n206:/**\n207: * True when the posting's TITLE does not identify a job.\n208: *\n209: * The sibling failure to an uncaptured description, and the nastier one,\n210: * because it repairs itself into something that looks fine. A listing card\n211: * links its posting from \"See more\" and \"Apply now\" as well as from its title;\n212: * a scrape that keyed on the href alone stored those buttons as jobs, the\n213: * detail backfill then fetched the real page and gave the row a genuine\n214: * description, and the scorer read a full description under the title \"See\n215: * more\" and scored it `best_fit`. Everything about that row is plausible\n216: * except the one fact that says which job it is.\n217: *\n218: * So the guard is the same guard: with no identity, an eligibility \"yes\" is\n219: * about a posting nobody has named.\n220: */\n221:export function titleUncaptured(job: ScorableJob): boolean {\n222:  return looksLikeGarbageTitle(job.title);\n223:}\n224:\n225:// ---------------------------------------------------------------------------\n226:// Layer 1 — deterministic rules (all data-driven, edited from the dashboard)\n227:// ---------------------------------------------------------------------------\n228:\n229:export interface HardFilterResult {\n230:  /** When true the verdict is locked to `no_fit`. */\n231:  reject: boolean;\n232:  reason?: string;\n233:  /**\n234:   * What kind of rule rejected it, when one did.\n235:   *\n236:   * The audit eligibility used to be derived from the rule *id* by string\n237:   * matching (`reason.startsWith(\"salary-currency\")`), which was wrong twice\n238:   * over: ids are user-editable, and the shipped ids did not match the prefixes\n239:   * being tested, so the branches were dead. The `kind` is the durable fact\n240:   * about what a rule actually asserts.\n241:   */\n242:  rejectedKind?: ScoringHardRule[\"kind\"];\n243:  /** When true, best_fit is downgraded to maybe_fit (salary unlisted / off-cur). */\n244:  capMaybe: boolean;\n245:  notes: string[];\n246:}\n247:\n248:/**\n249: * Normalize the advertised salary's best case to monthly USD, or null when the\n250: * posting lists nothing or quotes a currency the rate table cannot read.\n251: *\n252: * The best case is `salaryMax ?? salaryMin`: a floor comparison must measure\n253: * the most the posting offers, and a min-only range used to return null — a\n254: * \"from $4,000/mo\" posting sailed past a $9,000 floor as if it said nothing.\n255: * Non-USD amounts convert through the indicative table in @fbj/core; BRL\n256: * 8–15k/month used to be invisible to the floor entirely.\n257: */\n258:export function monthlyUsdMax(job: ScorableJob): number | null {\n259:  const amount = job.salaryMin ?? job.salaryMax;\n260:  if (amount == null) return null;\n261:  const usd = toUsd(amount, job.salaryCurrency ?? \"USD\");\n262:  if (usd == null) return null;\n263:  const period = (job.salaryPeriod ?? \"\").toLowerCase();\n264:  if (/year|annual|yr|yearly|pa\\b/.test(period)) return usd / 12;\n265:  if (/month|mo\\b|monthly/.test(period)) return usd;\n266:  if (/hour|hr|hourly/.test(period)) return usd * 160;\n267:  if (/week/.test(period)) return usd * 4.33;\n268:  if (/day|daily/.test(period)) return usd * 21;\n269:  // No period given: infer from magnitude (annual figures dwarf monthly ones).\n270:  // The threshold reads the raw amount, not the converted one — \"R$ 25.000\"\n271:  // is a monthly figure even though it converts to under $20k.\n272:  return amount >= 20_000 ? usd / 12 : usd;\n273:}\n274:\n275:/** Compile one rule's patterns, dropping any invalid regex defensively. */\n276:function compile(patterns: string[]): RegExp[] {\n277:  const out: RegExp[] = [];\n278:  for (const src of patterns) {\n279:    try {\n280:      out.push(new RegExp(src, \"i\"));\n281:    } catch {\n282:      logger.warn({ src }, \"scoring rule pattern failed to compile — skipped\");\n283:    }\n284:  }\n285:  return out;\n286:}\n287:\n288:/**\n289: * How many days ago the posting says it was published, or null when we do not\n290: * know — no date, or a date the source wrote in something `Date` cannot read.\n291: *\n292: * Null is load-bearing: an unknown publication date must never be treated as an\n293: * old one. Boards are inconsistent about publishing this field at all, and\n294: * discarding every posting that omitted it would hide fresh roles for a reason\n295: * the person can neither see nor fix. A date in the future is somebody's\n296: * timezone or typo, not a negative age — it clamps to 0, which is \"fresh\".\n297: */\n298:export function postingAgeDays(\n299:  postedAt: string | null | undefined,\n300:  nowMs: number = Date.now(),\n301:): number | null {\n302:  if (!postedAt) return null;\n303:  const ms = Date.parse(postedAt);\n304:  if (Number.isNaN(ms)) return null;\n305:  return Math.max(0, (nowMs - ms) / 86_400_000);\n306:}\n307:\n308:/**\n309: * Evaluate one deterministic rule against a job. Returns the matched evidence\n310: * (a note string) or null when the rule does not fire.\n311: */\n312:function ruleMatch(\n313:  rule: ScoringHardRule,\n314:  job: ScorableJob,\n315:  haystack: string,\n316:  monthly: number | null,\n317:  floor: number,\n318:  maxPostingAgeDays: number,\n319:): string | null {\n320:  switch (rule.kind) {\n321:    case \"text_match\": {\n322:      const res = compile(rule.patterns);\n323:      if (res.length === 0) return null;\n324:      if (rule.requireAll) {\n325:        // A dropped pattern makes an ALL rule *stricter*, so it cannot be\n326:        // ignored here the way it can for ANY. `compile` skips whatever fails\n327:        // to parse, and `every` then ran over the survivors: a shipped\n328:        // two-condition rule (\"no sponsorship\" AND \"must be in the US\") whose\n329:        // second pattern the user broke in the dashboard silently became a\n330:        // one-condition rule that rejected every posting merely mentioning\n331:        // sponsorship — and wrote \"all patterns matched\" into the audit note.\n332:        // A rule we cannot evaluate as written does not fire.\n333:        if (res.length !== rule.patterns.length) {\n…\n339:        }\n…\n344:      }\n…\n350:    }\n…\n383:  }\n384:}\n\n[Showing lines 199-333 of 2815. Use :334 to continue]",
+      "tool_call_id": "call_73a11f5c"
+    }
+  ],
+  "stream": true,
+  "stream_options": {
+    "include_usage": true
+  },
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "read",
+        "description": "Read files, directories, archives, SQLite, images, documents, internal resources, and web URLs via `path`.\n\n<instruction>\n- SHOULD parallelize independent reads.\n- SHOULD use `read` (not browser) for web content; browser only when `read` can't deliver.\n</instruction>\n\n## Selectors — append `:<sel>` to `path` (e.g. `src/foo.ts:50-200`, `src/foo.ts:raw`, `db.sqlite:users:42`)\n- `:50` / `:50-` — from line 50 | `:50-200` — inclusive | `:50+150` — 150 lines from 50 | `:5-16,960-973` — multiple ranges\n- `:raw` — verbatim, no anchors/prefixes | `:2-4:raw` / `:raw:2-4` — range + verbatim\n- `:conflicts` — one line per unresolved git merge conflict block\n- `:img` — rasterize a local `.svg`/`.svgz` as a PNG image; use when visual layout matters\n\n## Source kinds\n- Parseable code, no selector → structural summary (declarations only, body elided). Footer names recovery selector — re-issue ONLY those ranges.\n- File + selector → `[foo.ts#1A2B]` snapshot header + numbered lines. Copy `[FILENAME#TAG]` for anchored edits; NEVER fabricate the tag.\n- Directory → depth-limited dirent listing.\n- SQLite (`.sqlite`, `.sqlite3`, `.db`, `.db3`): `file.db` (tables), `file.db:table` (schema+rows), `file.db:table:key` (by PK), `?limit=`/`?where=`/`?q=SELECT`.\n- Archives (`.zip` family incl. `.jar`/`.apk`/`.whl`, `.tar` incl. `.tar.{gz,bz2,xz,zst}`, `.rar`, `.7z`, `.iso`, `.cab`, `.deb`/`.rpm`/`.cpio`/`.ar`/`.a`, `.lzh`/`.arj`, `.asar`; single-stream `.gz`/`.bz2`/`.xz`/`.zst`): `archive.ext:path/inside/archive` reads a member.\n- Documents → extracted text. Notebooks → editable cells. Images → decoded inline. SVGs read as text unless `:img` is specified. `:raw` bypasses converters.\n- URLs → reader-mode clean text/markdown; `:raw` → untouched HTML. Bare `host:port` needs trailing slash.\n- Internal URIs — all schemes take selectors. `artifact://<id>` recovers spilled output; page with `:N-M`/`:raw:N-M`.\n- `ssh://host/<path>` reads remote file/dir (UTF-8, ≤1 MiB); bare `ssh://` lists hosts; writable with `write` and searchable with `grep`.\n  Literal `:`, `?`, `#` → percent-encode (`%3A`/`%3F`/`%23`). Requires a verified POSIX shell on the remote host. For Windows or other unsupported hosts, use `bash` with a remote SSH command or mount with `sshfs`.\n\n<critical>\nSummary footer names elided ranges? Re-issue ONLY those ranges. NEVER guess `..`/`…` content.\n</critical>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "path": {
+              "type": "string",
+              "description": "Local path, internal URI (e.g. skill://), or URL. Inline selectors are supported."
+            }
+          },
+          "required": [
+            "path",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "bash",
+        "description": "Runs commands in a persistent shell.\n\nUse ONLY for one binary or a short pipeline that computes a fact (`wc -l`, `sort | uniq -c`, `diff`).\nInline scripts, heredocs, `$(…)`, and complex control flow → a purpose-built tool or checked-in script.\n\n<instruction>\n- Set `cwd` instead of `cd`; use `env: { NAME: \"…\" }` for multiline/quote-heavy values.\n- `pty: true` only for terminal interaction (`sudo`, `ssh`).\n- Order-dependent commands use `&&` in one call; independent calls may run concurrently.\n- Internal URIs (`skill://`, `agent://`, …) auto-resolve to paths.\n- aux utils available: mkdir, wc, sort, comm, diff, uniq, base64, cmp, md5sum, sha{1,224,256,384,512}sum, b2sum, basename, dirname, readlink, realpath, touch, stat, date, mktemp, seq, yes, printenv, truncate, tac, nproc, uname, whoami, hostname, which, ps, pgrep, pkill, pidwait, top, cut, tee, tr, paste, sed, xargs, jq, rm, mv, ln, ts, sponge, ifne, isutf8, combine, errno\n- `async: true` defers a finite command's result; it does not extend `timeout`.\n</instruction>\n\n<critical>\n- NEVER use shell `grep`/`rg`; use built-in `grep`.\n- List directories with `read` and find paths with `glob`; NEVER use `ls`/`find`.\n- Avoid `head`, `tail`, and redirection: output is captured, truncated, and linked as `artifact://<id>`.\n</critical>\n\nLong foreground calls may auto-background by the configured threshold and deliver later.\n`timeout: 0` disables the job deadline; otherwise `timeout` sets it without extending foreground waiting.\nNo truncation footer means the displayed output is complete.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "command": {
+              "type": "string"
+            },
+            "env": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "timeout": {
+              "type": "number",
+              "description": "timeout in seconds; 0 disables the command deadline; nonzero values are clamped to 1-3600"
+            },
+            "cwd": {
+              "type": "string"
+            },
+            "pty": {
+              "type": "boolean"
+            },
+            "async": {
+              "type": "boolean",
+              "description": "run in background"
+            }
+          },
+          "required": [
+            "command",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "edit",
+        "description": "Line-anchored patch language: name original lines/gaps to replace, insert, cut, or paste; then give new content. `:` headers take `+` body rows; colonless paste `PUT`, `CUT`, `REM`, `MV` take none.\n\n<headers>\nSection: `[PATH#TAG]`; `TAG`: 4-hex snapshot from latest `read`/`search`, REQUIRED each section. New files: `write`; hashline edits existing files only.\n</headers>\n\n<ops>\n`PUT N.=M:`: replace original inclusive lines N–M with body.\n`PUT N*:`: replace syntactic block beginning N; closing line resolved.\n`PUT <N:` insert body rows before line N (`PUT <1:` = file head).\n`PUT >N:` insert body rows after line N (`PUT >$:` = file tail).\n`PUT >N*:`: insert after block N's end, at sibling depth. Append inside block: `PUT >M:`.\n`PUT <N @name` / `PUT >N @name` paste register `@name` at the gap before/after line N; omit `@name` for the anonymous register.\n`PUT N.=M @name` / `PUT N* @name` paste `@name` over the range / resolved block; `@name` required here.\n`CUT N.=M` / `CUT N*`: delete and capture inclusive lines N–M / block N; anonymous or given `@name`.\n`REM`: delete section file. `MV DEST`: move/rename (quote paths with spaces); prior edits apply to source, final content to `DEST`.\nSingle line: `PUT N.=N:` / `CUT N.=N`. Ranges name original inclusive touched lines; body length irrelevant.\n</ops>\n\n<body-rows>\nOnly below `:` headers. Row: verbatim `+TEXT` (leading whitespace preserved); `+`: blank. NEVER `-old`, bare, or context rows: range deletes; body is final content. Keep line: exclude it from every range. Literal initial `-`/`+`: `- item` → `+- item`; `+ item` → `++ item`.\n</body-rows>\n\n<rules>\n- Numbers and `#TAG`: latest `read`/`search` `LINE:TEXT`; numbers are original, never shifted by hunks.\n- Each edit renumbers and changes `#TAG` → next numbers from edit response or fresh `read`.\n- Touch displayed lines only; undisplayed hunks REJECTED. Far from read window: re-`read`; confirm construct.\n- Elisions UNSEEN: `…`, `..`, collapsed `N-M:` rows. NEVER hunk in/across one; `read` first.\n- NEVER start/end range mid-expression or mid-block.\n- Ranges: changed lines only; NEVER widen over keepers. Non-adjacent changes: separate hunks.\n- Whole construct: `PUT N*:`; internal lines: `PUT N.=M:`.\n- `PUT N*:` resolves exactly node N. Leading decorators/attributes/doc-comments are separate nodes: point N at first decorator to include both. Standalone line-comments never swept: use `PUT N.=M:`.\n- Block ops: opening line of multi-line construct, NEVER closer, last line, bare inner statement. One statement: plain `PUT N.=N:` / `CUT N.=N` / `PUT >N:`. At closer: `PUT >M:`.\n- Markdown headings are block openers. Block op on `##`/`###`: whole section through deeper headings to next same/higher heading. After section `PUT >N*:`: end body with blank line to separate next heading.\n- Pure addition: `PUT <N:` / `PUT >N:`, NEVER widened `PUT N.=M:`.\n- Move: `CUT`+`PUT`; `CUT 5.=9 @fn` → `@fn`, `PUT >40 @fn` pastes. Single call-local move: unlabeled `CUT` + `PUT >40`. Named registers persist across edit calls.\n- NEVER format/restyle with this tool; run project formatter.\n</rules>\n\n<example>\n`read` output shape:\n```\n[greet.py#A1B2]\n1:def greet(name):\n2:    msg = \"Hello, \" + name\n3:    print(msg)\n4:greet(\"world\")\n```\n\nEdit, then move:\n```\n[greet.py#A1B2]\nPUT 1.=3:\n+def greet(name):\n+    print(f\"Hi, {name}\")\nMV lib/greet.py\n```\n\nMarkdown bullets — file receives `- task`:\n```\n[PLAN.md#A1B2]\nPUT >2:\n+- task\n+  - nested task\n```\n\nMove `greet` to sibling file via named register; flows across sections:\n```\n[greet.py#A1B2]\nCUT 1* @fn\n[other.py#3C4D]\nPUT <1 @fn\n```\n\n`PUT 1*:` resolves lines 1–3 (`def` through `print(msg)`); line 4 separate, remains:\n```\n[greet.py#A1B2]\nPUT 1*:\n+def greet(name):\n+    print(f\"Hello, {name}\")\n```\n\nDecorator/doc-comment separate block: point N at decorator to include both; anchoring `def` line 2 orphans `@cache`:\n```\n[svc.py#C3D4]\nPUT 1*:\n+@cache\n+def load(key):\n+    return store[key]\n```\n</example>\n\n<anti-patterns>\n# WRONG — empty `PUT` to delete. RIGHT: `CUT 4.=4`\nPUT 4.=4:\n\n# WRONG — range sized to the post-edit content. RIGHT: `PUT 1.=1:` (body length irrelevant)\nPUT 1.=2:\n+def greet(name):\n\n# WRONG — `-` rows / bare context lines do not exist; the range deletes, the body is only new content.\nPUT 3.=3:\n    msg = \"Hello, \" + name\n-   print(msg)\n+   return msg\n# RIGHT\nPUT 3.=3:\n+   return msg\n\n# WRONG — pure insertion as a widened `PUT`: retyped keepers get dropped (here line 4).\nPUT 2.=4:\n+    msg = \"Hello, \" + name\n+    extra = compute(name)\n+    print(msg)\n# RIGHT — touch nothing you keep.\nPUT >2:\n+    extra = compute(name)\n\n# WRONG — `PUT >N*:` anchored on the closing delimiter / last visible line. RIGHT: plain `PUT >M:`\nPUT >3*:\n+after()\n# RIGHT\nPUT >3:\n+after()\n\n# WRONG — body rows under register PUT; register pastes take no body. RIGHT: bodyless `PUT >20 @fn`.\nPUT >20 @fn:\n+function f() {}\n</anti-patterns>\n\n<critical>\n1. RE-GROUND AFTER EVERY EDIT: edits renumber and change `#TAG`; take next numbers from edit response or fresh `read`. Stale tag/surprise: STOP; re-`read`.\n2. RANGES TIGHT: changed lines only. Whole construct: `PUT N*:`.\n3. BODY FINAL CONTENT: every row starts `+`; Markdown bullet: `+- item`, not `- item`.\n</critical>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "input": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "input",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "glob",
+        "description": "Globs files, directories, and path-backed internal URLs with fast pattern matching.\n\n<instruction>\n- `path`: glob, file, directory, or path-backed internal URL; separate targets with `;` (`src/**/*.ts; test/**/*.ts`).\n- `memory://` glob patterns are supported. `ssh://` has no local path; use `read`. Other internal URLs accept exact paths only.\n- `gitignore` defaults `true`. Set `false` for ignored files such as `.env*`, logs, or build output.\n- `hidden` defaults `true`; pair it with `gitignore: false` for ignored dotfiles.\n</instruction>\n\n<output>\nMatches are newest-first and grouped by directory; directories end in `/`.\n</output>\n\n<avoid>\nOpen-ended multi-round discovery → Task + scout.\n</avoid>\n\n<examples>\n# Glob files\n<example i=\"…\">\nsrc/**/*.ts\n</example>\n# Multiple targets — semicolon-delimited list\n<example i=\"…\">\nsrc/**/*.ts; test/**/*.ts\n</example>\n# Glob gitignored files like .env\n<example>\nglob(i=\"…\", path=\".env*\", gitignore=False)\n</example>\n# Glob directories matching a name (returns both files and dirs; directories are suffixed with `/`)\n<example i=\"…\">\n**/tests\n</example>\n</examples>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "path": {
+              "type": "string",
+              "description": "glob, file, or directory to search — a single path or a semicolon-delimited list (\"src/**/*.ts; test/**/*.ts\"). Omitted -> searches the workspace root (\".\")"
+            },
+            "hidden": {
+              "type": "boolean",
+              "description": "include hidden files"
+            },
+            "gitignore": {
+              "type": "boolean",
+              "description": "respect gitignore"
+            },
+            "limit": {
+              "type": "number",
+              "description": "max results"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "i"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "grep",
+        "description": "Searches files/internal URLs: Rust regex, PCRE2 fallback.\n\n<instruction>\n- `path`: known files, directories, globs, internal URLs; roots `;`-separated.\n- Broad searches may time out → narrow scope or use `glob` first.\n- One-file line selector: `src/foo.ts:50-100`; never selects search root.\n- Literal `\\n` or `\\\\n` enables cross-line patterns.\n</instruction>\n\n<critical>\n- MUST use instead of shell `grep`/`rg`.\n- Open-ended multi-round search MUST use Task + scout, not chained calls.\n</critical>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "pattern": {
+              "type": "string",
+              "description": "regex pattern"
+            },
+            "path": {
+              "type": "string",
+              "description": "file, directory, glob, internal URL, or \"<file>:<lines>\" selector to search; pass several as a semicolon-delimited list (\"src; tests\"). Omitted -> searches the workspace root (\".\")"
+            },
+            "case": {
+              "type": "boolean",
+              "description": "case-sensitive search"
+            },
+            "gitignore": {
+              "type": "boolean",
+              "description": "respect gitignore"
+            },
+            "skip": {
+              "description": "files to skip before collecting results — use to paginate when the prior call hit the file limit",
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "pattern",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "write",
+        "description": "Creates or overwrites file at specified path.\n\n<conditions>\n- Creating new files explicitly required by task\n- Replacing entire file contents when editing would be more complex\n- Supports `.zip` (and ZIP-based `.jar`/`.war`/`.ear`/`.apk`), `.tar`, `.tar.gz`/`.tgz`, `.tar.zst`, and `.asar` archive entries via `archive.ext:path/inside/archive`; other archive formats (`.rar`, `.7z`, `.iso`, …) are read-only\n- Supports SQLite row operations via `db.sqlite:table` (insert), `db.sqlite:table:key` (update with JSON content, delete with empty content)\n</conditions>\n\n<critical>\n- You SHOULD use Edit tool for modifying existing files\n- You NEVER create documentation files (*.md, README) unless explicitly requested\n- You NEVER use emojis unless requested\n</critical>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "path": {
+              "type": "string",
+              "description": "file path"
+            },
+            "content": {
+              "type": "string",
+              "description": "file content"
+            }
+          },
+          "required": [
+            "path",
+            "content",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  ],
+  "max_completion_tokens": 4096,
+  "preserve_thinking": true,
+  "chat_template_kwargs": {
+    "preserve_thinking": true,
+    "reasoning_effort": "medium"
+  },
+  "enable_thinking": true,
+  "reasoning_effort": "medium"
+}

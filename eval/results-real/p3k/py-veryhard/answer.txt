@@ -1,0 +1,12 @@
+
+
+Done. The old regex missed the accented é, so Spanish `10 años de experiencia` was blocked but Portuguese `12 anos de experiência` sailed through.
+
+- **Fix**: `packages/landing-gen/src/infoproduct_landing_gen/copy.py:40` — the pattern now matches both spellings: `\d+\s*a[nñ]os de (?:experiencia|experiência)`.
+- **Test**: added `test_validate_landing_copy_rejects_brazilian_years_of_experience` in `packages/landing-gen/tests/test_landing_gen.py`, using the exact reported bio. It fails on the old code (I checked: old pattern gives `passed=True`), and passes now.
+- Full suite: 24 passed.
+
+**Summary**
+- What I did: made the years-of-experience regex accent-aware and added a pt-BR regression test.
+- Why it was broken: `re.IGNORECASE` only folds a/A, so `experiencia` never matched `experiência`.
+- What it means: D07 now blocks the claim in every language the pipeline writes, not just Spanish.

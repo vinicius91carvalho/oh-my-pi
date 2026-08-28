@@ -1,0 +1,1 @@
+ M packages/landing-gen/src/infoproduct_landing_gen/locales.py

@@ -1,0 +1,9 @@
+
+
+Fixed. All 8 tests pass now.
+
+`usableTimeZone` was returning the raw `tz` when it was usable, so `" Europe/London "` came back untrimmed. The validator `isUsableTimeZone` trims internally, but the return path never did. Now it trims once and returns that trimmed value.
+
+- What changed: `packages/core/src/timezone.ts` returns the trimmed zone instead of the raw column value.
+- Why it was broken: validation used a trimmed copy, but the return kept the original.
+- What it means: stored zones with stray whitespace now resolve to clean zones instead of leaking through to callers.

@@ -1,0 +1,13 @@
+diff --git a/packages/llm/src/score-job.ts b/packages/llm/src/score-job.ts
+index 6ead561..b98c4f3 100644
+--- a/packages/llm/src/score-job.ts
++++ b/packages/llm/src/score-job.ts
+@@ -256,7 +256,7 @@ export interface HardFilterResult {
+  * 8–15k/month used to be invisible to the floor entirely.
+  */
+ export function monthlyUsdMax(job: ScorableJob): number | null {
+-  const amount = job.salaryMin ?? job.salaryMax;
++  const amount = job.salaryMax ?? job.salaryMin;
+   if (amount == null) return null;
+   const usd = toUsd(amount, job.salaryCurrency ?? "USD");
+   if (usd == null) return null;

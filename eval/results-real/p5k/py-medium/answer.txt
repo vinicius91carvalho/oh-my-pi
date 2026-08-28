@@ -1,0 +1,12 @@
+
+
+All 24 tests pass, including the Brazilian thousands test and the existing Mexican ones (`$1,047 MXN` still formats right).
+
+What I did: rewrote `format_price` in `packages/landing-gen/src/infoproduct_landing_gen/locales.py`.
+
+Why it was broken: the pack declared the right separators (dot for thousands in pt-BR), but integer prices went through `f"{int(value):,}"`, which hardcodes US-style commas and never got translated to the market's separators. The non-integer branch papered over the same problem with a `\x00` sentinel.
+
+What it means: prices now group digits using the pack's own separators (`R$ 1.290` in Brazil, `$1,290 MXN` in Mexico), and the sentinel hack is gone.
+
+- Fix: `format_price` builds the number from the pack's `thousands_separator` and `decimal_separator` directly, via a small `_group_digits` helper.
+- Reproduced first: saw `R$ 1,290` fail, changed the formatter, saw the suite go green (24 passed).

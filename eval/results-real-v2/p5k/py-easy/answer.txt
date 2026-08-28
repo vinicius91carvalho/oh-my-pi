@@ -1,0 +1,5 @@
+
+
+Done. All 5 tests pass.
+
+The rule was supposed to keep trends with at least 2 corroborating sources, but the check used `<=` instead of `<`, so two-source trends were wrongly excluded and only three-source ones survived. That is why `dieta` (2 sources) and `curso` (2 sources) vanished, and `beta` (3 sources) survived alone. One-character fix on line 248 of `scoring.py`; no tests touched.

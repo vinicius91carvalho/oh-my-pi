@@ -1,0 +1,13 @@
+diff --git a/packages/research/src/infoproduct_research/scoring.py b/packages/research/src/infoproduct_research/scoring.py
+index 9b29cb9..28c9c2e 100644
+--- a/packages/research/src/infoproduct_research/scoring.py
++++ b/packages/research/src/infoproduct_research/scoring.py
+@@ -245,7 +245,7 @@ def score_and_rank_trends(
+ 
+     for _key, group in groups.items():
+         sources = {s.source for s in group}
+-        if len(sources) <= MIN_CORROBORATING_SOURCES:
++        if len(sources) < MIN_CORROBORATING_SOURCES:
+             excluded += 1
+             logger.debug(
+                 "Excluding trend %r: only %d source(s) %s",

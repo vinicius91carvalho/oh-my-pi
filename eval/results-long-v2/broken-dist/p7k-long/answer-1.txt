@@ -1,0 +1,252 @@
+
+Now I've confirmed the exact source code. The bug is on line 142:
+
+```ts
+if (!job.workCountries.length) return "yes";
+```
+
+When `workCountries` is empty, this unconditionally returns "yes" — so both of the following:
+1. When no job is passed at all (the default is `{ location: null, workCountries: [] }`)
+2. When a job is passed but there are no work countries on the profile
+
+...both produce "Yes — I am authorized to work where this role is based".
+
+The docstring of `conservativeDefaultAnswer` (lines 157–159) even states: "If `job` is absent, that branch still answers — with the negative. Because a positive with nothing behind it is the fabrication this module exists to prevent." In other words, the documented contract is the negative, and the code contradicts it.
+
+The fix: change `return "yes"` to `return "unknown"`. Then in `conservativeDefaultAnswer`, `reach === "unknown"` flows into the negative branch.
+
+Wait — but I should think about whether "unknown" is the right value, or whether it should stay as-is. Let me think about what `reach` values mean downstream:
+- `"yes"` → positive answer (evidence-based)
+- `"no"` → negative, reason "The posting is based where the candidate has no right to work."
+- `"unknown"` → negative, reason "Where the posting is based cannot be read from it, and authorization is a document. The negative claims nothing; the positive would be a fabrication."
+
+For an empty workCountries, the truthful situation is: there is no evidence the candidate can work anywhere. The answer must be the negative. The "why" message: for `reach === "unknown"`, it says "Where the posting is based cannot be read from it" — that's not exactly right when the posting does name a country (e.g., a US posting with an empty workCountries list). Hmm.
+
+Consider a US posting with an empty workCountries: currently it returns "yes" (the bug). After the fix with "unknown", it becomes: negative answer, why = "Where the posting is based cannot be read from it...". That's a bit off — the posting does name a country (the US), the problem is the candidate side.
+
+Options:
+1. Minimal: `if (!job.workCountries.length) return "unknown";` — the answer is the negative (correct), but the "why" wording is slightly inaccurate for the named-country case.
+2. Add a separate sentinel like "no-evidence" and give it its own "why". This is more precise, but it expands the surface area of the type.
+
+The AGENTS.md instruction: "for legal-status questions... answer with a negative that asserts nothing — never answer with a positive without evidence". The critical invariant is the polarity of the answer. The "why" wording is secondary, but it's shown to humans at /answers, so it should be honest.
+
+Let me think about what's simplest and most truthful:
+
+Case A: no work countries + no posting (job absent) → the negative. Reason: no evidence at all. "unknown" fits ("cannot be read from it" — there is no posting at all).
+
+Case B: no work countries + a posting naming a country (e.g., US) → the negative. Honest reason: the candidate has no documented right to work anywhere, so they cannot claim authorization in that country either. The "unknown" wording is a bit off, but still defensible? "Where the posting is based cannot be read from it" is factually wrong in this case — the posting does say the US.
+
+Hmm, I could make the "why" more accurate. Let me look at how "why" is constructed:
+
+```ts
+why:
+  reach === "no"
+    ? "The posting is based where the candidate has no right to work."
+    : "Where the posting is based cannot be read from it, and " +
+      "authorization is a document. The negative claims nothing; the " +
+      "positive would be a fabrication.",
+```
+
+I could restructure: the empty-workCountries case has its own why. Let me think about the cleanest design:
+
+Option: make `whereTheWorkIs` return "no" for empty workCountries? No — "no" means "the posting is based where the candidate has no right to work", and for a worldwide remote posting that's not even true... well actually, if the candidate has no work countries on file, then per the data, the candidate has no documented right to work anywhere, including at home. The profile presumably has a home country (the test file has its own country tests using workCountries ["Brazil"]).
+
+But wait — is an empty `workCountries` list realistic? The comment on `JobReach` says it comes from `profile.eligibility`. The reported bug says "a candidate whose profile has no work countries on file". So yes, it happens in production.
+
+Now, what should the fix say? Let me weigh:
+
+The module's docstring says: "If `job` is absent, that branch still answers — with the negative. Because a positive with nothing behind it is the fabrication this module exists to prevent."
+
+So the intended contract: no evidence → negative. The minimal fix that honors the documented contract is to have empty workCountries fall through to "unknown" (no evidence → the negative with the "cannot be read / claims nothing" why).
+
+But for the case of a named country with empty work countries, a more precise "why" would be: "The profile names no country the candidate may work in, and authorization is a document. The negative claims nothing; the positive would be a fabrication."
+
+I think the cleanest approach is this: return a distinct value and branch on it. Let me look at the type: `function whereTheWorkIs(job: JobReach): "yes" | "no" | "unknown"`. I could extend it to `"yes" | "no" | "unknown" | "no-evidence"` and handle it in the caller:
+
+```ts
+const reach = whereTheWorkIs(job ?? { location: null, workCountries: [] });
+if (reach === "yes") {
+  return { ... positive ... };
+}
+return {
+  answer: "No — I am not authorized to work in the country where this role is based.",
+  kind: "boolean",
+  why:
+    reach === "no"
+      ? "The posting is based where the candidate has no right to work."
+      : reach === "no-evidence"
+        ? "The profile names no country the candidate may work in, and authorization is a document. The negative claims nothing; the positive would be a fabrication."
+        : "Where the posting is based cannot be read from it, and authorization is a document. The negative claims nothing; the positive would be a fabrication.",
+};
+```
+
+Hmm, wait. Let me reconsider. Is "no-evidence" over-engineered? The minimal change is a one-character type addition plus one branch. AGENTS.md says "the simplest thing that really works; boring beats clever". A separate sentinel with a truthful "why" is arguably more "boring" and honest than reusing "unknown" with the wrong wording. But it does expand the union type.
+
+Actually, let me reconsider: for a named-country posting with empty workCountries, is the "unknown" why actually wrong? "Where the posting is based cannot be read from it" — if the posting says "San Francisco, CA, United States", then the posting's base CAN be read from it (the US). So this sentence is factually wrong. It would mislead a human reviewing /answers. The repo rules emphasize honesty of evidence, and the "why" is displayed. So I lean toward the separate sentinel.
+
+Alternatively, I could phrase a generic "no evidence" reason that covers both: "There is no evidence the candidate may work where this role is based (the profile names no work country), and authorization is a document. The negative claims nothing; the positive would be a fabrication."
+
+Let me settle on the design:
+
+Inside `whereTheWorkIs`:
+```ts
+function whereTheWorkIs(job: JobReach): "yes" | "no" | "no-evidence" | "unknown" {
+  const places = namedPlaces(job.location, job.remoteScope);
+  if (!job.workCountries.length) return "no-evidence";
+  ...
+}
+```
+
+And in the caller, branch on it.
+
+Now, do I need to update the docstring of whereTheWorkIs too? Its docstring explains the logic, and adding the empty case: "A candidate with no work countries on file has no evidence of authorization anywhere, which is its own ground for the negative — it is not 'yes'."
+
+Also update the test's docstring? No, the tests are the ones I add.
+
+Now the tests. Per AGENTS.md: "add tests that fail without the fix and pass with it", following "first make the bug occur" — red, green, repeat. Tests to add (inside the describe "authorization where the job is located" block, lines 104–207):
+
+1. **No job passed at all** (the second reported case):
+```ts
+it("answers no when the caller passed no posting at all", () => {
+  // The doc comment promises the branch still answers with the negative.
+  const d = conservativeDefaultAnswer(ASKED[0]);
+  expect(d).not.toBeNull();
+  expect(d!.answer).toMatch(/^No/);
+  expect(resolveBooleanAnswer(d!.answer)).toBe("no");
+});
+```
+With the current code: job absent → `{ location: null, workCountries: [] }` → empty → "yes" → positive. So this fails currently.
+
+2. **Empty workCountries, US posting** (the first reported case — the Greenhouse question about the country where the job is located, for a candidate with no work countries):
+```ts
+it("answers no when the profile has no work countries on file", () => {
+  const d = conservativeDefaultAnswer(ASKED[0], {
+    location: "San Francisco, CA, United States",
+    workCountries: [],
+  });
+  expect(d).not.toBeNull();
+  expect(d!.answer).toMatch(/^No/);
+  expect(resolveBooleanAnswer(d!.answer)).toBe("no");
+});
+```
+Currently: empty → "yes" → positive → fails.
+
+3. **Empty workCountries + worldwide remote** (the subtle case — even a "hires anywhere" posting must not yield a yes without evidence):
+```ts
+it("does not claim a worldwide posting on an empty profile", () => {
+  const d = conservativeDefaultAnswer(ASKED[0], {
+    location: "Remote",
+    remoteScope: "worldwide",
+    workCountries: [],
+  });
+  expect(d!.answer).toMatch(/^No/);
+});
+```
+Currently: empty → "yes" → fails.
+
+Should I also assert that `d!.answer` is not the exact positive string? `toMatch(/^No/)` is consistent with the existing tests.
+
+Do I also need a test that the "why" of the negative in the empty-workCountries case mentions the lack of evidence? I could, but the repo style doesn't assert on why. Let me stay consistent with existing style: assert the polarity of the answer.
+
+Now let me also double-check `namedPlaces` and `resolveBooleanAnswer` — to make sure my expectations about behavior are right. Let me look at namedPlaces in work-reach.ts (in core) and resolveBooleanAnswer. Actually, the baseline tests passed (16 passing) and I've confirmed the code paths, so the behavior of namedPlaces is: location "San Francisco, CA, United States" → countries [US]. location "Remote" + remoteScope "worldwide" → places.open = true (probably). location null → no countries, not open → reachAllows fallback.
+
+Wait, actually — one important check: for a US posting with empty workCountries, under the current code it hits `if (!job.workCountries.length) return "yes"` before checking places. So yes, positive. Confirmed the bug.
+
+Now, is there any risk that changing to "no-evidence" breaks other existing tests? Existing tests: all use BRAZIL (non-empty). The final describe block (lines 216–234, "own country") — let me check: they probably use workCountries ["Brazil"]. The fix only changes the empty-workCountries path, so no impact on non-empty. The baseline is 16 passing, and after the fix I need all 16 + my 3 to pass.
+
+Wait, I should also check: are there other tests in the repo that call `conservativeDefaultAnswer` or `whereTheWorkIs`? `whereTheWorkIs` is private (not exported). `conservativeDefaultAnswer` is exported; the caller is `apply-answer-rule.ts`. Are there tests in other packages? Let me grep for usages of conservativeDefaultAnswer across the repo to be safe. The history says "the only caller is apply-answer-rule.ts (a single caller), plus the tests". Good.
+
+But let me re-verify that apply-answer-rule.ts doesn't itself have tests depending on the "yes". Let me grep for "authorized to work where this role is based" and for the conservativeDefaultAnswer test file.
+
+Plan:
+1. Add 3 tests to conservative-default.test.ts (inside the job-country describe block).
+2. Run the test command → expect 3 new failures (red).
+3. Apply the fix in conservative-default.ts:
+   - `if (!job.workCountries.length) return "no-evidence";`
+   - Extend the return type
+   - Branch on "no-evidence" in the caller for the why
+   - Update the docstring of whereTheWorkIs
+4. Run tests → all green.
+5. Run the package's full test suite + typecheck/lint? The user's command only asks for the profile test file, but the repo rule says the gate is pnpm lint/typecheck/test. The user's explicit instruction: "run with `pnpm --filter @fbj/profile exec vitest run src/conservative-default.test.ts`". I'll run that, and also run the full profile package tests to make sure nothing else broke (apply-answer-rule tests). Should I also run the profile package's typecheck? The change is small and local; the typecheck is cheap. Let me run the profile package's full vitest and typecheck.
+
+Let me start with the test edits first. Where to insert: after the "still answers the US question with the US default" test, i.e., before line 207 `});`. Use `PUT >206:`? No — I want to insert before line 207 (the closing `});` of the describe). The closing `});` of the last test is at line 206. So insert after line 206: `PUT >206:`.
+
+Test content (with a comment explaining the reported bug, matching the file's comment-heavy style):
+
+```ts
+  /**
+   * The reported bug: a candidate with no work countries on file got
+   * "Yes — I am authorized to work where this role is based" for a US posting,
+   * and the same positive when the caller passed no posting at all. With no
+   * evidence of authorization anywhere, the only honest answer is the
+   * negative — an empty list is absence of proof, not proof of any reach.
+   */
+  it("answers no when the profile has no work countries on file", () => {
+    const d = conservativeDefaultAnswer(ASKED[0], {
+      location: "San Francisco, CA, United States",
+      workCountries: [],
+    });
+    expect(d).not.toBeNull();
+    expect(d!.answer).toMatch(/^No/);
+    expect(resolveBooleanAnswer(d!.answer)).toBe("no");
+  });
+
+  it("does not claim a worldwide posting on an empty profile", () => {
+    // "Hires anywhere" justifies a yes only because the candidate has a
+    // country they may work in and works from home. No work countries on
+    // file, that inference has no ground, and the positive is the
+    // fabrication again.
+    const d = conservativeDefaultAnswer(ASKED[0], {
+      location: "Remote",
+      remoteScope: "worldwide",
+      workCountries: [],
+    });
+    expect(d!.answer).toMatch(/^No/);
+  });
+
+  it("answers no when the caller passed no posting at all", () => {
+    // The doc comment promises the branch still answers without a job —
+    // with the negative, because a positive with nothing behind it is the
+    // fabrication this module exists to prevent.
+    const d = conservativeDefaultAnswer(ASKED[0]);
+    expect(d).not.toBeNull();
+    expect(d!.answer).toMatch(/^No/);
+    expect(resolveBooleanAnswer(d!.answer)).toBe("no");
+  });
+```
+
+Note: `resolveBooleanAnswer` — used with existing tests that have answers starting with "No", no issue.
+
+Wait, one concern about the test "no job passed at all": `conservativeDefaultAnswer(ASKED[0])` — with the fix, job absent → `{ location: null, workCountries: [] }` → empty → "no-evidence" → negative.
+
+Next, the source fix. Current lines 140–150:
+
+```ts
+function whereTheWorkIs(job: JobReach): "yes" | "no" | "unknown" {
+  const places = namedPlaces(job.location, job.remoteScope);
+  if (!job.workCountries.length) return "yes";
+  if (places.countries.length) {
+    return places.countries.some((c) => job.workCountries.includes(c))
+      ? "yes"
+      : "no";
+  }
+  if (places.open) return "yes";
+  return reachAllows(places, job.workCountries) === "yes" ? "yes" : "unknown";
+}
+```
+
+New:
+
+```ts
+function whereTheWorkIs(job: JobReach): "yes" | "no" | "no-evidence" | "unknown" {
+  const places = namedPlaces(job.location, job.remoteScope);
+  if (!job.workCountries.length) return "no-evidence";
+  ...
+}
+```
+
+Hmm, wait, should the empty check come before `namedPlaces`? It does currently, so let me preserve the order.
+
+Actually, hold on. Let me reconsider whether to use a distinct sentinel, or just "unknown". Let me weigh the "why" text:
+
+- For the no-posting case (job absent, location null): "Where the posting is based

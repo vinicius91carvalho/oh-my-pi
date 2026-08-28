@@ -1,0 +1,34 @@
+Scope: all 21 workspace projects
+✓ Lockfile passes supply-chain policies (verified 6d ago)
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+. prepare$ git config core.hooksPath .githooks && git config core.sshCommand 'ssh -o ServerAliveInterval=30 -o ServerAliveCountMax=40' || true
+. prepare: Done
+Done in 611ms using pnpm v11.13.1
+
+ RUN  v4.1.10 /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/packages/profile
+
+Sourcemap for "/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/packages/core/dist/aws-sdk-client-config.js" points to missing source files
+ ❯ src/conservative-default.hidden.test.ts (0 test)
+ ❯ src/conservative-default.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/conservative-default.hidden.test.ts [ src/conservative-default.hidden.test.ts ]
+ FAIL  src/conservative-default.test.ts [ src/conservative-default.test.ts ]
+Error: Cannot find package '@smithy/util-retry' imported from /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/packages/core/dist/aws-sdk-client-config.js
+ ❯ ../core/src/aws-sdk-client-config.ts:1:1
+ ❯ ../core/src/index.ts:1:1
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  no tests
+   Start at  05:32:25
+   Duration  138ms (transform 74ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+
+undefined
+/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/packages/profile:
+[ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command failed with exit code 1: vitest run src/conservative-default.test.ts src/conservative-default.hidden.test.ts

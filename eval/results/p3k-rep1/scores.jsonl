@@ -1,0 +1,12 @@
+{"id": "tool-01", "axis": "tool choice", "pass": true, "seconds": 73.3}
+{"id": "tool-02", "axis": "tool choice", "pass": true, "seconds": 27.8}
+{"id": "tool-03", "axis": "tool choice", "pass": true, "seconds": 49.6}
+{"id": "edit-01", "axis": "edit", "pass": true, "seconds": 99.2}
+{"id": "edit-02", "axis": "edit", "pass": true, "seconds": 230.5}
+{"id": "edit-03", "axis": "edit", "pass": true, "seconds": 349.8}
+{"id": "test-01", "axis": "run tests", "pass": true, "seconds": 150.4}
+{"id": "test-02", "axis": "run tests", "pass": true, "seconds": 118.8}
+{"id": "stop-01", "axis": "stop", "pass": true, "seconds": 23.9}
+{"id": "stop-02", "axis": "stop", "pass": true, "seconds": 50.8}
+{"id": "ask-01", "axis": "ask", "pass": true, "seconds": 510.5}
+{"id": "ask-02", "axis": "rules", "pass": true, "seconds": 363.5}

@@ -1,0 +1,2 @@
+# Linha de base: nada mudado. Serve para provar que o fork sem configuracao
+# nova reproduz o prompt de 22.526 tokens que eu medi no binario instalado.

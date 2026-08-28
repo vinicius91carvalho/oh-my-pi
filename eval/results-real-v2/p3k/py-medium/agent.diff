@@ -1,0 +1,20 @@
+diff --git a/packages/landing-gen/src/infoproduct_landing_gen/locales.py b/packages/landing-gen/src/infoproduct_landing_gen/locales.py
+index 1ac1510..6f29938 100644
+--- a/packages/landing-gen/src/infoproduct_landing_gen/locales.py
++++ b/packages/landing-gen/src/infoproduct_landing_gen/locales.py
+@@ -152,10 +152,11 @@ def format_price(amount: float | int, currency: str, pack: LocalePack) -> str:
+     wrong shape reads the page as foreign before reading a word of it.
+     """
+     value = float(amount)
+-    if value.is_integer():
+-        body = f"{int(value):,}"
+-    else:
+-        body = f"{value:,.2f}".replace(",", "\x00")
++    body = f"{int(value):,}" if value.is_integer() else f"{value:,.2f}"
++    # Swap separators in two stages: park the US thousands comma in a sentinel
++    # first, or a market whose thousands separator is "." would re-trigger the
++    # decimal pass and come out as "1,290" in Brazil.
++    body = body.replace(",", "\x00")
+     body = body.replace(".", pack.decimal_separator)
+     body = body.replace("\x00", pack.thousands_separator)
+     return f"{pack.price_prefix}{body}{pack.price_suffix}"

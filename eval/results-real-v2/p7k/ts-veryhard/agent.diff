@@ -1,0 +1,89 @@
+diff --git a/packages/profile/src/conservative-default.test.ts b/packages/profile/src/conservative-default.test.ts
+index 1ad519e..0c89cba 100644
+--- a/packages/profile/src/conservative-default.test.ts
++++ b/packages/profile/src/conservative-default.test.ts
+@@ -232,3 +232,57 @@ describe("authorization in the candidate's own country", () => {
+     expect(a?.answer).toMatch(/^No/);
+   });
+ });
++
++/**
++ * The reported failure: a profile with no work countries on file, and a call
++ * with no posting at all, both came back as
++ * "Yes - I am authorized to work where this role is based" - a positive claim
++ * made on the strength of nothing. A positive always needs evidence (a named
++ * country the candidate may work in, or a worldwide scope the candidate works
++ * from home under); with none on file the answer is the negative, which
++ * claims nothing.
++ */
++describe("conservativeDefaultAnswer: no work countries on file", () => {
++  const ASKED =
++    "Are you legally authorized to work in the country where the job is located?";
++
++  it("answers no with no posting and no work countries", () => {
++    const a = conservativeDefaultAnswer(ASKED);
++    expect(a).not.toBeNull();
++    expect(a!.kind).toBe("boolean");
++    expect(a!.answer).toMatch(/^No/);
++    expect(resolveBooleanAnswer(a!.answer)).toBe("no");
++  });
++
++  it("answers no when the profile has no work countries", () => {
++    const a = conservativeDefaultAnswer(ASKED, { workCountries: [] });
++    expect(a!.answer).toMatch(/^No/);
++    expect(resolveBooleanAnswer(a!.answer)).toBe("no");
++  });
++
++  it("answers no for a US posting with an empty profile", () => {
++    const a = conservativeDefaultAnswer(ASKED, {
++      location: "San Francisco, CA, United States",
++      workCountries: [],
++    });
++    expect(a!.answer).toMatch(/^No/);
++  });
++
++  it("answers no for a worldwide posting with an empty profile", () => {
++    const a = conservativeDefaultAnswer(ASKED, {
++      location: "Remote",
++      remoteScope: "worldwide",
++      workCountries: [],
++    });
++    expect(a!.answer).toMatch(/^No/);
++  });
++
++  it("still answers yes when the posting reaches a country on file", () => {
++    const a = conservativeDefaultAnswer(ASKED, {
++      location: "Anywhere in the World",
++      remoteScope: "worldwide",
++      workCountries: ["Brazil"],
++    });
++    expect(a!.answer).toMatch(/^Yes/);
++  });
++});
+diff --git a/packages/profile/src/conservative-default.ts b/packages/profile/src/conservative-default.ts
+index ff11fd4..9f521b8 100644
+--- a/packages/profile/src/conservative-default.ts
++++ b/packages/profile/src/conservative-default.ts
+@@ -136,16 +136,20 @@ export interface JobReach {
+  * So: a named country decides; only a posting that names none falls back to
+  * "hires anywhere", which means the candidate works from home and is
+  * authorized there.
++ *
++ * A positive always needs evidence - a named country the candidate may work
++ * in, or a worldwide scope the candidate works from home under. With no work
++ * countries on file there is no evidence anywhere, and the answer is the
++ * negative, which claims nothing.
+  */
+ function whereTheWorkIs(job: JobReach): "yes" | "no" | "unknown" {
+   const places = namedPlaces(job.location, job.remoteScope);
+-  if (!job.workCountries.length) return "yes";
+   if (places.countries.length) {
+     return places.countries.some((c) => job.workCountries.includes(c))
+       ? "yes"
+       : "no";
+   }
+-  if (places.open) return "yes";
++  if (places.open) return job.workCountries.length ? "yes" : "unknown";
+   return reachAllows(places, job.workCountries) === "yes" ? "yes" : "unknown";
+ }
+ 

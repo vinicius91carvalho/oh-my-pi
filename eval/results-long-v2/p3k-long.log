@@ -1,0 +1,8 @@
+== turn 1: Bug report from an apply run: on the Greenhouse question 'Are you legally authorized to work in the country where the job is located?' the agent answered 'Yes — I am authorized to work where this role is based' for a candidate whose profile has no work countries on file, and also when the caller passed no posting at all. AGENTS.md ('The Answer Library' > 'The conservative default') says legal-status questions must get the negative that claims nothing, never a positive without evidence. The current tests in packages/profile/src/conservative-default.test.ts all pass. Find the bug in packages/profile, fix it, and add test cases that fail without your fix and pass with it. Run with `pnpm --filter @fbj/profile exec vitest run src/conservative-default.test.ts`.
+./run-long.sh: line 38: 17693 Alarm clock: 14            perl -e "alarm ${TASK_TIMEOUT:-2400}; exec @ARGV" "$BUN" "$OMP_SRC/packages/coding-agent/src/cli.ts" -p --model omlxtap/Qwen3.8-27B-AWQ-5.0bpw --session-dir "$SESS" --auto-approve --config "$CFG" "$@" "$p" < /dev/null > "$OUT/answer-$n.txt" 2> "$OUT/stderr-$n.txt"
+   requests so far: 27
+== turn 2: Now add a vitest test that would have caught this bug. Run it and make sure it passes.
+   requests so far: 31
+== turn 3: Explain in 5 lines what the bug was, where it lived, and why the docs rule matters. Then run the full test file once more.
+   requests so far: 34
+== turn 4: Look for one more place in the same package that could break the same rule. If you find one, fix it and test; if not, say so.

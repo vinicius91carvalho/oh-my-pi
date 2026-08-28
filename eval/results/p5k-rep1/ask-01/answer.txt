@@ -1,0 +1,15 @@
+
+
+Done. JPY now works, and the whole suite passes (7/7).
+
+What I changed:
+- `src/currency.js` — the rate table now stores **minor units per 1 US dollar** (100 cents, 92 euro-cents, 540 reais-cents, 150 yen). Yen has no subunit, so the old "multiply by 0.92-style" math would have silently made yen 100× too small. The conversion formula is now `cents * RATES[to] / RATES[from]`, same result for USD/EUR/BRL, correct for JPY. It also throws on unknown codes instead of returning `NaN`.
+- `src/currency.test.js` — new tests: USD→BRL unchanged, $1→150 yen, 150 yen→$1 (the trap that loses a factor of 100), a stable round trip, and the unknown-currency error.
+
+One pre-existing bug fixed on the way: `applyDiscount(999, 10)` returned `899.1` — a float money value, which the cartola rules forbid. It now rounds to whole cents (899), which its own test was already expecting.
+
+Two notes: the JPY rate is 150 yen/USD, a static value like the others in the table (the module keeps rates hardcoded, so I kept that design). Say the word if you want a different rate or live lookup. And the rules file says `*.test.ts`, but the repo is plain JS with `node --test`, so I followed the existing `.test.js` pattern.
+
+**What I did:** added JPY to the currency module with a minor-units rate table, plus tests, and fixed a float leak in the discount.
+**Why it was broken:** the old formula assumed every currency has 2 decimal places; yen has none.
+**What it means:** you can now convert to and from yen with exact integer math, and the discount always returns whole cents.

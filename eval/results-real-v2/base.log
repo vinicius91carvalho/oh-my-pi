@@ -1,0 +1,10 @@
+{"id": "py-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 482.7, "requests": 9, "max_prompt_tokens": 27406, "aborted": 1}
+{"id": "py-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 326.5, "requests": 7, "max_prompt_tokens": 26578, "aborted": 0}
+{"id": "py-hard", "level": "hard", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 234.5, "requests": 9, "max_prompt_tokens": 23273, "aborted": 1}
+{"id": "py-veryhard", "level": "veryhard", "pass": false, "tests_ok": false, "touched_tests": 1, "seconds": 664.1, "requests": 17, "max_prompt_tokens": 29440, "aborted": 0}
+{"id": "ts-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 468.9, "requests": 11, "max_prompt_tokens": 26596, "aborted": 1}
+{"id": "ts-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 314.4, "requests": 9, "max_prompt_tokens": 27086, "aborted": 0}
+{"id": "ts-hard", "level": "hard", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 834.0, "requests": 16, "max_prompt_tokens": 30932, "aborted": 2}
+{"id": "ts-veryhard", "level": "veryhard", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 145.0, "requests": 4, "max_prompt_tokens": 28159, "aborted": 1}
+{"id": "ts-rename", "level": "lsp", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 8.1, "requests": 1, "max_prompt_tokens": null, "aborted": 1}
+{"id": "ts-contract", "level": "lsp", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 219.0, "requests": 6, "max_prompt_tokens": 23687, "aborted": 2}

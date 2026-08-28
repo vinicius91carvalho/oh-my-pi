@@ -1,0 +1,47 @@
+{"id": "py-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 296.8, "requests": 11, "max_prompt_tokens": 14916}
+{"id": "py-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 288.0, "requests": 10, "max_prompt_tokens": 14459}
+{"id": "py-hard", "level": "hard", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 232.6, "requests": 11, "max_prompt_tokens": 10177}
+{"id": "py-veryhard", "level": "veryhard", "pass": false, "tests_ok": false, "touched_tests": 1, "seconds": 495.4, "requests": 16, "max_prompt_tokens": 24933}
+{"id": "ts-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 163.2, "requests": 7, "max_prompt_tokens": 10956}
+{"id": "ts-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 404.8, "requests": 14, "max_prompt_tokens": 18227}
+{"id": "ts-hard", "level": "hard", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 1373.5, "requests": 20, "max_prompt_tokens": 27695}
+./run-real.sh: line 42: 85998 Alarm clock: 14            perl -e "alarm ${TASK_TIMEOUT:-1800}; exec @ARGV" "$BUN" "$OMP_SRC/packages/coding-agent/src/cli.ts" -p --model omlxtap/Qwen3.8-27B-AWQ-5.0bpw --no-session --auto-approve --config "$CFG" "$PROMPT" < /dev/null > "$RUN/answer.txt" 2> "$RUN/stderr.txt"
+{"id": "ts-veryhard", "level": "veryhard", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 1800.1, "requests": 9, "max_prompt_tokens": 27072}
+{"id": "py-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 365.7, "requests": 10, "max_prompt_tokens": 17804}
+{"id": "py-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 277.4, "requests": 9, "max_prompt_tokens": 14597}
+{"id": "py-hard", "level": "hard", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 266.4, "requests": 9, "max_prompt_tokens": 15955}
+{"id": "py-veryhard", "level": "veryhard", "pass": false, "tests_ok": false, "touched_tests": 1, "seconds": 653.0, "requests": 14, "max_prompt_tokens": 23676}
+{"id": "ts-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 140.8, "requests": 5, "max_prompt_tokens": 12198}
+{"id": "ts-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 271.6, "requests": 7, "max_prompt_tokens": 17063}
+{"id": "ts-hard", "level": "hard", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 1208.6, "requests": 16, "max_prompt_tokens": 27723}
+./run-real.sh: line 42: 57041 Alarm clock: 14            perl -e "alarm ${TASK_TIMEOUT:-1800}; exec @ARGV" "$BUN" "$OMP_SRC/packages/coding-agent/src/cli.ts" -p --model omlxtap/Qwen3.8-27B-AWQ-5.0bpw --no-session --auto-approve --config "$CFG" "$PROMPT" < /dev/null > "$RUN/answer.txt" 2> "$RUN/stderr.txt"
+{"id": "ts-veryhard", "level": "veryhard", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 1800.1, "requests": 22, "max_prompt_tokens": 30830}
+{"id": "py-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 218.4, "requests": 10, "max_prompt_tokens": 12119}
+{"id": "py-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 284.9, "requests": 9, "max_prompt_tokens": 13424}
+{"id": "py-hard", "level": "hard", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 266.4, "requests": 10, "max_prompt_tokens": 13601}
+{"id": "py-veryhard", "level": "veryhard", "pass": false, "tests_ok": false, "touched_tests": 1, "seconds": 425.1, "requests": 11, "max_prompt_tokens": 18862}
+{"id": "ts-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 231.7, "requests": 9, "max_prompt_tokens": 12360}
+{"id": "ts-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 428.6, "requests": 11, "max_prompt_tokens": 25320}
+{"id": "ts-hard", "level": "hard", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 1354.0, "requests": 28, "max_prompt_tokens": 27331}
+{"id": "ts-veryhard", "level": "veryhard", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 1369.7, "requests": 16, "max_prompt_tokens": 26913}
+{"id": "py-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 714.3, "requests": 19, "max_prompt_tokens": 26829}
+{"id": "py-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 220.2, "requests": 8, "max_prompt_tokens": 24864}
+{"id": "py-hard", "level": "hard", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 22.6, "requests": 2, "max_prompt_tokens": 19228}
+{"id": "py-veryhard", "level": "veryhard", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 863.8, "requests": 18, "max_prompt_tokens": 29497}
+{"id": "ts-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 368.3, "requests": 6, "max_prompt_tokens": 24917}
+{"id": "ts-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 815.2, "requests": 12, "max_prompt_tokens": 29117}
+{"id": "ts-hard", "level": "hard", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 25.6, "requests": 2, "max_prompt_tokens": 21446}
+./run-real.sh: line 42: 87565 Alarm clock: 14            perl -e "alarm ${TASK_TIMEOUT:-1800}; exec @ARGV" "$BUN" "$OMP_SRC/packages/coding-agent/src/cli.ts" -p --model omlxtap/Qwen3.8-27B-AWQ-5.0bpw --no-session --auto-approve --config "$CFG" "$PROMPT" < /dev/null > "$RUN/answer.txt" 2> "$RUN/stderr.txt"
+{"id": "ts-veryhard", "level": "veryhard", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 1800.3, "requests": 11, "max_prompt_tokens": 39526}
+./run-real.sh: line 65: syntax error near unexpected token `start'
+./run-real.sh: line 65: `t(start),1), "requests": int(reqs),'
+== turn 1: Bug report from an apply run: on the Greenhouse question 'Are you legally authorized to work in the country where the job is located?' the agent answered 'Yes — I am authorized to work where this role is based' for a candidate whose profile has no work countries on file, and also when the caller passed no posting at all. AGENTS.md ('The Answer Library' > 'The conservative default') says legal-status questions must get the negative that claims nothing, never a positive without evidence. The current tests in packages/profile/src/conservative-default.test.ts all pass. Find the bug in packages/profile, fix it, and add test cases that fail without your fix and pass with it. Run with `pnpm --filter @fbj/profile exec vitest run src/conservative-default.test.ts`.
+omlx restarted 13:24
+SWEEP-DONE
+RERUN-DONE
+omlx restarted 21:33 (manual, before deploy 14)
+omlx restarted for long sessions 03:30
+SWEEP2-DONE
+omlx restarted for redo 06:12
+REDO2-DONE
+omlx restarted for long-session redo 07:29

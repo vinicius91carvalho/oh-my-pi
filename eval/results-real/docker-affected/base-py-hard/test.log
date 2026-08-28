@@ -1,0 +1,813 @@
+...FFF.FFF............FFFFF.FF.FF.F                                      [100%]
+=================================== FAILURES ===================================
+___________________ test_has_cta_and_find_missing_cta_issues ___________________
+
+    def test_has_cta_and_find_missing_cta_issues() -> None:
+        assert has_cta("Descarga el bundle hoy")
+        assert not has_cta("Un texto neutro")
+    
+>       creative = _carousel_creative(final_cta="Paso 6")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/campaign/tests/test_tiktok_creatives.py:75: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+creative_id = 'carousel-1', card_count = 6, final_cta = 'Paso 6'
+
+    def _carousel_creative(
+        *,
+        creative_id: str = "carousel-1",
+        card_count: int = 6,
+        final_cta: str = "Desliza y descarga hoy",
+    ) -> Creative:
+        cards = [
+            CarouselCard(
+                index=index,
+                image_prompt=f"Paso {index + 1} de maquillaje natural",
+                on_image_text=(final_cta if index == card_count - 1 else f"Paso {index + 1}"),
+            )
+            for index in range(card_count)
+        ]
+>       return Creative(
+            id=creative_id,
+            format=CreativeFormat.CAROUSEL,
+            hook="Nadie te enseno esto sobre tu piel",
+            primary_text="Guia completa de maquillaje natural. Descarga hoy.",
+            headline="Maquillaje natural",
+            description="Guia practica",
+            cta="Comprar ahora",
+            language="es-MX",
+            cards=cards,
+            music_id="music_1",
+            validation=ValidationResult(passed=True, issues=[]),
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Creative
+E       cards
+E         List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...nchor=True, asset=None)], input_type=list]
+E           For further information visit https://errors.pydantic.dev/2.13/v/too_long
+
+packages/campaign/tests/test_tiktok_creatives.py:40: ValidationError
+____________ test_find_missing_cta_issues_passes_with_explicit_cta _____________
+
+    def test_find_missing_cta_issues_passes_with_explicit_cta() -> None:
+>       creative = _carousel_creative()
+                   ^^^^^^^^^^^^^^^^^^^^
+
+packages/campaign/tests/test_tiktok_creatives.py:85: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+creative_id = 'carousel-1', card_count = 6, final_cta = 'Desliza y descarga hoy'
+
+    def _carousel_creative(
+        *,
+        creative_id: str = "carousel-1",
+        card_count: int = 6,
+        final_cta: str = "Desliza y descarga hoy",
+    ) -> Creative:
+        cards = [
+            CarouselCard(
+                index=index,
+                image_prompt=f"Paso {index + 1} de maquillaje natural",
+                on_image_text=(final_cta if index == card_count - 1 else f"Paso {index + 1}"),
+            )
+            for index in range(card_count)
+        ]
+>       return Creative(
+            id=creative_id,
+            format=CreativeFormat.CAROUSEL,
+            hook="Nadie te enseno esto sobre tu piel",
+            primary_text="Guia completa de maquillaje natural. Descarga hoy.",
+            headline="Maquillaje natural",
+            description="Guia practica",
+            cta="Comprar ahora",
+            language="es-MX",
+            cards=cards,
+            music_id="music_1",
+            validation=ValidationResult(passed=True, issues=[]),
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Creative
+E       cards
+E         List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...nchor=True, asset=None)], input_type=list]
+E           For further information visit https://errors.pydantic.dev/2.13/v/too_long
+
+packages/campaign/tests/test_tiktok_creatives.py:40: ValidationError
+_________________ test_validate_carousel_creative_card_bounds __________________
+
+    def test_validate_carousel_creative_card_bounds() -> None:
+>       ok = _carousel_creative(card_count=6)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/campaign/tests/test_tiktok_creatives.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+creative_id = 'carousel-1', card_count = 6, final_cta = 'Desliza y descarga hoy'
+
+    def _carousel_creative(
+        *,
+        creative_id: str = "carousel-1",
+        card_count: int = 6,
+        final_cta: str = "Desliza y descarga hoy",
+    ) -> Creative:
+        cards = [
+            CarouselCard(
+                index=index,
+                image_prompt=f"Paso {index + 1} de maquillaje natural",
+                on_image_text=(final_cta if index == card_count - 1 else f"Paso {index + 1}"),
+            )
+            for index in range(card_count)
+        ]
+>       return Creative(
+            id=creative_id,
+            format=CreativeFormat.CAROUSEL,
+            hook="Nadie te enseno esto sobre tu piel",
+            primary_text="Guia completa de maquillaje natural. Descarga hoy.",
+            headline="Maquillaje natural",
+            description="Guia practica",
+            cta="Comprar ahora",
+            language="es-MX",
+            cards=cards,
+            music_id="music_1",
+            validation=ValidationResult(passed=True, issues=[]),
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Creative
+E       cards
+E         List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...nchor=True, asset=None)], input_type=list]
+E           For further information visit https://errors.pydantic.dev/2.13/v/too_long
+
+packages/campaign/tests/test_tiktok_creatives.py:40: ValidationError
+_____________ test_validate_tiktok_creative_set_requires_carousel ______________
+
+    def test_validate_tiktok_creative_set_requires_carousel() -> None:
+        image_only = Creative(
+            id="image-1",
+            format=CreativeFormat.IMAGE,
+            hook="Hook",
+            primary_text="Texto con descarga hoy",
+            headline="Titulo",
+            description="Desc",
+            cta="Comprar ahora",
+            language="es-MX",
+            validation=ValidationResult(passed=True, issues=[]),
+        )
+        issues = validate_tiktok_creative_set([image_only])
+        assert any("carousel" in issue for issue in issues)
+    
+>       assert validate_tiktok_creative_set([_carousel_creative()]) == []
+                                             ^^^^^^^^^^^^^^^^^^^^
+
+packages/campaign/tests/test_tiktok_creatives.py:120: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+creative_id = 'carousel-1', card_count = 6, final_cta = 'Desliza y descarga hoy'
+
+    def _carousel_creative(
+        *,
+        creative_id: str = "carousel-1",
+        card_count: int = 6,
+        final_cta: str = "Desliza y descarga hoy",
+    ) -> Creative:
+        cards = [
+            CarouselCard(
+                index=index,
+                image_prompt=f"Paso {index + 1} de maquillaje natural",
+                on_image_text=(final_cta if index == card_count - 1 else f"Paso {index + 1}"),
+            )
+            for index in range(card_count)
+        ]
+>       return Creative(
+            id=creative_id,
+            format=CreativeFormat.CAROUSEL,
+            hook="Nadie te enseno esto sobre tu piel",
+            primary_text="Guia completa de maquillaje natural. Descarga hoy.",
+            headline="Maquillaje natural",
+            description="Guia practica",
+            cta="Comprar ahora",
+            language="es-MX",
+            cards=cards,
+            music_id="music_1",
+            validation=ValidationResult(passed=True, issues=[]),
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Creative
+E       cards
+E         List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...nchor=True, asset=None)], input_type=list]
+E           For further information visit https://errors.pydantic.dev/2.13/v/too_long
+
+packages/campaign/tests/test_tiktok_creatives.py:40: ValidationError
+____________ test_validate_creatives_blocks_before_after_on_tiktok _____________
+
+    def test_validate_creatives_blocks_before_after_on_tiktok() -> None:
+>       creative = _carousel_creative()
+                   ^^^^^^^^^^^^^^^^^^^^
+
+packages/campaign/tests/test_tiktok_creatives.py:124: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+creative_id = 'carousel-1', card_count = 6, final_cta = 'Desliza y descarga hoy'
+
+    def _carousel_creative(
+        *,
+        creative_id: str = "carousel-1",
+        card_count: int = 6,
+        final_cta: str = "Desliza y descarga hoy",
+    ) -> Creative:
+        cards = [
+            CarouselCard(
+                index=index,
+                image_prompt=f"Paso {index + 1} de maquillaje natural",
+                on_image_text=(final_cta if index == card_count - 1 else f"Paso {index + 1}"),
+            )
+            for index in range(card_count)
+        ]
+>       return Creative(
+            id=creative_id,
+            format=CreativeFormat.CAROUSEL,
+            hook="Nadie te enseno esto sobre tu piel",
+            primary_text="Guia completa de maquillaje natural. Descarga hoy.",
+            headline="Maquillaje natural",
+            description="Guia practica",
+            cta="Comprar ahora",
+            language="es-MX",
+            cards=cards,
+            music_id="music_1",
+            validation=ValidationResult(passed=True, issues=[]),
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Creative
+E       cards
+E         List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...nchor=True, asset=None)], input_type=list]
+E           For further information visit https://errors.pydantic.dev/2.13/v/too_long
+
+packages/campaign/tests/test_tiktok_creatives.py:40: ValidationError
+___________________ test_build_card_image_prompt_composition ___________________
+
+    def test_build_card_image_prompt_composition() -> None:
+        plan = CampaignPlan.model_construct(messaging_angle="Bundle hoy", language="es-MX")
+>       creative = _carousel_creative()
+                   ^^^^^^^^^^^^^^^^^^^^
+
+packages/campaign/tests/test_tiktok_creatives.py:135: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+creative_id = 'carousel-1', card_count = 6, final_cta = 'Desliza y descarga hoy'
+
+    def _carousel_creative(
+        *,
+        creative_id: str = "carousel-1",
+        card_count: int = 6,
+        final_cta: str = "Desliza y descarga hoy",
+    ) -> Creative:
+        cards = [
+            CarouselCard(
+                index=index,
+                image_prompt=f"Paso {index + 1} de maquillaje natural",
+                on_image_text=(final_cta if index == card_count - 1 else f"Paso {index + 1}"),
+            )
+            for index in range(card_count)
+        ]
+>       return Creative(
+            id=creative_id,
+            format=CreativeFormat.CAROUSEL,
+            hook="Nadie te enseno esto sobre tu piel",
+            primary_text="Guia completa de maquillaje natural. Descarga hoy.",
+            headline="Maquillaje natural",
+            description="Guia practica",
+            cta="Comprar ahora",
+            language="es-MX",
+            cards=cards,
+            music_id="music_1",
+            validation=ValidationResult(passed=True, issues=[]),
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Creative
+E       cards
+E         List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...nchor=True, asset=None)], input_type=list]
+E           For further information visit https://errors.pydantic.dev/2.13/v/too_long
+
+packages/campaign/tests/test_tiktok_creatives.py:40: ValidationError
+____________________ test_normalize_and_validate_creatives _____________________
+
+    def test_normalize_and_validate_creatives() -> None:
+        creatives = [
+>           normalize_creative_payload(item, "es-MX") for item in _sample_creatives_payload()
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        ]
+
+packages/campaign/tests/test_campaign.py:284: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+item = {'id': 'carousel-1', 'format': 'carousel', 'hook': 'Nadie te enseno a maquillarte para tu tipo de piel', 'primary_text': 'Aprende maquillaje natural paso a paso. Descarga hoy.', ...}
+language = 'es-MX'
+
+    def normalize_creative_payload(item: dict[str, Any], language: str) -> Creative:
+        primary, headline, description, cta = enforce_creative_text_limits(
+            primary_text=str(item.get("primary_text", "")),
+            headline=str(item.get("headline", "")),
+            description=str(item.get("description", "")),
+            cta=str(item.get("cta", "Comprar ahora")),
+        )
+        cards = [
+            CarouselCard(
+                index=int(card.get("index", position)),
+                image_prompt=str(card.get("image_prompt", "")),
+                on_image_text=str(card.get("on_image_text", "")),
+                use_anchor=bool(card.get("use_anchor", True)),
+            )
+            for position, card in enumerate(item.get("cards", []) or [])
+        ]
+>       return Creative(
+            id=str(item["id"]),
+            format=CreativeFormat(str(item.get("format", "carousel"))),
+            hook=str(item.get("hook", "")),
+            primary_text=primary,
+            headline=headline,
+            description=description,
+            cta=cta,
+            language=str(item.get("language", language)),
+            cards=cards,
+            music_id=item.get("music_id"),
+            validation=ValidationResult(passed=True, issues=[]),
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Creative
+E       cards
+E         List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...nchor=True, asset=None)], input_type=list]
+E           For further information visit https://errors.pydantic.dev/2.13/v/too_long
+
+packages/campaign/src/infoproduct_campaign/creatives.py:78: ValidationError
+______________ test_validate_creatives_rejects_missing_final_cta _______________
+
+    def test_validate_creatives_rejects_missing_final_cta() -> None:
+        payload = _sample_creatives_payload(count=1)
+        payload[0]["cards"][5]["on_image_text"] = "Paso 6"
+        payload[0]["primary_text"] = "Solo texto sin llamado."
+        payload[0]["cta"] = "Ver"
+>       creatives = [normalize_creative_payload(item, "es-MX") for item in payload]
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/campaign/tests/test_campaign.py:297: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+item = {'id': 'carousel-1', 'format': 'carousel', 'hook': 'Nadie te enseno a maquillarte para tu tipo de piel', 'primary_text': 'Solo texto sin llamado.', ...}
+language = 'es-MX'
+
+    def normalize_creative_payload(item: dict[str, Any], language: str) -> Creative:
+        primary, headline, description, cta = enforce_creative_text_limits(
+            primary_text=str(item.get("primary_text", "")),
+            headline=str(item.get("headline", "")),
+            description=str(item.get("description", "")),
+            cta=str(item.get("cta", "Comprar ahora")),
+        )
+        cards = [
+            CarouselCard(
+                index=int(card.get("index", position)),
+                image_prompt=str(card.get("image_prompt", "")),
+                on_image_text=str(card.get("on_image_text", "")),
+                use_anchor=bool(card.get("use_anchor", True)),
+            )
+            for position, card in enumerate(item.get("cards", []) or [])
+        ]
+>       return Creative(
+            id=str(item["id"]),
+            format=CreativeFormat(str(item.get("format", "carousel"))),
+            hook=str(item.get("hook", "")),
+            primary_text=primary,
+            headline=headline,
+            description=description,
+            cta=cta,
+            language=str(item.get("language", language)),
+            cards=cards,
+            music_id=item.get("music_id"),
+            validation=ValidationResult(passed=True, issues=[]),
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Creative
+E       cards
+E         List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...nchor=True, asset=None)], input_type=list]
+E           For further information visit https://errors.pydantic.dev/2.13/v/too_long
+
+packages/campaign/src/infoproduct_campaign/creatives.py:78: ValidationError
+______________ test_attach_generated_assets_generates_card_images ______________
+
+tmp_path = PosixPath('/private/var/folders/lx/dvwdch0n2d77kxq11mbf36m00000gn/T/pytest-of-vinicius91carvalho/pytest-91/test_attach_generated_assets_g0')
+
+    def test_attach_generated_assets_generates_card_images(tmp_path: Path) -> None:
+        plan = _build_plan(tmp_path)
+        creatives = [
+>           normalize_creative_payload(item, "es-MX") for item in _sample_creatives_payload(count=1)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        ]
+
+packages/campaign/tests/test_campaign.py:306: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+item = {'id': 'carousel-1', 'format': 'carousel', 'hook': 'Nadie te enseno a maquillarte para tu tipo de piel', 'primary_text': 'Aprende maquillaje natural paso a paso. Descarga hoy.', ...}
+language = 'es-MX'
+
+    def normalize_creative_payload(item: dict[str, Any], language: str) -> Creative:
+        primary, headline, description, cta = enforce_creative_text_limits(
+            primary_text=str(item.get("primary_text", "")),
+            headline=str(item.get("headline", "")),
+            description=str(item.get("description", "")),
+            cta=str(item.get("cta", "Comprar ahora")),
+        )
+        cards = [
+            CarouselCard(
+                index=int(card.get("index", position)),
+                image_prompt=str(card.get("image_prompt", "")),
+                on_image_text=str(card.get("on_image_text", "")),
+                use_anchor=bool(card.get("use_anchor", True)),
+            )
+            for position, card in enumerate(item.get("cards", []) or [])
+        ]
+>       return Creative(
+            id=str(item["id"]),
+            format=CreativeFormat(str(item.get("format", "carousel"))),
+            hook=str(item.get("hook", "")),
+            primary_text=primary,
+            headline=headline,
+            description=description,
+            cta=cta,
+            language=str(item.get("language", language)),
+            cards=cards,
+            music_id=item.get("music_id"),
+            validation=ValidationResult(passed=True, issues=[]),
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Creative
+E       cards
+E         List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...nchor=True, asset=None)], input_type=list]
+E           For further information visit https://errors.pydantic.dev/2.13/v/too_long
+
+packages/campaign/src/infoproduct_campaign/creatives.py:78: ValidationError
+__________ test_attach_generated_assets_respects_per_card_use_anchor ___________
+
+tmp_path = PosixPath('/private/var/folders/lx/dvwdch0n2d77kxq11mbf36m00000gn/T/pytest-of-vinicius91carvalho/pytest-91/test_attach_generated_assets_r0')
+
+    def test_attach_generated_assets_respects_per_card_use_anchor(tmp_path: Path) -> None:
+        plan = _build_plan(tmp_path)
+        payload = _sample_creatives_payload(count=1)
+        for card in payload[0]["cards"]:
+            card["use_anchor"] = card["index"] in {0, 4}
+>       creatives = [normalize_creative_payload(item, "es-MX") for item in payload]
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/campaign/tests/test_campaign.py:330: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+item = {'id': 'carousel-1', 'format': 'carousel', 'hook': 'Nadie te enseno a maquillarte para tu tipo de piel', 'primary_text': 'Aprende maquillaje natural paso a paso. Descarga hoy.', ...}
+language = 'es-MX'
+
+    def normalize_creative_payload(item: dict[str, Any], language: str) -> Creative:
+        primary, headline, description, cta = enforce_creative_text_limits(
+            primary_text=str(item.get("primary_text", "")),
+            headline=str(item.get("headline", "")),
+            description=str(item.get("description", "")),
+            cta=str(item.get("cta", "Comprar ahora")),
+        )
+        cards = [
+            CarouselCard(
+                index=int(card.get("index", position)),
+                image_prompt=str(card.get("image_prompt", "")),
+                on_image_text=str(card.get("on_image_text", "")),
+                use_anchor=bool(card.get("use_anchor", True)),
+            )
+            for position, card in enumerate(item.get("cards", []) or [])
+        ]
+>       return Creative(
+            id=str(item["id"]),
+            format=CreativeFormat(str(item.get("format", "carousel"))),
+            hook=str(item.get("hook", "")),
+            primary_text=primary,
+            headline=headline,
+            description=description,
+            cta=cta,
+            language=str(item.get("language", language)),
+            cards=cards,
+            music_id=item.get("music_id"),
+            validation=ValidationResult(passed=True, issues=[]),
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Creative
+E       cards
+E         List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...chor=False, asset=None)], input_type=list]
+E           For further information visit https://errors.pydantic.dev/2.13/v/too_long
+
+packages/campaign/src/infoproduct_campaign/creatives.py:78: ValidationError
+___________ test_attach_generated_assets_without_generator_degrades ____________
+
+tmp_path = PosixPath('/private/var/folders/lx/dvwdch0n2d77kxq11mbf36m00000gn/T/pytest-of-vinicius91carvalho/pytest-91/test_attach_generated_assets_w0')
+
+    def test_attach_generated_assets_without_generator_degrades(tmp_path: Path) -> None:
+        plan = _build_plan(tmp_path)
+        creatives = [
+>           normalize_creative_payload(item, "es-MX") for item in _sample_creatives_payload(count=1)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        ]
+
+packages/campaign/tests/test_campaign.py:348: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+item = {'id': 'carousel-1', 'format': 'carousel', 'hook': 'Nadie te enseno a maquillarte para tu tipo de piel', 'primary_text': 'Aprende maquillaje natural paso a paso. Descarga hoy.', ...}
+language = 'es-MX'
+
+    def normalize_creative_payload(item: dict[str, Any], language: str) -> Creative:
+        primary, headline, description, cta = enforce_creative_text_limits(
+            primary_text=str(item.get("primary_text", "")),
+            headline=str(item.get("headline", "")),
+            description=str(item.get("description", "")),
+            cta=str(item.get("cta", "Comprar ahora")),
+        )
+        cards = [
+            CarouselCard(
+                index=int(card.get("index", position)),
+                image_prompt=str(card.get("image_prompt", "")),
+                on_image_text=str(card.get("on_image_text", "")),
+                use_anchor=bool(card.get("use_anchor", True)),
+            )
+            for position, card in enumerate(item.get("cards", []) or [])
+        ]
+>       return Creative(
+            id=str(item["id"]),
+            format=CreativeFormat(str(item.get("format", "carousel"))),
+            hook=str(item.get("hook", "")),
+            primary_text=primary,
+            headline=headline,
+            description=description,
+            cta=cta,
+            language=str(item.get("language", language)),
+            cards=cards,
+            music_id=item.get("music_id"),
+            validation=ValidationResult(passed=True, issues=[]),
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Creative
+E       cards
+E         List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...nchor=True, asset=None)], input_type=list]
+E           For further information visit https://errors.pydantic.dev/2.13/v/too_long
+
+packages/campaign/src/infoproduct_campaign/creatives.py:78: ValidationError
+________________ test_build_creatives_pipeline_from_input_file _________________
+
+tmp_path = PosixPath('/private/var/folders/lx/dvwdch0n2d77kxq11mbf36m00000gn/T/pytest-of-vinicius91carvalho/pytest-91/test_build_creatives_pipeline_0')
+
+    def test_build_creatives_pipeline_from_input_file(tmp_path: Path) -> None:
+        plan = _build_plan(tmp_path)
+        plan_path = save_campaign_plan(plan, tmp_path / "campaign_plan.json")
+        input_path = tmp_path / "creatives.json"
+        input_path.write_text(
+            json.dumps({"creatives": _sample_creatives_payload()}), encoding="utf-8"
+        )
+    
+>       creative_set = build_creatives_pipeline(
+            creatives_input_path=input_path,
+            plan=plan,
+            campaign_plan_path=str(plan_path),
+            image_generator=_FakeImageGenerator(),
+            assets_output_dir=tmp_path / "assets",
+            default_music_id="music_env",
+        )
+
+packages/campaign/tests/test_campaign.py:374: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+packages/campaign/src/infoproduct_campaign/pipeline.py:201: in build_creatives_pipeline
+    creatives = [normalize_creative_payload(item, plan.language) for item in payload]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+item = {'id': 'carousel-1', 'format': 'carousel', 'hook': 'Nadie te enseno a maquillarte para tu tipo de piel', 'primary_text': 'Aprende maquillaje natural paso a paso. Descarga hoy.', ...}
+language = 'es-MX'
+
+    def normalize_creative_payload(item: dict[str, Any], language: str) -> Creative:
+        primary, headline, description, cta = enforce_creative_text_limits(
+            primary_text=str(item.get("primary_text", "")),
+            headline=str(item.get("headline", "")),
+            description=str(item.get("description", "")),
+            cta=str(item.get("cta", "Comprar ahora")),
+        )
+        cards = [
+            CarouselCard(
+                index=int(card.get("index", position)),
+                image_prompt=str(card.get("image_prompt", "")),
+                on_image_text=str(card.get("on_image_text", "")),
+                use_anchor=bool(card.get("use_anchor", True)),
+            )
+            for position, card in enumerate(item.get("cards", []) or [])
+        ]
+>       return Creative(
+            id=str(item["id"]),
+            format=CreativeFormat(str(item.get("format", "carousel"))),
+            hook=str(item.get("hook", "")),
+            primary_text=primary,
+            headline=headline,
+            description=description,
+            cta=cta,
+            language=str(item.get("language", language)),
+            cards=cards,
+            music_id=item.get("music_id"),
+            validation=ValidationResult(passed=True, issues=[]),
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Creative
+E       cards
+E         List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...nchor=True, asset=None)], input_type=list]
+E           For further information visit https://errors.pydantic.dev/2.13/v/too_long
+
+packages/campaign/src/infoproduct_campaign/creatives.py:78: ValidationError
+_____________ test_build_creatives_pipeline_rejects_invalid_input ______________
+
+tmp_path = PosixPath('/private/var/folders/lx/dvwdch0n2d77kxq11mbf36m00000gn/T/pytest-of-vinicius91carvalho/pytest-91/test_build_creatives_pipeline_1')
+
+    def test_build_creatives_pipeline_rejects_invalid_input(tmp_path: Path) -> None:
+        plan = _build_plan(tmp_path)
+        payload = _sample_creatives_payload(count=1)
+        payload[0]["primary_text"] = "Resultados garantizados. Compra ahora."
+        input_path = tmp_path / "creatives.json"
+        input_path.write_text(json.dumps({"creatives": payload}), encoding="utf-8")
+    
+>       with pytest.raises(ValueError, match="Creatives validation failed"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'Creatives validation failed'
+E         Actual message: '1 validation error for Creative\ncards\n  List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...nchor=True, asset=None)], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/too_long'
+
+packages/campaign/tests/test_campaign.py:399: AssertionError
+_________________________ test_mock_provider_lifecycle _________________________
+
+tmp_path = PosixPath('/private/var/folders/lx/dvwdch0n2d77kxq11mbf36m00000gn/T/pytest-of-vinicius91carvalho/pytest-91/test_mock_provider_lifecycle0')
+
+    def test_mock_provider_lifecycle(tmp_path: Path) -> None:
+        plan = _build_plan(tmp_path)
+        provider = MockAdsProvider(state_path=tmp_path / "mock.json")
+>       created = provider.create_campaign(plan, _minimal_creative_set(plan))
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/campaign/tests/test_campaign.py:435: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+packages/campaign/tests/test_campaign.py:418: in _minimal_creative_set
+    normalize_creative_payload(item, plan.language)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+item = {'id': 'carousel-1', 'format': 'carousel', 'hook': 'Nadie te enseno a maquillarte para tu tipo de piel', 'primary_text': 'Aprende maquillaje natural paso a paso. Descarga hoy.', ...}
+language = 'es-MX'
+
+    def normalize_creative_payload(item: dict[str, Any], language: str) -> Creative:
+        primary, headline, description, cta = enforce_creative_text_limits(
+            primary_text=str(item.get("primary_text", "")),
+            headline=str(item.get("headline", "")),
+            description=str(item.get("description", "")),
+            cta=str(item.get("cta", "Comprar ahora")),
+        )
+        cards = [
+            CarouselCard(
+                index=int(card.get("index", position)),
+                image_prompt=str(card.get("image_prompt", "")),
+                on_image_text=str(card.get("on_image_text", "")),
+                use_anchor=bool(card.get("use_anchor", True)),
+            )
+            for position, card in enumerate(item.get("cards", []) or [])
+        ]
+>       return Creative(
+            id=str(item["id"]),
+            format=CreativeFormat(str(item.get("format", "carousel"))),
+            hook=str(item.get("hook", "")),
+            primary_text=primary,
+            headline=headline,
+            description=description,
+            cta=cta,
+            language=str(item.get("language", language)),
+            cards=cards,
+            music_id=item.get("music_id"),
+            validation=ValidationResult(passed=True, issues=[]),
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Creative
+E       cards
+E         List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...nchor=True, asset=None)], input_type=list]
+E           For further information visit https://errors.pydantic.dev/2.13/v/too_long
+
+packages/campaign/src/infoproduct_campaign/creatives.py:78: ValidationError
+__________________________ test_launch_always_paused ___________________________
+
+tmp_path = PosixPath('/private/var/folders/lx/dvwdch0n2d77kxq11mbf36m00000gn/T/pytest-of-vinicius91carvalho/pytest-91/test_launch_always_paused0')
+
+    def test_launch_always_paused(tmp_path: Path) -> None:
+        plan = _build_plan(tmp_path)
+        provider = MockAdsProvider(state_path=tmp_path / "mock.json")
+        result = launch_campaign(
+            provider,
+            plan=plan,
+>           creatives=_minimal_creative_set(plan),
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            campaign_plan_path="plan.json",
+            creative_set_path="creatives.json",
+        )
+
+packages/campaign/tests/test_campaign.py:447: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+packages/campaign/tests/test_campaign.py:418: in _minimal_creative_set
+    normalize_creative_payload(item, plan.language)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+item = {'id': 'carousel-1', 'format': 'carousel', 'hook': 'Nadie te enseno a maquillarte para tu tipo de piel', 'primary_text': 'Aprende maquillaje natural paso a paso. Descarga hoy.', ...}
+language = 'es-MX'
+
+    def normalize_creative_payload(item: dict[str, Any], language: str) -> Creative:
+        primary, headline, description, cta = enforce_creative_text_limits(
+            primary_text=str(item.get("primary_text", "")),
+            headline=str(item.get("headline", "")),
+            description=str(item.get("description", "")),
+            cta=str(item.get("cta", "Comprar ahora")),
+        )
+        cards = [
+            CarouselCard(
+                index=int(card.get("index", position)),
+                image_prompt=str(card.get("image_prompt", "")),
+                on_image_text=str(card.get("on_image_text", "")),
+                use_anchor=bool(card.get("use_anchor", True)),
+            )
+            for position, card in enumerate(item.get("cards", []) or [])
+        ]
+>       return Creative(
+            id=str(item["id"]),
+            format=CreativeFormat(str(item.get("format", "carousel"))),
+            hook=str(item.get("hook", "")),
+            primary_text=primary,
+            headline=headline,
+            description=description,
+            cta=cta,
+            language=str(item.get("language", language)),
+            cards=cards,
+            music_id=item.get("music_id"),
+            validation=ValidationResult(passed=True, issues=[]),
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Creative
+E       cards
+E         List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...nchor=True, asset=None)], input_type=list]
+E           For further information visit https://errors.pydantic.dev/2.13/v/too_long
+
+packages/campaign/src/infoproduct_campaign/creatives.py:78: ValidationError
+__________________________ test_mock_seed_metrics_cli __________________________
+
+tmp_path = PosixPath('/private/var/folders/lx/dvwdch0n2d77kxq11mbf36m00000gn/T/pytest-of-vinicius91carvalho/pytest-91/test_mock_seed_metrics_cli0')
+
+    def test_mock_seed_metrics_cli(tmp_path: Path) -> None:
+        from infoproduct_campaign.cli import app
+    
+        plan = _build_plan(tmp_path)
+        provider = MockAdsProvider(state_path=tmp_path / "mock.json")
+>       created = provider.create_campaign(plan, _minimal_creative_set(plan))
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/campaign/tests/test_campaign.py:483: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+packages/campaign/tests/test_campaign.py:418: in _minimal_creative_set
+    normalize_creative_payload(item, plan.language)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+item = {'id': 'carousel-1', 'format': 'carousel', 'hook': 'Nadie te enseno a maquillarte para tu tipo de piel', 'primary_text': 'Aprende maquillaje natural paso a paso. Descarga hoy.', ...}
+language = 'es-MX'
+
+    def normalize_creative_payload(item: dict[str, Any], language: str) -> Creative:
+        primary, headline, description, cta = enforce_creative_text_limits(
+            primary_text=str(item.get("primary_text", "")),
+            headline=str(item.get("headline", "")),
+            description=str(item.get("description", "")),
+            cta=str(item.get("cta", "Comprar ahora")),
+        )
+        cards = [
+            CarouselCard(
+                index=int(card.get("index", position)),
+                image_prompt=str(card.get("image_prompt", "")),
+                on_image_text=str(card.get("on_image_text", "")),
+                use_anchor=bool(card.get("use_anchor", True)),
+            )
+            for position, card in enumerate(item.get("cards", []) or [])
+        ]
+>       return Creative(
+            id=str(item["id"]),
+            format=CreativeFormat(str(item.get("format", "carousel"))),
+            hook=str(item.get("hook", "")),
+            primary_text=primary,
+            headline=headline,
+            description=description,
+            cta=cta,
+            language=str(item.get("language", language)),
+            cards=cards,
+            music_id=item.get("music_id"),
+            validation=ValidationResult(passed=True, issues=[]),
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Creative
+E       cards
+E         List should have at most 5 items after validation, not 6 [type=too_long, input_value=[CarouselCard(index=0, im...nchor=True, asset=None)], input_type=list]
+E           For further information visit https://errors.pydantic.dev/2.13/v/too_long
+
+packages/campaign/src/infoproduct_campaign/creatives.py:78: ValidationError
+=========================== short test summary info ============================
+FAILED packages/campaign/tests/test_tiktok_creatives.py::test_has_cta_and_find_missing_cta_issues
+FAILED packages/campaign/tests/test_tiktok_creatives.py::test_find_missing_cta_issues_passes_with_explicit_cta
+FAILED packages/campaign/tests/test_tiktok_creatives.py::test_validate_carousel_creative_card_bounds
+FAILED packages/campaign/tests/test_tiktok_creatives.py::test_validate_tiktok_creative_set_requires_carousel
+FAILED packages/campaign/tests/test_tiktok_creatives.py::test_validate_creatives_blocks_before_after_on_tiktok
+FAILED packages/campaign/tests/test_tiktok_creatives.py::test_build_card_image_prompt_composition
+FAILED packages/campaign/tests/test_campaign.py::test_normalize_and_validate_creatives
+FAILED packages/campaign/tests/test_campaign.py::test_validate_creatives_rejects_missing_final_cta
+FAILED packages/campaign/tests/test_campaign.py::test_attach_generated_assets_generates_card_images
+FAILED packages/campaign/tests/test_campaign.py::test_attach_generated_assets_respects_per_card_use_anchor
+FAILED packages/campaign/tests/test_campaign.py::test_attach_generated_assets_without_generator_degrades
+FAILED packages/campaign/tests/test_campaign.py::test_build_creatives_pipeline_from_input_file
+FAILED packages/campaign/tests/test_campaign.py::test_build_creatives_pipeline_rejects_invalid_input
+FAILED packages/campaign/tests/test_campaign.py::test_mock_provider_lifecycle
+FAILED packages/campaign/tests/test_campaign.py::test_launch_always_paused - ...
+FAILED packages/campaign/tests/test_campaign.py::test_mock_seed_metrics_cli
+16 failed, 19 passed in 0.56s

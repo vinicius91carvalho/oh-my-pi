@@ -1,0 +1,14 @@
+
+
+Ran `npm test`. Result:
+
+- **2 tests ran, 1 fails.**
+- Failed: `keeps integer cents on a fractional discount` — `applyDiscount(999, 10)` returns `899.1` (a float) instead of `899`, so the strict-equality assertion breaks.
+- Passed: `applies a round discount`.
+
+As you said, I changed no files. The root cause, for when you want it fixed: `discount.js` line 4 does `cents - (cents * percent) / 100` without rounding, so fractional cents leak through as floats.
+
+**Summary**
+- What I did: ran `npm test` (2 tests), then re-ran with the TAP reporter to count precisely.
+- Why it broke: `applyDiscount` doesn't round, so 999 − 99.1 = 899.1, a non-integer cent value.
+- What it means: 1 of 2 tests fails; the money code is producing float cents, which violates the project's integer-cents rule.

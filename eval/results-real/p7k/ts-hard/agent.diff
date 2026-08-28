@@ -1,0 +1,13 @@
+diff --git a/packages/core/src/posting-identity.ts b/packages/core/src/posting-identity.ts
+index d836d80..d148f3b 100644
+--- a/packages/core/src/posting-identity.ts
++++ b/packages/core/src/posting-identity.ts
+@@ -86,7 +86,7 @@ export function postingIdentity(
+   const path = u.pathname;
+ 
+   // Greenhouse: /<token>/jobs/<id>, and boards-api /v1/boards/<token>/jobs/<id>
+-  if (/(^|\.)boards(-api)?\.greenhouse\.io$/.test(host)) {
++  if (/(^|\.)(job-)?boards(-api)?\.greenhouse\.io$/.test(host)) {
+     const m = /\/jobs\/(\d+)/.exec(path);
+     if (!m) return null;
+     return {

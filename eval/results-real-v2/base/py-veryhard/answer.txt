@@ -1,0 +1,13 @@
+
+
+Corrigido e provado.
+
+O que mudou:
+- `packages/landing-gen/src/infoproduct_landing_gen/copy.py:40` — a regex `a[nñ]os de experiencia` só casava o espanhol; agora é `a[nñ]os de experi[eê]ncia`, que casa os dois. "Experiência" (português) tem ê acentuado, por isso a bio da Marina escapava do bloqueio do D07.
+- `packages/landing-gen/tests/test_landing_gen.py:158` — novo teste `test_validate_landing_copy_rejects_portuguese_experience_claims_in_bio`, com a bio de 12 anos de experiência, no mesmo formato do teste espanhol existente.
+
+Prova:
+1. Sem a correção, o novo teste falha exatamente como o bug descrito: `ValidationResult(passed=True, issues=[])` — a validação deixava passar.
+2. Com a correção, os 24 testes passam (`24 passed in 0.11s`), incluindo o espanhol que já bloqueava antes.
+
+Resumo: a regex só conhecia o acento espanhol, não o português. Adicionei `ê` como variante. Agora a validação bloqueia "anos de experiência" em qualquer dos dois idiomas, como o D07 exige.

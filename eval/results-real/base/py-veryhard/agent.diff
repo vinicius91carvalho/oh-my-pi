@@ -1,0 +1,13 @@
+diff --git a/packages/landing-gen/src/infoproduct_landing_gen/copy.py b/packages/landing-gen/src/infoproduct_landing_gen/copy.py
+index e4ad3fe..5673d35 100644
+--- a/packages/landing-gen/src/infoproduct_landing_gen/copy.py
++++ b/packages/landing-gen/src/infoproduct_landing_gen/copy.py
+@@ -37,7 +37,7 @@ FORBIDDEN_CREDENTIAL_PATTERNS = [
+     re.compile(r"\bdermat[oó]log", re.IGNORECASE),
+     re.compile(r"\bnutri[oó]log", re.IGNORECASE),
+     re.compile(r"\bm[eé]dic[oa]", re.IGNORECASE),
+-    re.compile(r"\d+\s*a[nñ]os de experiencia", re.IGNORECASE),
++    re.compile(r"\d+\s*a[nñ]os de experi[eê]ncia", re.IGNORECASE),
+     re.compile(r"\d+\s*(?:clientas?|clientes?|pacientes?)\b", re.IGNORECASE),
+     re.compile(r"\bcerimonialista\b", re.IGNORECASE),
+     re.compile(r"\badvogad[oa]\b", re.IGNORECASE),

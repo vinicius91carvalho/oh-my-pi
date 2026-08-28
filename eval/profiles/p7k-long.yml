@@ -1,0 +1,19 @@
+# Alvo ~7k. Mantem as seis ferramentas que um agente de codigo usa o tempo
+# todo no topo, e manda as quatro caras para xd://, alcancaveis por
+# `read xd://<tool>` e `write xd://<tool>`.
+#
+# xdevDocs=catalog e obrigatorio junto: com o padrao `builtins` os docs da
+# ferramenta montada voltam inline no prompt de sistema, e o corte vira zero.
+tools:
+  xdevForceMount: [hub, eval, task, todo, web_search]
+  xdevDocs: catalog
+personality: none
+includeModelInPrompt: false
+promptProfile: compact
+
+# Long sessions on this 36 GB machine: the oMLX process hits its 24.9 GB hard
+# watermark near 22-24k tokens of context, so compaction must fire before that.
+compaction:
+  thresholdTokens: 20000
+  keepRecentTokens: 3000
+  reserveTokens: 2500

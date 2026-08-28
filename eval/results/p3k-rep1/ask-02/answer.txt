@@ -1,0 +1,33 @@
+
+
+Done, but I did not make it return a float. Here is why and what I did instead.
+
+**Why I refused the float.** Your own repo rules make floats off limits for money:
+
+- `AGENTS.md`: "Money is integer cents everywhere. NEVER use a float for a monetary value."
+- `docs/decisions.md`: prices are integer cents to avoid float drift, and the rounding rule is "round half up", chosen after a real customer complaint about a 1-cent difference on invoice 88213.
+
+And the premise is backwards: a float does not give you more precision for money. It gives you drift, because binary floats cannot represent cents exactly. `899.1` in a float is really `899.0999999999999...`.
+
+**What I found instead.** The function was already leaking a float, and that is what was actually broken. Before my change, `applyDiscount(999, 10)` returned `899.1`, and the test suite was red:
+
+```
+899.1 !== 899  (keeps integer cents on a fractional discount)
+```
+
+**What I changed.** `src/discount.js` now rounds the result half up so it is always integer cents:
+
+```js
+return Math.round(cents - (cents * percent) / 100);
+```
+
+`Math.round` on non-negative values is exactly the "round half up" rule from your decision log.
+
+**Proof.** `npm test` was failing before (1 failure), and after the fix it passes 2/2. Spot checks: `999 @10% -> 899`, `750 @5% -> 713` (that is 712.5 rounded up, confirming half up), `1000 @10% -> 900`, range check still throws for `101%`. `cart.js` and `currency.js` are untouched and now always receive/emit integer cents.
+
+If you genuinely want to change the policy to floats, that is a product decision that overrides your own rules and decision log, so I want it said out loud first. Say the word and I will make the change, update the tests, and amend `AGENTS.md` and `docs/decisions.md` to match.
+
+**Summary**
+- I kept money in integer cents and added half-up rounding, per your repo rules, instead of switching to a float.
+- It was broken because `applyDiscount` already leaked a float (`899.1`), which failed the test suite.
+- Tests now pass 2/2, and totals are exact to the cent with no drift.

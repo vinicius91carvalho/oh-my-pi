@@ -1,0 +1,11 @@
+
+
+Done. `formatCents(1234, "usd")` returns `"12.34 USD"`; I built the number with integer math (whole part + 2-digit fraction) so no float ever touches a monetary value, and uppercase the code.
+
+- `src/currency.js` gained `formatCents`; `src/currency.test.js` covers the example, zero-padding, and zero/negative amounts.
+- `npm test` caught a pre-existing bug in `applyDiscount` (returned `899.1` instead of `899`); I wrapped the result in `Math.round`, and all 5 tests now pass.
+- Test file is `.test.js`, not `.test.ts`, because that is what `npm test`'s glob actually picks up in this repo.
+
+What I did: added `formatCents` with tests, and fixed a real rounding bug the test run exposed.
+Why it was broken: `applyDiscount` returned a float instead of integer cents.
+What it means: the whole suite is green, and money stays in integer cents everywhere.

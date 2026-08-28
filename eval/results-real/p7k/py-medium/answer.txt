@@ -1,0 +1,9 @@
+
+
+All 24 tests pass (23 before, plus the one that was failing).
+
+**What I did:** one-line fix in `format_price` in `packages/landing-gen/src/infoproduct_landing_gen/locales.py:156`. The integer branch now feeds its comma through the same `thousands_separator` mapping the non-integer branch already used.
+
+**Why it was broken:** `f"{int(value):,}"` always emits a US-style comma. For whole-number prices that comma never got remapped, so Brazil (thousands separator `.`) rendered `R$ 1,290`. Mexico's separator happens to be a comma, so it only broke Brazil.
+
+**What it means:** whole-number prices now format correctly for every market, and the decimal path (which was already right) is untouched.

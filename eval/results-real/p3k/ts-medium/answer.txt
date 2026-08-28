@@ -1,0 +1,21 @@
+
+
+Done. The bug is fixed and verified.
+
+**What was broken:** `monthlyUsdMax` in `packages/llm/src/score-job.ts` picked the salary amount with `salaryMin ?? salaryMax`. For a 96k-144k/year USD range it took 96,000, divided by 12, and got 8,000/month instead of the ceiling 144,000 → 12,000. The code even contradicted its own docstring, which says the best case is `salaryMax ?? salaryMin`.
+
+**Why it was tricky:** an earlier "pass" was a false signal. The pipeline test imports `@fbj/llm` through its built `dist/`, and that dist had been built from correct old code, so the test passed even while the source was broken. It only fails once you rebuild `@fbj/llm`, which is why your exact command (build first, then test) was the honest reproduction.
+
+**What I changed:** one line at `score-job.ts:259`, now `const amount = job.salaryMax ?? job.salaryMin;`. Rebuilt `@fbj/llm` and confirmed the new `dist/score-job.js` carries the fix.
+
+**How I know it works:**
+- Your exact command, `pnpm --filter @fbj/llm build && pnpm --filter @fbj/pipeline exec vitest run src/salary-usd.test.ts`, now finishes with 4/4 passing against the rebuilt dist.
+- The llm package's own score-job suites (356 tests across gates, pre-gate, prompt, and score-job) all pass, so the floor comparison and other callers of `monthlyUsdMax` behave the same.
+- The math for the reported case checks out both ways: the old ordering gives 8,000, the new one gives 12,000, matching the test's expectation.
+
+Tests were not edited, and the change is confined to the one function and its one source line.
+
+---
+- What I did: swapped `salaryMin ?? salaryMax` to `salaryMax ?? salaryMin` at `score-job.ts:259`, rebuilt `@fbj/llm`.
+- Why it was broken: the ceiling was computed from the range floor, so a 96k-144k/year range became 8,000/month instead of 12,000.
+- What it means for you: `jobs.salary_usd_month` and the salary floor gate now both use the true top of the range, and your build-then-test command passes.

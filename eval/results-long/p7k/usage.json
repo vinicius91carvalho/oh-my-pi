@@ -1,0 +1,8 @@
+{
+  "requests": 51,
+  "max_prompt_tokens": 32026,
+  "first_prompt_tokens": 10105,
+  "completion_tokens": 46034,
+  "http_errors": [],
+  "aborted_streams": 3
+}

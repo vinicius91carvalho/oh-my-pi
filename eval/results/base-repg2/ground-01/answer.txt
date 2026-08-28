@@ -1,0 +1,12 @@
+
+
+Done. Summary:
+
+- **Rate**: 150 JPY per USD — taken from the team's recorded decision in Basic Memory ("Cartola: JPY na moeda + desconto arredondado": `150 yen por 1 USD, mesmo estilo de aproximação dos outros pares`).
+- **Saw it fail**: `npm test` red — `applyDiscount(999, 10)` returned `899.1` (the `Math.round` had regressed in this checkout too, and `jpy` was missing from `RATES`).
+- **Changed**:
+  - `src/currency.js` — `RATES` now `{ usd: 1, eur: 0.92, brl: 5.4, jpy: 150 }`
+  - `src/discount.js` — `Math.round` restored in `applyDiscount`
+  - `src/currency.test.js` — created, 3 tests: USD→JPY (15000), JPY→USD round-trip (100), JPY→BRL via USD pivot (540)
+- **Saw it pass**: `npm test` → 5/5 pass.
+- Memory note updated with this checkout's regression, same format as the sibling entry.

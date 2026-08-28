@@ -1,0 +1,7 @@
+
+
+Invoice 88213 triggered a customer complaint about a 1-cent difference, which led to the decision (2026-05-02) that discount rounding is "round half up".
+
+- What I did: read the file and found the one line mentioning invoice 88213.
+- Why: the decision record cites the invoice as the reason for the rounding rule.
+- What it means: discounts on invoices like 88213 now always round to the customer's favor when there is an exact half-cent.

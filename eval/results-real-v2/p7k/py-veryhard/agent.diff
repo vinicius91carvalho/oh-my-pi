@@ -1,0 +1,33 @@
+diff --git a/packages/landing-gen/src/infoproduct_landing_gen/copy.py b/packages/landing-gen/src/infoproduct_landing_gen/copy.py
+index e4ad3fe..b165f9d 100644
+--- a/packages/landing-gen/src/infoproduct_landing_gen/copy.py
++++ b/packages/landing-gen/src/infoproduct_landing_gen/copy.py
+@@ -37,7 +37,7 @@ FORBIDDEN_CREDENTIAL_PATTERNS = [
+     re.compile(r"\bdermat[oó]log", re.IGNORECASE),
+     re.compile(r"\bnutri[oó]log", re.IGNORECASE),
+     re.compile(r"\bm[eé]dic[oa]", re.IGNORECASE),
+-    re.compile(r"\d+\s*a[nñ]os de experiencia", re.IGNORECASE),
++ re.compile(r"\d+\s*a[nñ]os de experi[eê]ncia", re.IGNORECASE),
+     re.compile(r"\d+\s*(?:clientas?|clientes?|pacientes?)\b", re.IGNORECASE),
+     re.compile(r"\bcerimonialista\b", re.IGNORECASE),
+     re.compile(r"\badvogad[oa]\b", re.IGNORECASE),
+diff --git a/packages/landing-gen/tests/test_landing_gen.py b/packages/landing-gen/tests/test_landing_gen.py
+index cd346a5..f0c300a 100644
+--- a/packages/landing-gen/tests/test_landing_gen.py
++++ b/packages/landing-gen/tests/test_landing_gen.py
+@@ -555,3 +555,15 @@ def test_portuguese_profession_claim_is_rejected():
+     }
+     result = validate_landing_copy(copy)
+     assert not result.passed
++
++
++def test_portuguese_years_of_experience_claim_is_rejected():
++    copy = _sample_copy()
++    copy["persona_bio"] = {
++        "heading": "Quem escreve",
++        "paragraphs": ["Marina tem 12 anos de experiência organizando casamentos."],
++        "signature_line": "- Marina",
++    }
++    result = validate_landing_copy(copy)
++    assert result.passed is False
++    assert any("credential" in issue for issue in result.issues)

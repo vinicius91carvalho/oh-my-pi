@@ -1,0 +1,11 @@
+{"id": "py-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 345.6, "requests": 11, "max_prompt_tokens": 17265, "aborted": 0}
+{"id": "py-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 989.0, "requests": 19, "max_prompt_tokens": 26568, "aborted": 1}
+{"id": "py-hard", "level": "hard", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 246.0, "requests": 13, "max_prompt_tokens": 13226, "aborted": 0}
+{"id": "py-veryhard", "level": "veryhard", "pass": false, "tests_ok": false, "touched_tests": 1, "seconds": 884.4, "requests": 25, "max_prompt_tokens": 20161, "aborted": 2}
+{"id": "ts-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 244.3, "requests": 10, "max_prompt_tokens": 13255, "aborted": 0}
+{"id": "ts-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 564.9, "requests": 15, "max_prompt_tokens": 21219, "aborted": 1}
+{"id": "ts-hard", "level": "hard", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 994.5, "requests": 16, "max_prompt_tokens": 27689, "aborted": 0}
+./run-real.sh: line 45: 36978 Alarm clock: 14            perl -e "alarm ${TASK_TIMEOUT:-1800}; exec @ARGV" "$BUN" "$OMP_SRC/packages/coding-agent/src/cli.ts" -p --model omlxtap/Qwen3.8-27B-AWQ-5.0bpw --no-session --auto-approve --config "$CFG" "$PROMPT" < /dev/null > "$RUN/answer.txt" 2> "$RUN/stderr.txt"
+{"id": "ts-veryhard", "level": "veryhard", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 1800.1, "requests": 19, "max_prompt_tokens": 25088, "aborted": 1}
+{"id": "ts-rename", "level": "lsp", "pass": true, "tests_ok": true, "touched_tests": 2, "seconds": 581.6, "requests": 11, "max_prompt_tokens": 26933, "aborted": 0}
+{"id": "ts-contract", "level": "lsp", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 898.1, "requests": 14, "max_prompt_tokens": 25406, "aborted": 1}

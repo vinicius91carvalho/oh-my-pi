@@ -1,0 +1,13 @@
+diff --git a/packages/landing-gen/src/infoproduct_landing_gen/locales.py b/packages/landing-gen/src/infoproduct_landing_gen/locales.py
+index 1ac1510..76d6fcb 100644
+--- a/packages/landing-gen/src/infoproduct_landing_gen/locales.py
++++ b/packages/landing-gen/src/infoproduct_landing_gen/locales.py
+@@ -153,7 +153,7 @@ def format_price(amount: float | int, currency: str, pack: LocalePack) -> str:
+     """
+     value = float(amount)
+     if value.is_integer():
+-        body = f"{int(value):,}"
++        body = f"{int(value):,}".replace(",", "\x00")
+     else:
+         body = f"{value:,.2f}".replace(",", "\x00")
+     body = body.replace(".", pack.decimal_separator)

@@ -1,0 +1,55 @@
+Scope: 13 of 21 workspace projects
+packages/db build$ tsc -b
+packages/queue build$ tsc -b
+packages/queue build: Done
+packages/db build: Done
+packages/core build$ tsc -b
+packages/core build: Done
+packages/notify build$ tsc -b
+packages/mail build$ tsc -b
+packages/browser build$ tsc -b
+packages/llm build$ tsc -b
+packages/browser build: Done
+packages/observability build$ tsc -b
+packages/notify build: Done
+packages/storage build$ tsc -b
+packages/observability build: Done
+packages/mail build: Done
+packages/storage build: Done
+packages/llm build: Done
+packages/adapters build$ tsc -b
+packages/profile build$ tsc -b
+packages/adapters build: Done
+packages/profile build: Done
+packages/agents build$ tsc -b && mkdir -p dist/prompts && cp src/prompts/*.md dist/prompts/
+packages/agents build: Done
+packages/pipeline build$ tsc -b
+packages/pipeline build: Done
+
+ RUN  v4.1.10 /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/packages/core
+
+ ❯ src/user-facing-failure.hidden.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/user-facing-failure.hidden.test.ts [ src/user-facing-failure.hidden.test.ts ]
+Error: Cannot find module './user-facing-failure.js' imported from /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/packages/core/src/user-facing-failure.hidden.test.ts
+ ❯ src/user-facing-failure.hidden.test.ts:6:1
+      4| import { describe, expect, it } from "vitest";
+      5| import { FAILURE_OUTCOMES, type FailureOutcome } from "./failure-outco…
+      6| import { presentedState, userFacingFailure } from "./user-facing-failu…
+       | ^
+      7|
+      8| /**
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  02:20:39
+   Duration  98ms (transform 16ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+
+undefined
+/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/packages/core:
+[ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command failed with exit code 1: vitest run src/user-facing-failure.test.ts src/user-facing-failure.hidden.test.ts

@@ -1,0 +1,21 @@
+
+
+For an empty `items` array, `cartTotal` returns **`0`**.
+
+Here is the path:
+
+- `items.reduce(..., 0)` has no items to loop over, so it just gives back the starting value, `0`. That is the subtotal.
+- It then calls `applyDiscount(0, percent)`, which computes `0 - (0 * percent) / 100`, which is `0`.
+
+So an empty cart totals zero cents.
+
+Two edge cases worth knowing:
+
+- If `percent` is out of range (`< 0` or `> 100`), `applyDiscount` throws a `RangeError` before it ever reaches the zero math. So a valid `percent` is still required.
+- If you call `cartTotal(items)` with no `percent` at all, it does **not** throw and does **not** return `0`. It returns `NaN`, because `0 * undefined` is `NaN`. That is a quiet bug in `discount.js`, not a cart problem, but it is how the code actually behaves today.
+
+I changed nothing.
+
+**What I did:** read `src/cart.js` and the `applyDiscount` it depends on.
+**Why it was broken:** nothing; you only asked what it returns, and for an empty cart that is `0`.
+**What it means for you:** empty cart = `0` cents, as long as `percent` is a real number between `0` and `100`.

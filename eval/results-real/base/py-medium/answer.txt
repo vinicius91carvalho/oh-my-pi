@@ -1,0 +1,9 @@
+
+
+Fixed. All 24 tests pass, including the previously failing `test_brazilian_thousands_use_a_dot` (now `R$ 1.290`) and the es-MX cases (`$1,047 MXN` stays intact).
+
+**What was broken:** in `format_price` (packages/landing-gen/src/infoproduct_landing_gen/locales.py), the integer branch wrote the number with a hardcoded US thousands comma (`f"{int(value):,}"`) and never mapped it through `pack.thousands_separator` like the decimal branch did. So Brazil got `R$ 1,290` instead of `R$ 1.290`.
+
+**What changed:** the integer branch now protects the US comma with the same `\x00` sentinel as the decimal branch, so the existing two `.replace()` calls apply the pack's real separators to both paths.
+
+**What it means:** price display now always follows the market's convention, and the one copy of that logic in `format_price` covers every price the manifest renders (offer, volumes, compare-at, pay button).

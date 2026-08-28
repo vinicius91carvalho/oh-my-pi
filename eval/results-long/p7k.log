@@ -1,0 +1,400 @@
+== turn 1: Bug report from an apply run: on the Greenhouse question 'Are you legally authorized to work in the country where the job is located?' the agent answered 'Yes — I am authorized to work where this role is based' for a candidate whose profile has no work countries on file, and also when the caller passed no posting at all. AGENTS.md ('The Answer Library' > 'The conservative default') says legal-status questions must get the negative that claims nothing, never a positive without evidence. The current tests in packages/profile/src/conservative-default.test.ts all pass. Find the bug in packages/profile, fix it, and add test cases that fail without your fix and pass with it. Run with `pnpm --filter @fbj/profile exec vitest run src/conservative-default.test.ts`.
+./run-long.sh: line 34: 28524 Alarm clock: 14            perl -e "alarm ${TASK_TIMEOUT:-2400}; exec @ARGV" "$BUN" "$OMP_SRC/packages/coding-agent/src/cli.ts" -p --model omlxtap/Qwen3.8-27B-AWQ-5.0bpw --session-dir "$SESS" --auto-approve --config "$CFG" "$@" "$p" < /dev/null > "$OUT/answer-$n.txt" 2> "$OUT/stderr-$n.txt"
+   requests so far: 23
+== turn 2: Now add a vitest test that would have caught this bug. Run it and make sure it passes.
+   requests so far: 30
+== turn 3: Explain in 5 lines what the bug was, where it lived, and why the docs rule matters. Then run the full test file once more.
+   requests so far: 32
+== turn 4: Look for one more place in the same package that could break the same rule. If you find one, fix it and test; if not, say so.
+./run-long.sh: line 34: 39301 Alarm clock: 14            perl -e "alarm ${TASK_TIMEOUT:-2400}; exec @ARGV" "$BUN" "$OMP_SRC/packages/coding-agent/src/cli.ts" -p --model omlxtap/Qwen3.8-27B-AWQ-5.0bpw --session-dir "$SESS" --auto-approve --config "$CFG" "$@" "$p" < /dev/null > "$OUT/answer-$n.txt" 2> "$OUT/stderr-$n.txt"
+   requests so far: 53
+{
+  "requests": 51,
+  "max_prompt_tokens": 32026,
+  "first_prompt_tokens": 10105,
+  "completion_tokens": 46034,
+  "http_errors": [],
+  "aborted_streams": 3
+}
+{
+ "requests": 53,
+ "compaction_fired": true,
+ "compaction_at_request": 6,
+ "max_messages_before": 13,
+ "requests_after_compaction": 47,
+ "tool_calls_after_compaction": 1,
+ "xd_refs_after_compaction": 1739,
+ "rows": [
+  {
+   "req": 1,
+   "messages": 2,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 0
+  },
+  {
+   "req": 2,
+   "messages": 6,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 3,
+   "messages": 8,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 4,
+   "messages": 11,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 6
+  },
+  {
+   "req": 5,
+   "messages": 13,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 7
+  },
+  {
+   "req": 6,
+   "messages": 7,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 7,
+   "messages": 10,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 5
+  },
+  {
+   "req": 8,
+   "messages": 12,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 6
+  },
+  {
+   "req": 9,
+   "messages": 14,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 7
+  },
+  {
+   "req": 10,
+   "messages": 16,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 8
+  },
+  {
+   "req": 11,
+   "messages": 18,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 9
+  },
+  {
+   "req": 12,
+   "messages": 4,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 13,
+   "messages": 7,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 14,
+   "messages": 9,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 15,
+   "messages": 11,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 5
+  },
+  {
+   "req": 16,
+   "messages": 14,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 7
+  },
+  {
+   "req": 17,
+   "messages": 4,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 18,
+   "messages": 6,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 19,
+   "messages": 8,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 20,
+   "messages": 10,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 21,
+   "messages": 4,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 22,
+   "messages": 6,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 23,
+   "messages": 4,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 24,
+   "messages": 5,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 25,
+   "messages": 8,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 26,
+   "messages": 10,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 27,
+   "messages": 12,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 5
+  },
+  {
+   "req": 28,
+   "messages": 5,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 29,
+   "messages": 7,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 30,
+   "messages": 4,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 31,
+   "messages": 6,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 32,
+   "messages": 8,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 33,
+   "messages": 10,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 34,
+   "messages": 5,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 35,
+   "messages": 7,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 36,
+   "messages": 10,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 5
+  },
+  {
+   "req": 37,
+   "messages": 12,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 6
+  },
+  {
+   "req": 38,
+   "messages": 14,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 7
+  },
+  {
+   "req": 39,
+   "messages": 6,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 40,
+   "messages": 8,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 41,
+   "messages": 10,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 42,
+   "messages": 13,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 6
+  },
+  {
+   "req": 43,
+   "messages": 16,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 8
+  },
+  {
+   "req": 44,
+   "messages": 5,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 45,
+   "messages": 8,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 46,
+   "messages": 5,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 47,
+   "messages": 7,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 48,
+   "messages": 9,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 49,
+   "messages": 4,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 50,
+   "messages": 6,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 51,
+   "messages": 8,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 52,
+   "messages": 10,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 53,
+   "messages": 4,
+   "top_level_tools": 6,
+   "xd_refs": 37,
+   "tool_calls_in_history": 1
+  }
+ ]
+}

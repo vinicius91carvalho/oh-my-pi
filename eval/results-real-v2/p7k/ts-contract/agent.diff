@@ -1,0 +1,170 @@
+diff --git a/apps/dashboard/app/components/FailureSummary.tsx b/apps/dashboard/app/components/FailureSummary.tsx
+index c5a1dea..9dfb15c 100644
+--- a/apps/dashboard/app/components/FailureSummary.tsx
++++ b/apps/dashboard/app/components/FailureSummary.tsx
+@@ -74,7 +74,7 @@ export function FailureSummary({
+   /** Actions rendered under the explanation (the login CTA, Q&A, retry). */
+   children?: ReactNode;
+ }) {
+-  const calm = !admin && userFacingFailure(outcome) === "pending";
++  const calm = !admin && userFacingFailure(outcome).kind === "pending";
+   const { title, body } = calm
+     ? { title: dict.failure.pendingTitle, body: dict.failure.pendingBody }
+     : failureCopy(dict, outcome, platformLabel);
+diff --git a/apps/dashboard/app/lib/admin-walls.ts b/apps/dashboard/app/lib/admin-walls.ts
+index 4d6898c..56f0ca3 100644
+--- a/apps/dashboard/app/lib/admin-walls.ts
++++ b/apps/dashboard/app/lib/admin-walls.ts
+@@ -80,8 +80,8 @@ export async function loadAdminWalls(
+       actionable: 0,
+     };
+     const facing = userFacingFailure(classifyFailure(r.reason));
+-    if (facing === "actionable") entry.actionable += 1;
+-    else if (facing === "pending") entry.pending += 1;
++    if (facing.kind === "actionable") entry.actionable += 1;
++    else if (facing.kind === "pending") entry.pending += 1;
+     byTenant.set(r.tenantId, entry);
+   }
+ 
+diff --git a/packages/agents/src/tools/db-tools.ts b/packages/agents/src/tools/db-tools.ts
+index 83376c4..2a63b4d 100644
+--- a/packages/agents/src/tools/db-tools.ts
++++ b/packages/agents/src/tools/db-tools.ts
+@@ -1575,7 +1575,7 @@ export function registerDbTools(server: McpServer, ctx: AgentContext): void {
+     // selector, a captcha rung, a turn budget — and it was going out as a push
+     // notification to the person paying for this. A wall or a bug of ours is
+     // our queue; they hear about it when it is fixed, not while it is a wall.
+-    if (userFacingFailure(classifyFailure(detail)) === "actionable") {
++    if (userFacingFailure(classifyFailure(detail)).kind === "actionable") {
+       const [row] = await ctx.db
+         .select({ attempts: applications.attemptCount })
+         .from(applications)
+diff --git a/packages/core/src/user-facing-failure.test.ts b/packages/core/src/user-facing-failure.test.ts
+index ee4d960..bae559f 100644
+--- a/packages/core/src/user-facing-failure.test.ts
++++ b/packages/core/src/user-facing-failure.test.ts
+@@ -4,7 +4,7 @@ import {
+   presentedState,
+   stateTone,
+   userFacingFailure,
+-  type UserFacingFailure,
++  type FailurePresentation,
+ } from "./user-facing-failure.js";
+ 
+ /**
+@@ -15,24 +15,37 @@ import {
+  * which are ours — spelled out so that moving one class between buckets has to
+  * be done here, on purpose, in front of the reason.
+  */
+-const EXPECTED: Record<FailureOutcome, UserFacingFailure> = {
++const EXPECTED: Record<FailureOutcome, FailurePresentation> = {
+   // There is a login form to open.
+-  needs_login: "actionable",
++  needs_login: { kind: "actionable", waitingOn: "candidate" },
+   // There is an /answers page to go to.
+-  needs_answer: "actionable",
++  needs_answer: { kind: "actionable", waitingOn: "candidate" },
+   // The employer took it down; nothing to do and nothing to worry about.
+-  posting_gone: "closed",
++  posting_gone: { kind: "closed", waitingOn: "nobody" },
+   // A captcha or an anti-bot wall. The coding agent takes this down, not them.
+-  wall: "pending",
++  wall: { kind: "pending", waitingOn: "us" },
+   // Ours by definition.
+-  our_bug: "pending",
++  our_bug: { kind: "pending", waitingOn: "us" },
+   // Nobody could classify it, so nobody can be asked to act on it.
+-  unknown: "pending",
++  unknown: { kind: "pending", waitingOn: "us" },
+ };
+ 
+ describe("userFacingFailure", () => {
+   it.each(FAILURE_OUTCOMES)("maps %s", (outcome) => {
+-    expect(userFacingFailure(outcome)).toBe(EXPECTED[outcome]);
++    expect(userFacingFailure(outcome)).toEqual(EXPECTED[outcome]);
++  });
++
++  it("always agrees with its own kind", () => {
++    for (const outcome of FAILURE_OUTCOMES) {
++      const p = userFacingFailure(outcome);
++      expect(p.waitingOn).toBe(
++        p.kind === "actionable"
++          ? "candidate"
++          : p.kind === "closed"
++            ? "nobody"
++            : "us",
++      );
++    }
+   });
+ 
+   it("covers every outcome, so a new class cannot default to calm", () => {
+diff --git a/packages/core/src/user-facing-failure.ts b/packages/core/src/user-facing-failure.ts
+index e6c1789..d904a68 100644
+--- a/packages/core/src/user-facing-failure.ts
++++ b/packages/core/src/user-facing-failure.ts
+@@ -31,18 +31,31 @@ import { classifyFailure, type FailureOutcome } from "./failure-outcome.js";
+  */
+ export type UserFacingFailure = "actionable" | "closed" | "pending";
+ 
+-/** Which of the three a classified failure belongs to. */
+-export function userFacingFailure(outcome: FailureOutcome): UserFacingFailure {
++/**
++ * Whose move a failed application is on.
++ *
++ * - `candidate` — there is a form to open or an answer to give.
++ * - `us` — a wall, our bug, or a report nobody could classify; the fix is a
++ *   deploy, not a click.
++ * - `nobody` — the posting is gone; nothing to do, nothing to worry about.
++ */
++export interface FailurePresentation {
++  kind: UserFacingFailure;
++  waitingOn: "candidate" | "us" | "nobody";
++}
++
++/** Which of the three a classified failure belongs to, and whose move it is. */
++export function userFacingFailure(outcome: FailureOutcome): FailurePresentation {
+   switch (outcome) {
+     case "needs_login":
+     case "needs_answer":
+-      return "actionable";
++      return { kind: "actionable", waitingOn: "candidate" };
+     case "posting_gone":
+-      return "closed";
++      return { kind: "closed", waitingOn: "nobody" };
+     case "wall":
+     case "our_bug":
+     case "unknown":
+-      return "pending";
++      return { kind: "pending", waitingOn: "us" };
+   }
+ }
+ 
+@@ -100,5 +113,5 @@ export function presentedState(
+ ): PresentedState {
+   if (state !== "error") return { key: state, tone: stateTone(state) };
+   const facing = userFacingFailure(classifyFailure(failureReason));
+-  return { key: "pending", tone: facing === "actionable" ? "warn" : "off" };
++  return { key: "pending", tone: facing.kind === "actionable" ? "warn" : "off" };
+ }
+diff --git a/packages/pipeline/src/stages/apply.ts b/packages/pipeline/src/stages/apply.ts
+index 71ca18c..16e1418 100644
+--- a/packages/pipeline/src/stages/apply.ts
++++ b/packages/pipeline/src/stages/apply.ts
+@@ -341,7 +341,7 @@ async function askAboutExhausted(ctx: RunContext): Promise<void> {
+     // the row stays in `error`, `fbj walls` still counts it, and the admin area
+     // still ranks it.
+     const facing = userFacingFailure(classifyFailure(app.reason));
+-    if (facing !== "actionable") {
++    if (facing.kind !== "actionable") {
+       await recordEvent(ctx.db, {
+         type: "agent_action",
+         applicationId: app.id,
+@@ -1711,7 +1711,7 @@ async function handleError(
+   // the product is already disappointing them. The row is unchanged: it stays
+   // in `error`, the sweep reopens it, and the operator sees it in the admin
+   // area and in `fbj walls`.
+-  if (userFacingFailure(classifyFailure(reason)) === "actionable") {
++  if (userFacingFailure(classifyFailure(reason)).kind === "actionable") {
+     await notify(
+       "activity",
+       "info",

@@ -1,0 +1,11 @@
+
+
+Fixed. `packages/llm/src/score-job.ts:259` in `monthlyUsdMax` read `job.salaryMin ?? job.salaryMin`'s sibling first: `salaryMin ?? salaryMax`. For a two-sided range it always took the floor and divided that — 96 000/12 = 8 000 instead of 144 000/12 = 12 000. It now reads `salaryMax ?? salaryMin`, which is what the function's own docstring already said ("the best case is `salaryMax ?? salaryMin`"), and what every consumer (floor comparison, `salary_usd_month` denormalization) expects from a "max".
+
+Rebuilt `@fbj/llm` (packages resolve through `dist/`) and verified:
+- `salary-usd.test.ts` (pipeline): 4/4 pass, including the 96k-144k → 12 000 case.
+- `score-job.gates.test.ts` (llm): 220/220 pass, so min-only postings and single-value cases behave unchanged — the only behavior change is two-sided ranges now measuring the ceiling.
+
+**What you did:** the salary normalization picked the range floor instead of the ceiling.
+**Why it was broken:** the code order was `salaryMin ?? salaryMax`; the docs said `salaryMax ?? salaryMin`.
+**What it means:** `jobs.salary_usd_month` now stores the real monthly ceiling, so list filters and ordering by salary are correct again.

@@ -1,0 +1,9 @@
+
+
+All 8 tests pass.
+
+**What I did** — In `packages/core/src/timezone.ts`, `usableTimeZone` validated the zone trimmed but returned the original string with its spaces, so `" Europe/London "` came back untrimmed. Now it returns the trimmed value it validated.
+
+**Why it was broken** — `isUsableTimeZone` trims internally for the `Intl` check, but `usableTimeZone` never applied that trim to the value it handed back.
+
+**What it means for you** — Both real callers (`caps.ts` quota window, `slots.ts` email labels) already fed the result to `Intl.DateTimeFormat`, which only accepts the trimmed form, so the fix is strictly safer; no caller change needed.

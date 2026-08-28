@@ -1,0 +1,11 @@
+
+
+Done. `npm test` now passes: 2 pass, 0 fail.
+
+The failing test was `keeps integer cents on a fractional discount` in `src/discount.test.js`. The bug was in `src/discount.js`: `applyDiscount(999, 10)` computed `999 - (999*10)/100 = 899.1` in float math, breaking the "money is integer cents" rule. I changed it to `Math.round((cents * (100 - percent)) / 100)` — one rounding at the end, on the exact result, so a 10% discount on 999 cents is 899 cents.
+
+- I did: `applyDiscount` now rounds the final total, test suite is green.
+- Why it was broken: percentage math produced a float (899.1) instead of integer cents.
+- What it means: all discounts now return whole cents, as the codebase requires.
+
+One note, not part of this fix: `cart.js` and `currency.js` export functions without colocated test files, which the repo rules require. I left them alone since you asked only for the failing test. Say the word if you want those test files added.

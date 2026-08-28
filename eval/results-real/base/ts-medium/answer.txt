@@ -1,0 +1,30 @@
+
+
+Both suites green. The fix is complete and verified.
+
+## What was broken
+
+`monthlyUsdMax` in `packages/llm/src/score-job.ts` picked the wrong end of a salary range:
+
+```ts
+const amount = job.salaryMin ?? job.salaryMax;   // before: min first
+const amount = job.salaryMax ?? job.salaryMin;   // after:  max first
+```
+
+The function's contract (its doc comment) is the **best case** of the posting, i.e. the ceiling. But the code normalized from the minimum, so a 96k-144k/year USD range came out as `96 000 / 12 = 8 000`/month instead of `144 000 / 12 = 12 000`/month. Any job with both min and max was scored, filtered, and floor-compared against the floor of its own range.
+
+## What I changed
+
+One line (line 259) — the `??` precedence swap. Min-only postings still work: when `salaryMax` is null the fallback returns `salaryMin`, so the "falls back to min when no max is listed" case is untouched.
+
+## Verification
+
+- **Pipeline** (the required command): `pnpm --filter @fbj/llm build && pnpm --filter @fbj/pipeline exec vitest run src/salary-usd.test.ts` — **4/4 passed**, including "normalizes a yearly USD range to its monthly ceiling" → `12 000` (was `8 000`), the BRL range ≈ `2 850`, and the `null` cases (missing/unknown currency).
+- **LLM gates** (regression check): `pnpm --filter @fbj/llm exec vitest run src/score-job.gates.test.ts` — **79/79 passed**, including the min-only fallback case (`salaryMin: 8 000, salaryMax: null` → 8 000).
+
+Scope exercised: salary normalization only, single line in one shared function. No other paths touched.
+
+**Summary**
+- I swapped the precedence in `monthlyUsdMax` to take `salaryMax` before `salaryMin`, matching its documented best-case contract.
+- It was broken because the min was used as the ceiling, under-reporting every range that had both ends.
+- All job scores, hard salary filters, and floor comparisons now use the true top of the advertised range; min-only listings behave exactly as before.

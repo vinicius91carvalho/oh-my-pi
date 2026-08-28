@@ -1,0 +1,16 @@
+
+
+Done. The bug is fixed and everything is verified.
+
+**What was broken:** Brazilian prices rendered as `R$ 1,290` instead of `R$ 1.290`.
+
+**Why:** In `format_price` (`packages/landing-gen/src/infoproduct_landing_gen/locales.py`), the integer path used Python's own `f"{int(value):,}"`, which always puts a comma between thousands. Then the code swapped `.` for the market's decimal separator and comma for its thousands separator. For es-MX the thousands separator *is* a comma, so the wrong output happened to be correct there. For pt-BR the thousands separator is a dot, so the swap turned the thousands comma into a decimal comma and re-triggered the dot pass, giving `1,290`. It went unnoticed because every product was Mexican until now.
+
+**The fix:** both paths now build the body the same way and go through the same two-stage swap (park the thousands comma in a sentinel, then swap the dot, then swap the sentinel into the market's thousands separator). Two stages are required: in one stage, a market with a dot thousands separator would re-trigger the decimal pass.
+
+**How I know it works:** the failing test `test_brazilian_thousands_use_a_dot` now passes, the full suite is 24 passed, and I checked both markets directly, including non-integer prices: pt-BR gives `R$ 67`, `R$ 1.290`, `R$ 2.480`, `R$ 99,90`, `R$ 1.234,50`, `R$ 1.000.000`; es-MX is unchanged at `$67 MXN`, `$1,290 MXN`, `$99.90 MXN`, `$1,234.50 MXN`. I also saved the root cause to Basic Memory.
+
+---
+- I fixed `format_price` in `locales.py`: the integer branch now uses the same two-stage separator swap as the decimal branch.
+- It was broken because the integer branch used Python's US-style format, and es-MX's comma thousands separator hid the bug until a Brazilian product arrived.
+- For you: generated Brazilian manifests now show prices the way Brazil writes them, and the suite is green (24 passed).

@@ -1,0 +1,9 @@
+{"id": "py-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 296.8, "requests": 11, "max_prompt_tokens": 14916}
+{"id": "py-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 288.0, "requests": 10, "max_prompt_tokens": 14459}
+{"id": "py-hard", "level": "hard", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 232.6, "requests": 11, "max_prompt_tokens": 10177}
+{"id": "py-veryhard", "level": "veryhard", "pass": false, "tests_ok": false, "touched_tests": 1, "seconds": 495.4, "requests": 16, "max_prompt_tokens": 24933}
+{"id": "ts-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 163.2, "requests": 7, "max_prompt_tokens": 10956}
+{"id": "ts-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 404.8, "requests": 14, "max_prompt_tokens": 18227}
+{"id": "ts-hard", "level": "hard", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 1373.5, "requests": 20, "max_prompt_tokens": 27695}
+./run-real.sh: line 42: 85998 Alarm clock: 14            perl -e "alarm ${TASK_TIMEOUT:-1800}; exec @ARGV" "$BUN" "$OMP_SRC/packages/coding-agent/src/cli.ts" -p --model omlxtap/Qwen3.8-27B-AWQ-5.0bpw --no-session --auto-approve --config "$CFG" "$PROMPT" < /dev/null > "$RUN/answer.txt" 2> "$RUN/stderr.txt"
+{"id": "ts-veryhard", "level": "veryhard", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 1800.1, "requests": 9, "max_prompt_tokens": 27072}

@@ -1,0 +1,158 @@
+
+Wait a minute, the footer says "Showing lines 366-419 of 834". So job-countries.ts is 834 lines. In the previous read it said 416 lines — that must have been a different count, or the read was truncated in a different way. Oh well, doesn't matter.
+
+So, the semantics of `reachAllows(places, workCountries)` are as follows:
+- `places.open` → "yes" (the job posting is worldwide open; no evidence needed from the candidate)
+- `workCountries` is empty → "unknown" (candidate has no evidence at all)
+- Job posting specifies nothing (no countries, no regions, not open either) → "unknown"
+- Otherwise, if there's an intersection → "yes"
+- Otherwise → "no"
+
+Now, `whereTheWorkIs(job)`:
+
+```ts
+function whereTheWorkIs(job: { location?: string | null; workCountries: string[] }): "yes" | "no" | "unknown" {
+  if (!job.location) return "unknown";
+  const named = namedPlaces(job.location, { openWords: OPEN_SCOPE_WORDS, ignoreLocal: false });
+  return reachAllows(named, job.workCountries);
+}
+```
+
+Bug report scenario 1: Profile has no work countries on file, and the caller passes a job posting with a location. In that case:
+- `job.location` is non-null → `named = namedPlaces(location, ...)`.
+- If the job posting is worldwide open → "yes" — no problem, the negative claim is not needed.
+- If workCountries is empty → "unknown" → the country check is skipped → falls through to the default → "i am authorized to work in the location of this position" — a positive claim based on no evidence. **This is the bug.**
+
+Wait, but let me actually reconsider: is the bug that when the evidence is empty, `whereTheWorkIs` should return "no" (the negative) instead of "unknown"?
+
+Hold on. Let me re-read the main function:
+
+```ts
+if (matchesLegalStatusLegalCountryQuestion(normalized)) {
+  const where = whereTheWorkIs(job);
+  if (where === "yes") return { kind: "boolean", answer: "yes", applyToAll: true };
+  if (where === "no") return { kind: "boolean", answer: "no", applyToAll: true };
+  // If we can't tell where the work happens, fall through to the default
+  // conservative answer ("I am authorized to work in the location of this
+  // position") — this is not a positive claim that asserts residence
+  // or citizenship anywhere in particular.
+  return null;
+}
+```
+
+So the flow is: "yes" → affirmative; "no" → negative; "unknown" → return null → caller falls back to the generic default, which is "i am authorized to work in the location of this position" (a positive claim).
+
+Now, where do the three "unknown" cases come from?
+
+1. `!job.location` → "unknown" → the default positive. Bug? The question says "in the country where the job is located". If we don't know the location at all, we can't say "authorized in the country where the job is located" (a positive about an unknown country), nor can we safely say "no" (a negative).
+
+   Wait, but the bug report says: "the candidate's profile has no work countries on file, and the caller didn't pass any job posting at all". So `job = { location: null, workCountries: [] }` → "unknown" → positive default. According to AGENTS.md, this is a violation: "never a positive without evidence".
+
+   What should happen instead? The conservative rule is: the answer to legal status questions must be a negative that asserts nothing. If we don't know where the work happens and have no evidence, we can't make a positive. Can we make a negative? A negative like "no, I am not authorized to work in the country where the job is located" — that's a strong negative assertion and would kill the application if it happens to be the candidate's own country. Hmm.
+
+   But wait — what is the existing default for "no" in the file? Let me recall: when `where === "no"`, it answers "no". The `no` case occurs when the job posting names specific countries and the candidate's workCountries don't intersect them. In that case, the candidate truly is not authorized (as far as we know) for those countries — the negative is truthful: the profile says they work in {X} and the job is in {Y}, no intersection → they are not authorized in the job's country (as far as the record shows).
+
+   For "unknown" (no location at all, or no evidence about the candidate): what negative "asserts nothing the candidate can't back up"?
+   - "No, I am not legally authorized to work in the country where the job is located" — this asserts non-authorization. Without evidence about the job's country, this assertion itself is unverifiable and could be false (e.g., the job is in Brazil and the candidate is Brazilian, but the profile just doesn't have the work country recorded). That would incorrectly kill the application.
+   - "I will need sponsorship" is for the sponsorship question, not this one.
+
+   Hmm. But the bug report explicitly says: in both cases (no work country in the profile; no job posting at all), the agent answered "Yes - ...". According to AGENTS.md, that violates the floor. So what is the correct answer?
+
+Let me look at AGENTS.md again: "For legal status questions (US work authorization, visa sponsorship), answer with the negative that asserts nothing — not authorized / requires sponsorship — never a positive without evidence."
+
+"Answer with the negative that asserts nothing" — for work authorization: "not authorized". The "asserts nothing" part: answering "not authorized to work in the country where the job is located" when we truly have no evidence... asserts a negative about the job's country. Is that "asserting nothing the candidate can't back up"?
+
+Let me think about the actual semantics. The question: "Are you legally authorized to work in the country where the job is located?"
+
+Case A: the job posting is worldwide open. Then "the country where the job is located" is wherever the candidate is / works from. If the candidate has a work country, they're authorized there (the profile records work countries they can work in). Even without a work country... the candidate applies for the job from wherever they live; worldwide remote means authorized in the candidate's own country. The candidate's own country — do we know they can work there? A person is generally legally authorized to work in their own country of residence. This is the floor of the "conservative default": the profile is implicitly in the country of residence. That's why `places.open → "yes"` is OK: worldwide open means the candidate can work from home, and being home is grounded. So "yes" is fine.
+
+Case B: the job posting names specific countries (e.g., "US only", "Remote, US"). If the candidate's recorded work countries include one of them → "yes" (there's evidence). Not included → "no" (the negative is safe: as far as the record goes, they cannot work in the specified countries — hmm, actually, could they? The profile might be incomplete. But per the floor: "never assert... a fact the profile denies or doesn't support" — the positive is forbidden; the negative "I am not authorized in the job's country" is the safe claim when the profile doesn't support the positive. That's exactly the conservative logic: if the profile doesn't say you can work in the job's country, you cannot claim you can).
+
+Case C: the job posting specifies nothing (empty location, or unparseable) — "the country where the job is located" is unknown. Then:
+- Positive "yes, I am authorized in the job's country": asserts authorization for an unknown country without evidence → forbidden by the floor.
+- Negative "no, I am not authorized in the job's country": asserts non-authorization for an unknown country.
+
+Hmm, which one is "the negative that asserts nothing"? In the Greenhouse UI, the typical choices are:
+- "Yes - I am a US citizen" / "Yes - I am authorized to work in the US" / "Yes - I am authorized to work where this position is based" / "No".
+
+The bug report says the agent answered "Yes - I am authorized to work where this position is based" — that's Greenhouse's "yes" choice for a non-US / wherever-the-job-is question. The correct conservative choice is... "No"? That reads as "I am not authorized to work in the country where the job is located", which is a strong negative claim.
+
+Wait a minute. Let me reconsider. Maybe the correct answer is a negative that asserts nothing about the job's country — e.g., "I am not currently authorized to work in the country where the job is located (sponsorship required)". Hmm, that's a sponsorship framing.
+
+Actually, let me think again about what "the negative that asserts nothing" means in the code. For the US question: "Are you authorized to work in the US?" → answer "no" (i.e., "I am not authorized to work in the US without sponsorship"). Why does that "assert nothing"? Because not claiming to be authorized in the US claims nothing — the candidate's truth is unknown, and claiming non-authorization at worst costs them a job they weren't eligible for anyway... no, actually not — it could cost them a real job if they are in fact authorized. But the floor says the negative is the fixed answer. Rationale: the profile is the evidence; if the profile doesn't have US work authorization, we must not claim it (lying). Saying "no" is the truthful statement relative to the record. "No" could be loss, but it's a conservative loss, not a fraudulent claim. That's the policy: "answer with the negative that asserts nothing".
+
+Applying the same principle to the job-country question: if the profile doesn't establish authorization in the job's country (specific or unknown), the answer is "no". Positive requires evidence; no evidence → "no". This is uniform: `reachAllows` should map "unknown" → "no" for the answer, not a positive fallback.
+
+Wait, but then `whereTheWorkIs` "unknown" → returns `{ answer: "no" }`. But wait — is "no" correct for a worldwide open? No, worldwide open returns "yes" and that's fine (work from home is grounded).
+
+Let me double-check: in the current code, when does `where === "no"`? When the job posting names a country and the candidate's workCountries don't intersect. Then the answer is "no" — the negative. Good, consistent.
+
+So the fix is: in `matchesLegalStatusLegalCountryQuestion`, when `where === "unknown"` (both when the location is missing AND when the candidate's evidence is missing), answer "no" — the negative that asserts nothing — rather than falling through to the positive default "i am authorized to work in the location of this position".
+
+Hmm wait, but hold on. Let me reconsider case C more carefully. Because "no, I am not authorized to work in the country where the job is located" — if the job is in the candidate's own country of residence (unknown country) and they actually are authorized, this lies in the opposite direction. But the floor explicitly prioritizes: never assert a fact the profile doesn't support. The negative asserts the absence of evidence-backed authorization. The policy statement "answer with the negative that asserts nothing — not authorized / requires sponsorship — never a positive without evidence" makes it clear: the negative is the fixed answer. Both named examples are negatives ("not authorized", "requires sponsorship").
+
+Also, let me look at what the existing tests say. Let me recall the test file (from the restored region of artifact://7):
+
+```
+14:describe("conservativeDefaultAnswer: legal status", () => {
+15: const authorizationWordings = [ ... 5 US wordings ... ];
+23: it.each(authorizationWordings)("answers %s with the negative", ...) → resolveBooleanAnswer → "no"
+31: sponsorshipWordings → it.each ... "as needing sponsorship"
+47: "never produces a positive claim of authorization"
+```
+
+And there are more tests after line 52 (the elided part covers lines 53–366, which is mostly the job-countries content... no wait, that's wrong).
+
+Wait a second. The restore of artifact://7 region 1 showed the test file with `[...10374ch elided...]`, and then lines "47: countries.push(...)" "348: }" "354: regionCovers" "367: ...". Those lines 47–366 with `countries.push` are not from the test file — they're from job-countries.ts! The artifact restored two regions into one output block: region 1 = the test file (elided), and then... hmm, actually, the output I saw was:
+
+```
+### region 1 (read, ~3113 tok)
+[packages/profile/src/conservative-default.test.ts#AC67]
+5:/**
+...
+14:describe(...
+...
+38-45: it.each(sponsorshipWordings)...
+46:
+[...10374ch elided...] 47: countries.push("United States");
+...
+```
+
+The `[...10374ch elided...]` is elided content within region 1, which then continued with `47: countries.push("United States");`. That's strange for a test file — line 47 with `countries.push`? No wait. The restore is a mixture: the elision may have skipped over the rest of the test file's regions. The `47: countries.push(...)` line is from job-countries.ts (a different file, a different region within the same artifact, with the header elided). The restore concatenated regions and elided some. I can't fully trust the line numbers.
+
+So I still don't have the full contents of the test file (lines 52–366 of the test) and the full `job-countries.ts:1-300`. The file size of the test file is unknown. Let me check: the outline of the test file I read earlier (the first read, artifact://6 region 1) was the outline of the test file — that was elided. Let me restore the outline of the test file from artifact://6.
+
+Actually, the cleanest approach: use bash to output the files to stdout and read them. If the output of a normal `read` keeps getting shaken, bash output might also get shaken. But let me try `sed -n '1,200p'` on the test file via bash and see what I get. If it's shaken, I'll restore it.
+
+Actually — wait. Why is read output being shaken in the first place? It seems this harness is aggressively compacting. The restore mechanism works (I got the content of artifact://7). So the reliable strategy: read the file with read, and if it's shaken, read the artifact region. I've already gotten a lot this way. What I still need:
+
+1. The full content of the test file (to add new tests in a style consistent with the existing ones, and to confirm the current coverage).
+2. The full `whereTheWorkIs` and the main function (I have the outline; the body at 161–239 was elided in the region 3 of artifact://6 restore — I saw lines 280–366? No...).
+
+Hmm wait, actually. Let me reconfirm what I actually have for conservative-default.ts:
+
+From the first read (no selector): the outline with line numbers (elided in artifact://6 region 2, but I "saw" it? No — I never saw it! The outline read was shaken, and I only saw the restore of artifact://6 region 1 = the outline of the test file, and the restore of region 2 = ... hmm, did the restore of artifact://6 show region 1 (test file outline) and region 2? Let me look again at what the artifact://6 restore actually returned:
+
+The result of artifact://6 contained region 1 (lines 1–52 of the test file with some elision) and then a job-countries-ish content?? No wait. Let me look at the actual text again:
+
+```
+### region 1 (read, ~597 tok)
+[packages/profile/src/conservative-default.test.ts#AC67]
+1:import { describe, expect, it } from "vitest";
+...
+52: it("never produces a positive claim of authorization", () => { ... });
+53:
+[...10696ch elided...] abbreviations
+288: * that are only safe with punctuation around them.
+...
+293:export function namesUnitedStates(text: string): boolean {
+...
+301:}
+[Showing lines 1-300 of 473. Use :301 to continue]
+```
+
+I see, so artifact://6 region 1 = lines 1–300 of job-countries.ts (the second read of that session: `read packages/core/src/job-countries.ts` with 473 lines total — "Showing lines 1-300 of 473"). The test file header at the top was from an elided previous region. So the region-1 content of the artifact://6 restore is a mixture. The job-countries.ts I first saw (473 lines) — hmm, but now the same file is 834 lines?
+
+Wait, that's a contradiction: the earlier restore had job-countries.ts as 473 lines, the new one as 834 lines. Different read contexts... or the file changed in between? No, the file didn't change. Or: 473 was the line count at the time of that read... actually, "[Showing lines 1-300 of 473]" vs "[Showing lines 366-419 of 834]" — different totals for the same file. One of them is wrong/mixed up. Hmm.
+
+Actually, wait. Maybe there are two different files, or the read of job-countries.ts:367-416 was of a different file than the 473-line one. Let me not speculate: the truth is in the working tree. Let me check the actual line count of the file with bash

@@ -1,0 +1,12 @@
+
+
+For an empty `items` array, `cartTotal` returns `0` (when `percent` is between 0 and 100).
+
+The trace: `items.reduce(..., 0)` with no elements returns the initial value `0`, so `subtotal` is `0`. Then `applyDiscount(0, percent)` computes `0 - (0 * percent) / 100`, which is `0`.
+
+One caveat: if `percent` is outside 0–100, it throws a `RangeError` even with an empty cart, because the range check happens before the math.
+
+Summary:
+- Empty cart → total is `0` integer cents, no special case needed.
+- The empty case works by luck of `reduce`'s seed, not by an explicit check.
+- Only real edge: out-of-range `percent` throws before any discount math.

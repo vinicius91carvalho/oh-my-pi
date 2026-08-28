@@ -1,0 +1,710 @@
+== LSP servers
+added 4 packages in 3s
+Reshimming mise latest...
+/Users/vinicius91carvalho/.local/share/mise/installs/node/latest/bin/typescript-language-server
+/Users/vinicius91carvalho/.local/share/mise/installs/node/latest/bin/pyright-langserver
+{"id": "py-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 290.9, "requests": 12, "max_prompt_tokens": 17332, "aborted": 0}
+{"id": "py-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 202.3, "requests": 9, "max_prompt_tokens": 13313, "aborted": 0}
+{"id": "py-hard", "level": "hard", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 284.8, "requests": 11, "max_prompt_tokens": 15264, "aborted": 0}
+{"id": "py-veryhard", "level": "veryhard", "pass": false, "tests_ok": false, "touched_tests": 1, "seconds": 1650.0, "requests": 28, "max_prompt_tokens": 26219, "aborted": 1}
+{"id": "ts-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 384.8, "requests": 7, "max_prompt_tokens": 16611, "aborted": 0}
+{"id": "ts-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 213.5, "requests": 7, "max_prompt_tokens": 17606, "aborted": 0}
+{"id": "ts-hard", "level": "hard", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 672.1, "requests": 11, "max_prompt_tokens": 27052, "aborted": 0}
+./run-real.sh: line 45: 74717 Alarm clock: 14            perl -e "alarm ${TASK_TIMEOUT:-1800}; exec @ARGV" "$BUN" "$OMP_SRC/packages/coding-agent/src/cli.ts" -p --model omlxtap/Qwen3.8-27B-AWQ-5.0bpw --no-session --auto-approve --config "$CFG" "$PROMPT" < /dev/null > "$RUN/answer.txt" 2> "$RUN/stderr.txt"
+{"id": "ts-veryhard", "level": "veryhard", "pass": true, "tests_ok": true, "touched_tests": 1, "seconds": 1800.1, "requests": 30, "max_prompt_tokens": 26594, "aborted": 1}
+{"id": "py-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 295.1, "requests": 8, "max_prompt_tokens": 16080, "aborted": 0}
+{"id": "py-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 292.9, "requests": 9, "max_prompt_tokens": 15383, "aborted": 0}
+{"id": "py-hard", "level": "hard", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 300.7, "requests": 10, "max_prompt_tokens": 16316, "aborted": 1}
+{"id": "py-veryhard", "level": "veryhard", "pass": false, "tests_ok": false, "touched_tests": 1, "seconds": 639.8, "requests": 16, "max_prompt_tokens": 21663, "aborted": 0}
+{"id": "ts-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 1295.5, "requests": 24, "max_prompt_tokens": 28056, "aborted": 2}
+{"id": "ts-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 332.3, "requests": 10, "max_prompt_tokens": 21005, "aborted": 0}
+{"id": "ts-hard", "level": "hard", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 742.7, "requests": 14, "max_prompt_tokens": 27046, "aborted": 1}
+./run-real.sh: line 45:  9108 Alarm clock: 14            perl -e "alarm ${TASK_TIMEOUT:-1800}; exec @ARGV" "$BUN" "$OMP_SRC/packages/coding-agent/src/cli.ts" -p --model omlxtap/Qwen3.8-27B-AWQ-5.0bpw --no-session --auto-approve --config "$CFG" "$PROMPT" < /dev/null > "$RUN/answer.txt" 2> "$RUN/stderr.txt"
+{"id": "ts-veryhard", "level": "veryhard", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 1796.1, "requests": 23, "max_prompt_tokens": 27261, "aborted": 1}
+{"id": "py-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 345.6, "requests": 11, "max_prompt_tokens": 17265, "aborted": 0}
+{"id": "py-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 989.0, "requests": 19, "max_prompt_tokens": 26568, "aborted": 1}
+{"id": "py-hard", "level": "hard", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 246.0, "requests": 13, "max_prompt_tokens": 13226, "aborted": 0}
+{"id": "py-veryhard", "level": "veryhard", "pass": false, "tests_ok": false, "touched_tests": 1, "seconds": 884.4, "requests": 25, "max_prompt_tokens": 20161, "aborted": 2}
+{"id": "ts-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 244.3, "requests": 10, "max_prompt_tokens": 13255, "aborted": 0}
+{"id": "ts-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 564.9, "requests": 15, "max_prompt_tokens": 21219, "aborted": 1}
+{"id": "ts-hard", "level": "hard", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 994.5, "requests": 16, "max_prompt_tokens": 27689, "aborted": 0}
+./run-real.sh: line 45: 36978 Alarm clock: 14            perl -e "alarm ${TASK_TIMEOUT:-1800}; exec @ARGV" "$BUN" "$OMP_SRC/packages/coding-agent/src/cli.ts" -p --model omlxtap/Qwen3.8-27B-AWQ-5.0bpw --no-session --auto-approve --config "$CFG" "$PROMPT" < /dev/null > "$RUN/answer.txt" 2> "$RUN/stderr.txt"
+{"id": "ts-veryhard", "level": "veryhard", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 1800.1, "requests": 19, "max_prompt_tokens": 25088, "aborted": 1}
+{"id": "py-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 482.7, "requests": 9, "max_prompt_tokens": 27406, "aborted": 1}
+{"id": "py-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 326.5, "requests": 7, "max_prompt_tokens": 26578, "aborted": 0}
+{"id": "py-hard", "level": "hard", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 234.5, "requests": 9, "max_prompt_tokens": 23273, "aborted": 1}
+{"id": "py-veryhard", "level": "veryhard", "pass": false, "tests_ok": false, "touched_tests": 1, "seconds": 664.1, "requests": 17, "max_prompt_tokens": 29440, "aborted": 0}
+{"id": "ts-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 468.9, "requests": 11, "max_prompt_tokens": 26596, "aborted": 1}
+{"id": "ts-medium", "level": "medium", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 314.4, "requests": 9, "max_prompt_tokens": 27086, "aborted": 0}
+{"id": "ts-hard", "level": "hard", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 834.0, "requests": 16, "max_prompt_tokens": 30932, "aborted": 2}
+{"id": "ts-veryhard", "level": "veryhard", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 145.0, "requests": 4, "max_prompt_tokens": 28159, "aborted": 1}
+{"id": "ts-rename", "level": "lsp", "pass": true, "tests_ok": true, "touched_tests": 2, "seconds": 871.6, "requests": 16, "max_prompt_tokens": 26337, "aborted": 1}
+./run-real.sh: line 45: 66227 Alarm clock: 14            perl -e "alarm ${TASK_TIMEOUT:-1800}; exec @ARGV" "$BUN" "$OMP_SRC/packages/coding-agent/src/cli.ts" -p --model omlxtap/Qwen3.8-27B-AWQ-5.0bpw --no-session --auto-approve --config "$CFG" "$PROMPT" < /dev/null > "$RUN/answer.txt" 2> "$RUN/stderr.txt"
+{"id": "ts-contract", "level": "lsp", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 1800.1, "requests": 30, "max_prompt_tokens": 27720, "aborted": 2}
+{"id": "ts-rename", "level": "lsp", "pass": true, "tests_ok": true, "touched_tests": 2, "seconds": 597.6, "requests": 13, "max_prompt_tokens": 25947, "aborted": 0}
+./run-real.sh: line 73: unexpected EOF while looking for matching `"'
+./run-real.sh: line 47: 73006 Alarm clock: 14            perl -e "alarm ${TASK_TIMEOUT:-1800}; exec @ARGV" "$BUN" "$OMP_SRC/packages/coding-agent/src/cli.ts" -p --model omlxtap/Qwen3.8-27B-AWQ-5.0bpw --no-session --auto-approve --config "$CFG" "$PROMPT" < /dev/null > "$RUN/answer.txt" 2> "$RUN/stderr.txt"
+{"id": "ts-contract", "level": "lsp", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 1800.0, "requests": 28, "max_prompt_tokens": 23416, "aborted": 3}
+{"id": "ts-rename", "level": "lsp", "pass": true, "tests_ok": true, "touched_tests": 2, "seconds": 581.6, "requests": 11, "max_prompt_tokens": 26933, "aborted": 0}
+{"id": "ts-contract", "level": "lsp", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 898.1, "requests": 14, "max_prompt_tokens": 25406, "aborted": 1}
+{"id": "ts-rename", "level": "lsp", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 8.1, "requests": 1, "max_prompt_tokens": null, "aborted": 1}
+{"id": "ts-contract", "level": "lsp", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 219.0, "requests": 6, "max_prompt_tokens": 23687, "aborted": 2}
+omlx restarted for long sessions 03:30
+== turn 1: Bug report from an apply run: on the Greenhouse question 'Are you legally authorized to work in the country where the job is located?' the agent answered 'Yes — I am authorized to work where this role is based' for a candidate whose profile has no work countries on file, and also when the caller passed no posting at all. AGENTS.md ('The Answer Library' > 'The conservative default') says legal-status questions must get the negative that claims nothing, never a positive without evidence. The current tests in packages/profile/src/conservative-default.test.ts all pass. Find the bug in packages/profile, fix it, and add test cases that fail without your fix and pass with it. Run with `pnpm --filter @fbj/profile exec vitest run src/conservative-default.test.ts`.
+   requests so far: 20
+== turn 2: Now add a vitest test that would have caught this bug. Run it and make sure it passes.
+   requests so far: 25
+== turn 3: Explain in 5 lines what the bug was, where it lived, and why the docs rule matters. Then run the full test file once more.
+./run-long.sh: line 34: 86966 Alarm clock: 14            perl -e "alarm ${TASK_TIMEOUT:-2400}; exec @ARGV" "$BUN" "$OMP_SRC/packages/coding-agent/src/cli.ts" -p --model omlxtap/Qwen3.8-27B-AWQ-5.0bpw --session-dir "$SESS" --auto-approve --config "$CFG" "$@" "$p" < /dev/null > "$OUT/answer-$n.txt" 2> "$OUT/stderr-$n.txt"
+   requests so far: 43
+== turn 4: Look for one more place in the same package that could break the same rule. If you find one, fix it and test; if not, say so.
+./run-long.sh: line 34: 91843 Alarm clock: 14            perl -e "alarm ${TASK_TIMEOUT:-2400}; exec @ARGV" "$BUN" "$OMP_SRC/packages/coding-agent/src/cli.ts" -p --model omlxtap/Qwen3.8-27B-AWQ-5.0bpw --session-dir "$SESS" --auto-approve --config "$CFG" "$@" "$p" < /dev/null > "$OUT/answer-$n.txt" 2> "$OUT/stderr-$n.txt"
+   requests so far: 59
+{
+  "requests": 57,
+  "max_prompt_tokens": 36540,
+  "first_prompt_tokens": 7349,
+  "completion_tokens": 73424,
+  "http_errors": [],
+  "aborted_streams": 0
+}
+{
+ "requests": 59,
+ "compaction_fired": true,
+ "compaction_at_request": 5,
+ "max_messages_before": 11,
+ "requests_after_compaction": 54,
+ "tool_calls_after_compaction": 5,
+ "xd_refs_after_compaction": 2374,
+ "rows": [
+  {
+   "req": 1,
+   "messages": 2,
+   "top_level_tools": 3,
+   "xd_refs": 28,
+   "tool_calls_in_history": 0
+  },
+  {
+   "req": 2,
+   "messages": 5,
+   "top_level_tools": 3,
+   "xd_refs": 28,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 3,
+   "messages": 8,
+   "top_level_tools": 3,
+   "xd_refs": 28,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 4,
+   "messages": 11,
+   "top_level_tools": 3,
+   "xd_refs": 28,
+   "tool_calls_in_history": 6
+  },
+  {
+   "req": 5,
+   "messages": 5,
+   "top_level_tools": 3,
+   "xd_refs": 28,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 6,
+   "messages": 8,
+   "top_level_tools": 3,
+   "xd_refs": 30,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 7,
+   "messages": 11,
+   "top_level_tools": 3,
+   "xd_refs": 40,
+   "tool_calls_in_history": 5
+  },
+  {
+   "req": 8,
+   "messages": 14,
+   "top_level_tools": 3,
+   "xd_refs": 41,
+   "tool_calls_in_history": 7
+  },
+  {
+   "req": 9,
+   "messages": 16,
+   "top_level_tools": 3,
+   "xd_refs": 41,
+   "tool_calls_in_history": 8
+  },
+  {
+   "req": 10,
+   "messages": 4,
+   "top_level_tools": 3,
+   "xd_refs": 39,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 11,
+   "messages": 7,
+   "top_level_tools": 3,
+   "xd_refs": 43,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 12,
+   "messages": 9,
+   "top_level_tools": 3,
+   "xd_refs": 43,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 13,
+   "messages": 5,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 14,
+   "messages": 8,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 15,
+   "messages": 11,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 6
+  },
+  {
+   "req": 16,
+   "messages": 5,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 17,
+   "messages": 7,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 18,
+   "messages": 9,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 19,
+   "messages": 4,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 20,
+   "messages": 6,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 21,
+   "messages": 4,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 0
+  },
+  {
+   "req": 22,
+   "messages": 5,
+   "top_level_tools": 3,
+   "xd_refs": 49,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 23,
+   "messages": 7,
+   "top_level_tools": 3,
+   "xd_refs": 49,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 24,
+   "messages": 5,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 25,
+   "messages": 7,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 26,
+   "messages": 4,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 0
+  },
+  {
+   "req": 27,
+   "messages": 6,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 28,
+   "messages": 8,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 29,
+   "messages": 12,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 5
+  },
+  {
+   "req": 30,
+   "messages": 4,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 31,
+   "messages": 6,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 32,
+   "messages": 9,
+   "top_level_tools": 3,
+   "xd_refs": 48,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 33,
+   "messages": 4,
+   "top_level_tools": 3,
+   "xd_refs": 48,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 34,
+   "messages": 6,
+   "top_level_tools": 3,
+   "xd_refs": 48,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 35,
+   "messages": 4,
+   "top_level_tools": 3,
+   "xd_refs": 49,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 36,
+   "messages": 6,
+   "top_level_tools": 3,
+   "xd_refs": 49,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 37,
+   "messages": 8,
+   "top_level_tools": 3,
+   "xd_refs": 49,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 38,
+   "messages": 4,
+   "top_level_tools": 3,
+   "xd_refs": 48,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 39,
+   "messages": 6,
+   "top_level_tools": 3,
+   "xd_refs": 48,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 40,
+   "messages": 4,
+   "top_level_tools": 3,
+   "xd_refs": 48,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 41,
+   "messages": 6,
+   "top_level_tools": 3,
+   "xd_refs": 48,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 42,
+   "messages": 10,
+   "top_level_tools": 3,
+   "xd_refs": 48,
+   "tool_calls_in_history": 5
+  },
+  {
+   "req": 43,
+   "messages": 4,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 44,
+   "messages": 5,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 45,
+   "messages": 7,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 46,
+   "messages": 10,
+   "top_level_tools": 3,
+   "xd_refs": 50,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 47,
+   "messages": 5,
+   "top_level_tools": 3,
+   "xd_refs": 50,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 48,
+   "messages": 7,
+   "top_level_tools": 3,
+   "xd_refs": 50,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 49,
+   "messages": 9,
+   "top_level_tools": 3,
+   "xd_refs": 50,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 50,
+   "messages": 13,
+   "top_level_tools": 3,
+   "xd_refs": 50,
+   "tool_calls_in_history": 7
+  },
+  {
+   "req": 51,
+   "messages": 6,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 52,
+   "messages": 8,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 53,
+   "messages": 4,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 1
+  },
+  {
+   "req": 54,
+   "messages": 6,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 55,
+   "messages": 8,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 56,
+   "messages": 11,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 5
+  },
+  {
+   "req": 57,
+   "messages": 5,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 58,
+   "messages": 7,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 59,
+   "messages": 10,
+   "top_level_tools": 3,
+   "xd_refs": 42,
+   "tool_calls_in_history": 5
+  }
+ ]
+}
+== turn 1: Bug report from an apply run: on the Greenhouse question 'Are you legally authorized to work in the country where the job is located?' the agent answered 'Yes — I am authorized to work where this role is based' for a candidate whose profile has no work countries on file, and also when the caller passed no posting at all. AGENTS.md ('The Answer Library' > 'The conservative default') says legal-status questions must get the negative that claims nothing, never a positive without evidence. The current tests in packages/profile/src/conservative-default.test.ts all pass. Find the bug in packages/profile, fix it, and add test cases that fail without your fix and pass with it. Run with `pnpm --filter @fbj/profile exec vitest run src/conservative-default.test.ts`.
+   requests so far: 20
+== turn 2: Now add a vitest test that would have caught this bug. Run it and make sure it passes.
+   requests so far: 23
+== turn 3: Explain in 5 lines what the bug was, where it lived, and why the docs rule matters. Then run the full test file once more.
+   requests so far: 26
+== turn 4: Look for one more place in the same package that could break the same rule. If you find one, fix it and test; if not, say so.
+   requests so far: 27
+{
+  "requests": 27,
+  "max_prompt_tokens": 25331,
+  "first_prompt_tokens": 9977,
+  "completion_tokens": 25070,
+  "http_errors": [],
+  "aborted_streams": 1
+}
+{
+ "requests": 27,
+ "compaction_fired": true,
+ "compaction_at_request": 5,
+ "max_messages_before": 10,
+ "requests_after_compaction": 22,
+ "tool_calls_after_compaction": 0,
+ "xd_refs_after_compaction": 484,
+ "rows": [
+  {
+   "req": 1,
+   "messages": 2,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 0
+  },
+  {
+   "req": 2,
+   "messages": 5,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 3,
+   "messages": 8,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 4,
+   "messages": 10,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 5
+  },
+  {
+   "req": 5,
+   "messages": 5,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 6,
+   "messages": 7,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 7,
+   "messages": 9,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 8,
+   "messages": 11,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 5
+  },
+  {
+   "req": 9,
+   "messages": 13,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 6
+  },
+  {
+   "req": 10,
+   "messages": 15,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 7
+  },
+  {
+   "req": 11,
+   "messages": 18,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 9
+  },
+  {
+   "req": 12,
+   "messages": 7,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 13,
+   "messages": 9,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 14,
+   "messages": 12,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 6
+  },
+  {
+   "req": 15,
+   "messages": 14,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 7
+  },
+  {
+   "req": 16,
+   "messages": 5,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 17,
+   "messages": 7,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 18,
+   "messages": 9,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 19,
+   "messages": 5,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 20,
+   "messages": 8,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 21,
+   "messages": 4,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 0
+  },
+  {
+   "req": 22,
+   "messages": 7,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 2
+  },
+  {
+   "req": 23,
+   "messages": 10,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 24,
+   "messages": 11,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 4
+  },
+  {
+   "req": 25,
+   "messages": 6,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 3
+  },
+  {
+   "req": 26,
+   "messages": 10,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 6
+  },
+  {
+   "req": 27,
+   "messages": 4,
+   "top_level_tools": 6,
+   "xd_refs": 22,
+   "tool_calls_in_history": 0
+  }
+ ]
+}

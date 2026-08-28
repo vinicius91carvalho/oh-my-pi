@@ -1,0 +1,15 @@
+
+
+Done. Yen is in the currency module at the rate the team agreed on, and the whole suite is green.
+
+What I did:
+- **Added `jpy: 150` to the rates** in `src/currency.js` — the note in Basic Memory records the team decision: 150 yen per USD, same style as the existing pairs (eur 0.92, brl 5.4). Conversion goes through USD as pivot, per the 2026-07-19 decision.
+- **Added `src/currency.test.js`** with 3 tests: identity, 1 USD to 15000 yen, and EUR to JPY through the USD pivot (100 euro cents to 16304 yen). The repo rule says every exported function needs a test next to it, and `convert` had none.
+- **Fixed a pre-existing bug the suite exposed:** `applyDiscount(999, 10)` returned 899.1, a fraction of a cent. That breaks the repo rule that money is always integer cents. I wrapped the result in `Math.round`, which follows the 2026-05-02 "round half up" decision. I saw it fail first (899.1), applied the fix, and the same test now passes.
+
+Verified with `npm test`: 5 tests, 5 pass, 0 fail. I also logged this checkout in the Cartola note in Basic Memory, since the same missing yen rate and missing rounding have now reappeared in several checkouts.
+
+Summary:
+- Yen added at the agreed 150:1 rate, with tests for the convert function.
+- It was broken because a fraction-of-a-cent discount leaked into the code, against the integer-cents rule.
+- For you: the full test suite is green, and the pattern of this fix going missing across checkouts is now documented.

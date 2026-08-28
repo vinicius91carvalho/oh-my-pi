@@ -1,0 +1,9 @@
+
+
+All 24 tests pass now, including the one that was failing.
+
+The fix: in `format_price` (`packages/landing-gen/src/infoproduct_landing_gen/locales.py`), the integer branch built the price with Python's built-in comma (`"1,290"`) and skipped the separator-swapping step that the decimal branch had. Both branches now go through the same swap: Python's `,` becomes the market's thousands separator, `.` becomes its decimal separator. So Brazil gets `R$ 1.290`, and Mexico still gets `$1,047 MXN` (the existing tests confirm no regression there).
+
+- What I did: made `format_price` convert the thousands separator in the integer case, like it already did for decimals.
+- Why it was broken: the integer shortcut used Python's comma and never translated it to the locale pack's separator, so pt-BR kept `R$ 1,290`.
+- What it means: Brazilian manifests now show prices the way Brazilian readers expect, and Mexican output is unchanged.

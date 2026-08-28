@@ -1,0 +1,11 @@
+
+
+Done. All gates green:
+
+- **The bug:** `isUsableTimeZone` trimmed the string before validating, but `usableTimeZone` returned the *raw* string when validation passed. So a stored `" Europe/London "` was accepted as usable, then handed to `Intl.DateTimeFormat` untrimmed.
+- **The fix:** `packages/core/src/timezone.ts` — `usableTimeZone` now trims once and returns that trimmed value (or the fallback). The returned string is exactly the string that was validated.
+- **Why it's safe for the two callers** (`tenantTimezone` in `caps.ts`, label in `slots.ts`): both feed the result to `Intl.DateTimeFormat`; for zones without padding the output is byte-identical, for padded ones it now matches what was actually checked.
+
+**Verification:** the previously failing test now passes (8/8), full `@fbj/core` suite 951/951, repo typecheck 31/31. No E2E run: the change only alters output for whitespace-padded zones, and the old value there was never better.
+
+What I did: made `usableTimeZone` return the trimmed zone it validated. Why it was broken: validation trimmed, return didn't. What it means: a résumé timezone with stray spaces can no longer reach `Intl` untrimmed.

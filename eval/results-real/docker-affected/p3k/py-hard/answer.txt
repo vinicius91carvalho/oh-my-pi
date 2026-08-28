@@ -1,0 +1,15 @@
+
+
+Fixed. All 35 tests in the two files pass, and the full campaign suite (81 tests) passes too.
+
+What was broken: `packages/campaign/src/infoproduct_campaign/models.py:17` had `CAROUSEL_CARDS_MAX = 5`. The comment two lines above says the TikTok API allows 2-35 cards, and the tests build a 6-card carousel (the project default). So 6-card creatives failed Pydantic's `max_length` check at build time.
+
+Why it was broken: the max was a stale `5` instead of `35` - the compliance check in `compliance.py` and the error message both read from the same constant, so the wrong number propagated everywhere.
+
+What I did: changed `CAROUSEL_CARDS_MAX = 5` to `CAROUSEL_CARDS_MAX = 35`, matching the documented API range. I saw the 16 failures, made the one-line fix, and saw the same tests pass (I did not touch the tests).
+
+| | |
+|---|---|
+| What I did | Set `CAROUSEL_CARDS_MAX` from 5 to 35 |
+| Why it was broken | Stale max of 5 rejected the standard 6-card carousel |
+| What it means | 6-card carousels build and validate normally again |

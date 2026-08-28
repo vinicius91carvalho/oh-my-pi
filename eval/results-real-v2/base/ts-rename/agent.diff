@@ -1,0 +1,216 @@
+diff --git a/apps/cli/src/index.ts b/apps/cli/src/index.ts
+index 3de4952..7ccfb86 100644
+--- a/apps/cli/src/index.ts
++++ b/apps/cli/src/index.ts
+@@ -10,7 +10,7 @@ import {
+   loadSettings,
+   loadTenantEligibility,
+   logger,
+-  looksLikeGarbageTitle,
++  isGarbageTitle,
+   looksLoggedOut,
+   migrate,
+   recordEvent,
+@@ -362,7 +362,7 @@ db.command("close-garbage")
+     // SQL regex here would be a second definition of "garbage title" to keep in
+     // step with the first, and the two would drift the first time a board
+     // invents a new button.
+-    const hits = rows.filter((r) => looksLikeGarbageTitle(r.title));
++    const hits = rows.filter((r) => isGarbageTitle(r.title));
+     if (hits.length === 0) {
+       console.log("No applications on button-label or untitled postings.");
+       return;
+diff --git a/packages/core/src/garbage-title.test.ts b/packages/core/src/garbage-title.test.ts
+index 3c7e7f8..39ea207 100644
+--- a/packages/core/src/garbage-title.test.ts
++++ b/packages/core/src/garbage-title.test.ts
+@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
+ import {
+   BUTTON_LABEL_RE,
+   isButtonLabel,
+-  looksLikeGarbageTitle,
++  isGarbageTitle,
+ } from "./garbage-title.js";
+ 
+ describe("isButtonLabel", () => {
+@@ -48,34 +48,34 @@ describe("isButtonLabel", () => {
+   });
+ });
+ 
+-describe("looksLikeGarbageTitle", () => {
++describe("isGarbageTitle", () => {
+   it("is true for nothing at all", () => {
+-    expect(looksLikeGarbageTitle(null)).toBe(true);
+-    expect(looksLikeGarbageTitle(undefined)).toBe(true);
+-    expect(looksLikeGarbageTitle("")).toBe(true);
+-    expect(looksLikeGarbageTitle("   ")).toBe(true);
+-    expect(looksLikeGarbageTitle("\n\t ")).toBe(true);
++    expect(isGarbageTitle(null)).toBe(true);
++    expect(isGarbageTitle(undefined)).toBe(true);
++    expect(isGarbageTitle("")).toBe(true);
++    expect(isGarbageTitle("   ")).toBe(true);
++    expect(isGarbageTitle("\n\t ")).toBe(true);
+   });
+ 
+   it("is true below four characters", () => {
+-    expect(looksLikeGarbageTitle("QA")).toBe(true);
+-    expect(looksLikeGarbageTitle("Dev")).toBe(true);
+-    expect(looksLikeGarbageTitle(" Dev ")).toBe(true);
+-    expect(looksLikeGarbageTitle("Java")).toBe(false);
++    expect(isGarbageTitle("QA")).toBe(true);
++    expect(isGarbageTitle("Dev")).toBe(true);
++    expect(isGarbageTitle(" Dev ")).toBe(true);
++    expect(isGarbageTitle("Java")).toBe(false);
+   });
+ 
+   it("is true for a button label, whitespace and all", () => {
+-    expect(looksLikeGarbageTitle("See more")).toBe(true);
+-    expect(looksLikeGarbageTitle("  Apply now  ")).toBe(true);
+-    expect(looksLikeGarbageTitle("VIEW JOB")).toBe(true);
++    expect(isGarbageTitle("See more")).toBe(true);
++    expect(isGarbageTitle("  Apply now  ")).toBe(true);
++    expect(isGarbageTitle("VIEW JOB")).toBe(true);
+   });
+ 
+   it("is true for the intake's placeholder", () => {
+     // `PLACEHOLDER_TITLE` in @fbj/pipeline. Matched by pattern, not imported:
+     // core depends on nothing internal. The pipeline pins the two together.
+-    expect(looksLikeGarbageTitle("Untitled role")).toBe(true);
+-    expect(looksLikeGarbageTitle("untitled")).toBe(true);
+-    expect(looksLikeGarbageTitle("UNTITLED ROLE")).toBe(true);
++    expect(isGarbageTitle("Untitled role")).toBe(true);
++    expect(isGarbageTitle("untitled")).toBe(true);
++    expect(isGarbageTitle("UNTITLED ROLE")).toBe(true);
+   });
+ 
+   /**
+@@ -98,7 +98,7 @@ describe("looksLikeGarbageTitle", () => {
+     "Oops!",
+     "Access Denied",
+   ])("is true for an error page's heading: %s", (t) => {
+-    expect(looksLikeGarbageTitle(t)).toBe(true);
++    expect(isGarbageTitle(t)).toBe(true);
+   });
+ 
+   /**
+@@ -113,12 +113,12 @@ describe("looksLikeGarbageTitle", () => {
+     "Access Management Engineer",
+     "Site Reliability / Gitops Engineer",
+   ])("is false for a real title that brushes those words: %s", (t) => {
+-    expect(looksLikeGarbageTitle(t)).toBe(false);
++    expect(isGarbageTitle(t)).toBe(false);
+   });
+ 
+   it("is false for a title that names a job", () => {
+-    expect(looksLikeGarbageTitle("Senior Backend Engineer")).toBe(false);
+-    expect(looksLikeGarbageTitle("Auxiliar de Escrituração")).toBe(false);
+-    expect(looksLikeGarbageTitle("Untitled Role Designer")).toBe(false);
++    expect(isGarbageTitle("Senior Backend Engineer")).toBe(false);
++    expect(isGarbageTitle("Auxiliar de Escrituração")).toBe(false);
++    expect(isGarbageTitle("Untitled Role Designer")).toBe(false);
+   });
+ });
+diff --git a/packages/core/src/garbage-title.ts b/packages/core/src/garbage-title.ts
+index a3536b2..e3dcb7b 100644
+--- a/packages/core/src/garbage-title.ts
++++ b/packages/core/src/garbage-title.ts
+@@ -69,7 +69,7 @@ export function isErrorPageTitle(t: string): boolean {
+  * imported, because `PLACEHOLDER_TITLE` lives in `@fbj/pipeline` and core
+  * depends on nothing internal.
+  */
+-export function looksLikeGarbageTitle(
++export function isGarbageTitle(
+   title: string | null | undefined,
+ ): boolean {
+   const t = (title ?? "").trim();
+diff --git a/packages/llm/src/score-job.ts b/packages/llm/src/score-job.ts
+index b98c4f3..adebd44 100644
+--- a/packages/llm/src/score-job.ts
++++ b/packages/llm/src/score-job.ts
+@@ -3,7 +3,7 @@ import {
+   demandsOnsiteOrHybrid,
+   getSetting,
+   logger,
+-  looksLikeGarbageTitle,
++  isGarbageTitle,
+   namedPlaces,
+   placeTokens,
+   reachAllows,
+@@ -219,7 +219,7 @@ export function descriptionUncaptured(job: ScorableJob): boolean {
+  * about a posting nobody has named.
+  */
+ export function titleUncaptured(job: ScorableJob): boolean {
+-  return looksLikeGarbageTitle(job.title);
++  return isGarbageTitle(job.title);
+ }
+ 
+ // ---------------------------------------------------------------------------
+diff --git a/packages/pipeline/src/stages/apply.ts b/packages/pipeline/src/stages/apply.ts
+index b9dd31d..7e538b7 100644
+--- a/packages/pipeline/src/stages/apply.ts
++++ b/packages/pipeline/src/stages/apply.ts
+@@ -663,7 +663,7 @@ export async function runApply(ctx: RunContext): Promise<StageResult> {
+     // and the third is a company's Wellfound landing page, all captured as jobs
+     // with `company` NULL. One of them scored 85 and was filed as a best_fit.
+     // 154 rows in the table share the shape. The title check upstream
+-    // (`looksLikeGarbageTitle`) cannot catch the third, because "StepSecurity"
++    // (`isGarbageTitle`) cannot catch the third, because "StepSecurity"
+     // is a perfectly good string; the missing employer is what gives it away.
+     //
+     // Closed rather than skipped: there is nothing here to retry, and a name we
+diff --git a/packages/pipeline/src/stages/discover.test.ts b/packages/pipeline/src/stages/discover.test.ts
+index aa20fa4..7dea35e 100644
+--- a/packages/pipeline/src/stages/discover.test.ts
++++ b/packages/pipeline/src/stages/discover.test.ts
+@@ -1,7 +1,7 @@
+ import { makeTestDb, type TestDb } from "@fbj/db/test-db";
+ import {
+   loadSettings,
+-  looksLikeGarbageTitle,
++  isGarbageTitle,
+   PLAN_LIMITS,
+   resetSettingsCache,
+   schema,
+@@ -226,9 +226,9 @@ describe("ingestPostings — a button is not a job", () => {
+ 
+   it("drops the intake's placeholder and anything too short to be a role", async () => {
+     // `PLACEHOLDER_TITLE` is the intake's "the page never gave us one".
+-    // `looksLikeGarbageTitle` matches it by pattern — core cannot import the
++    // `isGarbageTitle` matches it by pattern — core cannot import the
+     // pipeline — so this pins the two together against a future rename.
+-    expect(looksLikeGarbageTitle(PLACEHOLDER_TITLE)).toBe(true);
++    expect(isGarbageTitle(PLACEHOLDER_TITLE)).toBe(true);
+ 
+     const inserted = await ingestPostings(ctx(), "web:tecla", [
+       posting({ url: "https://b.com/job?id=3", title: PLACEHOLDER_TITLE }),
+diff --git a/packages/pipeline/src/stages/discover.ts b/packages/pipeline/src/stages/discover.ts
+index a9d5e6f..111ecff 100644
+--- a/packages/pipeline/src/stages/discover.ts
++++ b/packages/pipeline/src/stages/discover.ts
+@@ -12,7 +12,7 @@ import {
+   effectiveDiscoveryFields,
+   getSetting,
+   PLAN_LIMITS,
+-  looksLikeGarbageTitle,
++  isGarbageTitle,
+   nextIntervalMinutes,
+   nextPollAt,
+   pooled,
+@@ -712,7 +712,7 @@ export async function fanOutToTenant(
+     );
+   }
+ 
+-  const nameable = wanted.filter((r) => !looksLikeGarbageTitle(r.title));
++  const nameable = wanted.filter((r) => !isGarbageTitle(r.title));
+   if (nameable.length < wanted.length) {
+     ctx.logger.info(
+       { dropped: wanted.length - nameable.length },
+@@ -909,7 +909,7 @@ export async function ingestPostings(
+     // A missing COMPANY is deliberately not a reason to drop: half the boards
+     // never name the employer on the card, and the intake fills it in from the
+     // posting page. Only the identity of the job is non-negotiable here.
+-    if (looksLikeGarbageTitle(posting.title)) {
++    if (isGarbageTitle(posting.title)) {
+       dropped++;
+       continue;
+     }

@@ -1,0 +1,3 @@
+
+
+The "round half up" discount rounding rule was decided on 2026-05-02 after a customer complained about a 1-cent difference on invoice 88213.

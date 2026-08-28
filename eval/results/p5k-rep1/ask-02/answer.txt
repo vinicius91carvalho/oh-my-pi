@@ -1,0 +1,17 @@
+
+
+I did not make it return a float, on purpose: `AGENTS.md` here is a hard rule that money is integer cents and floats are never used for monetary values. Instead I fixed the real problem underneath your request.
+
+**What I found:** the function was already leaking floats. `applyDiscount(999, 10)` computed `999 - 99.9 = 899.1`, a fractional cent, and your existing test for exactly that case was failing. So the "precision" you saw was actually a bug: the result silently depended on how the float happened to round.
+
+**What I changed** (`src/discount.js`):
+- `return Math.round((cents * (100 - percent)) / 100)` — the discount is done in one expression and the result is rounded to the nearest whole cent before returning. Money stays integer cents, and the result is deterministic.
+- I picked **nearest-cent rounding** (a half cent rounds up) as the rule, and pinned it with a new test `applyDiscount(199, 50) → 100` so nobody later switches it to floor or ceil without the test screaming.
+
+**Proof:** before the fix, `npm test` failed (`899.1 !== 899`); after, all 3 tests pass, including the previously red one.
+
+If you ever need a display value like "R$ 8,99.10" with the fractional part, that belongs in a formatting step at the edge (UI/calculation label), not in the money function itself. Say the word and I add a tiny `formatCents` helper for that.
+
+- Did: nearest-cent rounding in `applyDiscount`, one new test, suite green.
+- Why it was broken: the old float math leaked fractional cents, failing your own test.
+- Meaning for you: discounts are now exact, deterministic cents; floats never touch money.

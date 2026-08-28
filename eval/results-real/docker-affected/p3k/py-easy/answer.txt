@@ -1,0 +1,5 @@
+
+
+All 5 scoring tests pass now, and the full research suite (28 tests) is green.
+
+What was broken: in `scoring.py`, the corroboration check was `if len(sources) <= MIN_CORROBORATING_SOURCES` with the minimum set to 2. So a trend with exactly 2 sources (the minimum you actually need) also got excluded, since `2 <= 2` is true. The fix is `len(sources) < MIN_CORROBORATING_SOURCES`: keep a group only when it has at least 2 sources. I saw it fail (3 tests, trends list empty or missing), changed that one operator, saw the same tests pass, plus the rest of the package.

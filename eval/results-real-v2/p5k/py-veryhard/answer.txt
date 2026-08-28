@@ -1,0 +1,15 @@
+
+
+Done and proven. The new test fails on the old code and passes on the fix, and the full suite is green.
+
+What I changed
+- `packages/landing-gen/src/infoproduct_landing_gen/copy.py:40` - the years-of-experience pattern was `\d+\s*a[nñ]os de experiencia`. Spanish spells it without an accent, so `a[nñ]os de experiencia` blocked "12 años de experiencia" but missed the Portuguese `experiência`. It is now `experi[eê]ncia`, the same accent-class trick the file already uses for `[nñ]os`, `[eé]dic`, `[oó]log`.
+- `packages/landing-gen/tests/test_landing_gen.py` - new `test_portuguese_years_of_experience_claim_is_rejected`, styled after the existing `test_portuguese_profession_claim_is_rejected`: it runs your exact bio ("Marina tem 12 anos de experiência organizando casamentos.") through `validate_landing_copy` and asserts it fails with a credential issue.
+
+Proof
+- Before: that pt-BR copy passed with zero issues; the Spanish twin was blocked. I reproduced both.
+- After: the pt-BR copy is blocked with `persona_bio: credential/track-record claim not allowed for a fictional persona`.
+- I swapped the old pattern back in at runtime and confirmed the new test's exact assertions fail without the fix.
+- `.venv/bin/pytest packages/landing-gen/tests -q` -> 24 passed (23 old + 1 new).
+
+Summary: one character class in one regex was Spanish-only, so pt-BR "experiência" slipped past D07's block; widened it to `[eê]` and locked it with a pytest test. The check now treats both markets the same, and the test fails if the accented form ever stops being caught.

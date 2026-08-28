@@ -1,0 +1,8 @@
+# Alvo ~5k. Alem do p7k, manda edit e glob para xd://.
+# Perde: chamada nativa de edicao e de busca por padrao de nome.
+tools:
+  xdevForceMount: [hub, eval, task, todo, web_search, edit, glob]
+  xdevDocs: catalog
+personality: none
+includeModelInPrompt: false
+promptProfile: compact

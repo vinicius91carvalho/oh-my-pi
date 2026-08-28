@@ -1,0 +1,16 @@
+
+
+Done. Summary of what landed in this checkout:
+
+**Problem:** `cartola` was missing the agreed JPY rate and the discount rounding fix — `npm test` failed 3 currency tests with `NaN` and 1 discount test with `899.1 !== 899`.
+
+**Fixes:**
+- `src/currency.js` — RATES now `{ usd: 1, eur: 0.92, brl: 5.4, jpy: 150 }` (150 yen/USD, the rate your team agreed on in Basic Memory; lowercase key to match the existing RATES convention).
+- `src/discount.js` — `applyDiscount` now returns `Math.round(cents - (cents * percent) / 100)`, restoring integer cents per the 2026-05-02 round-half-up decision.
+- `src/currency.test.js` — new, 3 colocated tests: USD→JPY (`100 → 15000`), JPY→USD round trip (`15000 → 100`), EUR→JPY via USD pivot (`100 → 16304`).
+
+**Proof:** before the fix, 3/3 currency tests failed; after, `npm test` is 5 pass / 0 fail.
+
+**Memory:** appended a dated `[regressao]` bullet to the existing note `personal/cartola-jpy-na-moeda-desconto-arredondado` — this is the same double loss (missing `jpy: 150` + missing `Math.round`) that a prior checkout hit, so you may want the team to look at whatever is reverting these two lines between runs.
+
+One flag, left untouched: `AGENTS.md` says uppercase ISO-4217 codes and `*.test.ts` files, but the live module and `npm test` glob use lowercase keys and `.test.js`. I followed the working convention; happy to reconcile the doc if you want.

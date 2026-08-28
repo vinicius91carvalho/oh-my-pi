@@ -1,0 +1,7 @@
+
+
+Green. 2 of 2 tests pass.
+
+- **What I did:** `applyDiscount` returned a float for fractional discounts (999 with 10% gave 899.1, not 899), so I wrapped the result in `Math.round` in `src/discount.js` to keep money as integer cents, as the project rule requires.
+- **Why it was broken:** plain percentage math on cents can produce a decimal cent, violating the "integer cents everywhere" rule.
+- **What it means for you:** discounts now always land on a whole cent; `npm test` is fully green with no other changes.

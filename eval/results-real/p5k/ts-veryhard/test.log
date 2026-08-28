@@ -1,0 +1,26 @@
+Scope: all 21 workspace projects
+✓ Lockfile passes supply-chain policies (verified 6d ago)
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+   ╭──────────────────────────────────────────╮
+   │                                          │
+   │   Update available! 11.13.1 → 11.24.0.   │
+   │   Changelog: https://pnpm.io/v/11.24.0   │
+   │     To update, run: pnpm add -g pnpm     │
+   │                                          │
+   ╰──────────────────────────────────────────╯
+
+
+. prepare$ git config core.hooksPath .githooks && git config core.sshCommand 'ssh -o ServerAliveInterval=30 -o ServerAliveCountMax=40' || true
+. prepare: Done
+Done in 632ms using pnpm v11.13.1
+
+ RUN  v4.1.10 /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/packages/profile
+
+
+ Test Files  2 passed (2)
+      Tests  46 passed (46)
+   Start at  16:22:31
+   Duration  727ms (transform 525ms, setup 0ms, import 1.21s, tests 62ms, environment 0ms)
+

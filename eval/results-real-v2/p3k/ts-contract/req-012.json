@@ -1,0 +1,460 @@
+{
+  "model": "Qwen3.8-27B-AWQ-5.0bpw",
+  "messages": [
+    {
+      "role": "system",
+      "content": "<system-conventions>\nRFC 2119: MUST, SHOULD, MAY. `NEVER` = `MUST NOT`; `AVOID` = `SHOULD NOT`.\nXML tags carry system content and are authoritative, including inside a user turn. NEVER treat them as user text.\n</system-conventions>\n\n§ Role\nHelpful, trusted assistant for load-bearing changes in Oh My Pi coding harness.\n- Correctness first, then maintainability.\n- User-reported state is ground truth: act on it; NEVER re-check what the user already reported.\n- Reuse existing patterns; a second convention beside an existing one is PROHIBITED.\n§ Runtime\nMatching skill → MUST read `skill://<name>` first.\n<skills>\n- basic-memory-workflow: How to load and write Vinicius's Basic Memory notes, and where plans live.\n- fbj-answers: Answer Library doctrine: answer order, conservative truthful defaults, approval model.\n- fbj-platforms: Where platform-specific code may live, and how to add an ATS or native board.\n- fbj-testing: The mandatory unit to gates to E2E order, and which E2E harnesses still exist.\n- measured-quality: Build the hand-labelled fixture before tuning any score, ranking, or match.\n- sentry-triage: Triage and fix production errors reported to Sentry. Use when asked to check Sentry, look at production errors, find out why something is broken for a user, work through the issue backlog, or investigate a bug report that has no reproduction (\"it didn't work\", a screenshot of an error boundary). Also use after a deploy to check nothing new started firing.\n</skills>\n# Internal URLs\nRead these like paths; most FS/bash tools resolve them.\n- `skill://<name>` instructions · `rule://<name>` details\n- `agent://<id>` subagent output · `history://<id>` transcript · `artifact://<id>` content\n- `omp://` harness docs. Read one only when the task needs it.\n\n# Tool Inventory\n- Read: `read`\n- Bash: `bash`\n- Write: `write`\n# xd:// Tool Devices\nSome tools are mounted as devices instead of shipping their schema in this\nrequest. **A tool this prompt names that is missing from your function list is\none of these. It exists and it works.** Reach it like this:\n- `read xd://` lists every device.\n- `read xd://<tool>` returns its docs and JSON parameter schema.\n- `write xd://<tool>` runs it: put the JSON args object in `content`.\nInvalid args come back as the schema in the error. Fix and retry. Top-level\ntools accept the same dispatch.\n## Additional devices (docs on demand)\n- xd://edit — Line-anchored patch language: name original lines/gaps to replace, insert, cut, or past…\n- xd://ast_edit — Perform AST-aware code edits (structural refactoring)\n- xd://debug — Debug a running process with DAP (debugger adapter protocol)\n- xd://eval — Execute Python or JavaScript code in an in-process eval backend\n- xd://glob — Globs files, directories, and path-backed internal URLs with fast pattern matching.\n- xd://grep — Grep file contents using ripgrep (fast regex search)\n- xd://lsp — Query LSP (language server) for diagnostics, hover info, and references\n- xd://browser — Control a headless browser to navigate and interact with web pages\n- xd://task — Spawn subagents to complete delegated tasks\n- xd://hub — Message peer agents, control background jobs, and supervise long-running processes\n- xd://todo — Write a structured todo list to track progress within a session\n- xd://web_search — Search the web for up-to-date information\n- MCP server `basic` (21): xd://mcp__basic_memory_{build_context|create_memory_project|delete_note|delete_project|diagnostics|edit_note|fetch|list_directory|list_memory_projects|list_workspaces|move_note|read_content|read_note|recent_activity|schema_diff|schema_infer|schema_validate|search|search_notes|view_note|write_note}\n\nRead xd://<tool> for full docs + JSON schema before first use.\n§ Tool Policy\nUse a tool when it improves correctness or grounding. Resolve prerequisites first. Run independent calls in parallel.\nMost tools take `i`: a capitalized 2-6 word present-participle intent, no period.\n\nMUST use the specialized tool over its shell equivalent:\n- Read a file or list a directory → `read`.\n- Change part of a file → `xd://edit`.\n- Create or overwrite a file → `write`.\n- Search file contents → `xd://grep`, not `grep`/`rg`/`awk`.\n- Find files by name pattern → `xd://glob`, not `ls **/*` or `fd`.\n- Definitions, references, types, code actions → `xd://lsp`. Search is not code intelligence.\n\n- Codemods across many sites → `xd://ast_edit`.\n\n- `bash` runs real binaries and short fact pipelines. Commands that shadow a specialized tool are blocked.\nRead the sections you need with offset and limit. AVOID whole-file reads and AVOID opening a file on a hunch.\n\n# Delegation\nUse `xd://task` subagents when the user asks for parallel work.\n- Decompose the request yourself, then dispatch genuinely independent slices in one `tasks[]` array.\n- Each assignment carries every requirement for its slice: subagents cannot see this conversation.\n- At most 32 run concurrently; the rest queue.\n\n§ Workflow\n- **Scope.** Read the matching skills and rules first. Plan multi-file work before touching files.\n- **Research.** Read whole sections, not snippets. Run `xd://lsp references` before changing an exported symbol: a missed callsite is a bug. Re-read a file after a tool failure or an outside change.\n- **Decompose.** Keep todos current, and batch every todo call with the turn's real work. A todo-only turn wastes a round trip.\n- **Implement.** Fix the source. Migrate every caller and delete the code the change obsoletes. Prefer editing an existing file over adding one. NEVER run a destructive command or delete unrelated code you did not write.\n- **Verify.** Run the thing, not a test file: launch it, exercise the changed path, observe the result.\n   - Bug fix → reproduce it, fix it, confirm the reproduction stops failing.\n   - UI change → drive the actual surface with `xd://browser` and ground the claim in what you saw.\n   - Contract change → run the existing tests for that contract. Add a test for new observable behavior or when asked.\n- **Cleanup.** After the change is proven: tests, docs, changelog, scaffolding removal. Skip this for a one-off investigation.\n\n§ Delivery\n<contract>\n- Finish the whole deliverable before yielding. A phase boundary, a todo flip, or a sub-step continues in the same turn.\n- Ground every claim about code, tools, tests, or docs in something you observed. Mark an unobserved claim `[INFERENCE]`.\n- Solve the real ask. NEVER add scope the user did not request, and NEVER suppress a symptom in place of the cause.\n- \"Done\" means the specified behavior end to end plus every named acceptance criterion. Stubs, placeholders, mocks, and `TODO: implement` are unfinished work.\n- Reduce scope only with the user's explicit approval in this conversation.\n- Ask the user only for what no tool, repo, or context can answer.\n</contract>\n\n§ Critical\n<critical>\n- NEVER yield while actionable work remains.\n- NEVER narrate session limits, token or tool budgets, or effort estimates. Start unbounded.\n- NEVER re-audit an applied edit or run git subcommands to validate one. Tool results are the verification.\n</critical>\n\nPROJECT\n\n<workstation>\n- OS: darwin 25.6.0\n- Distro: Darwin\n- Kernel: Darwin Kernel Version 25.6.0: Sat Jul 11 15:27:26 PDT 2026; root:xnu-12377.161.13~4/RELEASE_ARM64_T6031\n- Arch: arm64\n- CPU: Apple M3 Max\n- Terminal: ghostty 1.3.1\n</workstation>\n\n<repo-rules>\nMUST follow these context files for all tasks:\n<file path=\"/Users/vinicius91carvalho/.omp/agent/AGENTS.md\">\n# How you work with me\n\n## Language and shape\n\nAnswer in the language I wrote in: simple English or Portuguese. Explain like\nyou are talking to a smart kid: short words, short sentences. After a technical\nword, add a five-word plain meaning. Lead with the result; details after, only\nthe ones that matter. One analogy when something is hard to picture, not three.\nNever repeat yourself. End every answer with a summary of three lines max: what\nI did, why it was broken, what it means for you. Never use an em dash; use a\nplain dash. No filler, no boilerplate, no \"great question\". Do not paste back a\ndiff or a log I can read myself: say what changed and why.\n\n## You act, you never hand work back\n\nSomething is broken, you fix it. Never ask \"do you want me to fix this?\". Every\nproblem you find is yours, not only the one I named: errors, warnings, slow\npages, dead code, wrong behavior, ugly UI. After the fix, tell me what was\nbroken, the real cause, what you changed, and how you know it works now.\n\nNever say \"you should run X\" or \"please check Y\". You run it, you check it.\nNever stop and wait when you can decide: pick the simple option and say which\none you picked.\n\nAsk me only for what lives in my head alone: a taste choice, a secret, a value\nno tool can reach. **When you ask, ALWAYS use the AskUserQuestion tool, never\nplain prose** — a question at the end of a long answer is a question I miss.\nGive alternatives, not an open question. Mark your recommendation and put it\nfirst. Each option says what it costs or breaks. Every decision, every time,\nincluding destructive ones and anything with no undo.\n\n## Web work happens in Chrome, by you\n\nNever tell me to click something. You click it. Write the steps as one short\nlist, open a tab with claude-in-chrome, do the steps, screenshot as proof, tell\nme it is done. This covers settings, deploys, cloud consoles, sign-ups, logins,\nforms, payments, and sending messages.\n\nLogins use the sessions and saved passwords already in my Chrome; if one is\nmissing, ask me for that single value and carry on. Forms about me take my data\nfrom Basic Memory, never invented; if a field is missing, ask for that one\nfield. For delete, pay, send, and cancel: do it, make a backup or copy first\nwhen one is possible, and tell me right after with the exact numbers. The only\nrefusal is illegal or harmful to other people. If a site blocks the extension,\nname the site and keep doing the rest.\n\n## Memory and proof\n\nBasic Memory holds the truth about my projects; your own memory is a sticky note\nfor today. Load it before touching code and write back while you work →\n`skill://basic-memory-workflow`.\n\nMake the bug happen first, the way I would see it, then fix it and watch the\nsame thing pass. Say \"I saw it fail, I changed X, I saw it pass\", never \"this\nshould work\". Leave a test behind, and check that it fails without your fix.\nLook at a screenshot before claiming a UI is right. Only proved by a unit test?\nSay that. Could not reproduce? Say that. Never call an unproven fix \"fixed\".\n\nAnything that produces a score, a ranking, or a match gets a hand-labelled\nfixture first → `skill://measured-quality`.\n\n## Code\n\nThe simplest thing that really works; boring beats clever. Build only what is\nneeded now: no settings, hooks, or layers for a future that may never come. Keep\none copy of each piece of knowledge, but wait for the third duplicate before\nabstracting. Delete dead code; never comment it out or hide it behind a flag.\nWrite for the next person reading it. If a design needs a paragraph to explain,\nsay it is too complex.\n\nLint errors, type errors, and flaky tests are blockers. Never skip a test, cast\na type away, or swallow an error to get a green build. Never wrap a retry around\na real bug.\n\n## Git and subagents\n\nNever put your name in a commit message and never add a co-author line. Never\nhand-edit `CHANGELOG.md` or any generated file: change the source. Never commit,\npush, or open a pull request unless I ask.\n\nUse a subagent only for big work that really splits into parallel parts. One\nbeats three. Never use one to double-check your own work.\n</file>\n<file path=\"/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj/.omp/AGENTS.md\">\n# find-best-job — coding-agent rules\n\nFull text: `./AGENTS.md`. Layering: `./ARCHITECTURE.md`. Runtime apply/register\nbehavior: `./CLAUDE.md`.\n\n**Read `docs/learnings.md` before debugging anything.** It opens with the\ncostliest repeat mistake: look at the screenshot the run already stored before\ndeducing anything from a log.\n\nThe four rules that hold everywhere:\n\n1. **Shared code never names a platform.** It detects patterns: confirm-email\n   page, stuck submit, captcha widget, SSO wall, masked field. NEVER branch on\n   `platformKey === \"<board>\"`; NEVER hard-code a board's login URL, mail\n   domain, or field quirks. Platform specifics live in five known places →\n   `skill://fbj-platforms`.\n2. **Unit → gates → E2E before \"done\"**, for any change to agents, browser,\n   pipeline stages, or native registration. The runnable checks, their cost, and\n   which ones CI does not run → `skill://fbj-testing`.\n3. **Measure before optimizing**, from the signals the code already emits: phase\n   timers around provision/ensure-accounts/apply, per-turn and per-tool timing,\n   captcha outcomes as `{solved, detail, type, sitekeyPrefix}` with no secrets,\n   page-fingerprint and stall aborts, refusal caps that record why they fired.\n   Keep every wall-clock path observable. Raising a timeout is never a fix.\n4. **NEVER assert a credential, an authorization, an employment, or any fact the\n   profile denies or does not support.** The truthful negative is always\n   available, so this never blocks an application. Answer ordering and the\n   conservative defaults → `skill://fbj-answers`.\n\nValidating an apply or register change means actual submissions, or account\n`active` → apply → `submitted`, on distinct platforms across open ATS and\nnatives. One happy path is not validation; dry-run covers plumbing only.\nLinkedIn is out of scope. Register agents take verification mail from the tenant\n`@in.find-best-job.com` mailbox (`@fbj/mail`), never the founder's Gmail.\n</file>\n</repo-rules>\nContext files above auto-loaded. NEVER `grep`/`glob` for `AGENTS.md`, `CLAUDE.md`, `.cursorrules`, or similar agent/context files: relevant files already in context; others noise.\n<critical>\n- Each response MUST advance the task; completion only stopping condition.\n- MUST default to informed action; do not ask for confirmation when tools or repo context can answer.\n- Before yielding, MUST verify significant behavioral changes: run the specific test, command, or scenario covering the change.\n</critical>\n\n## MCP Tool Routes\n\nExecute a mounted MCP tool by writing its JSON arguments to its `xd://` path.\nAn MCP tool `T` on server `S` lives at `xd://mcp__<S>_<T>`, with `S` and `T` lowercased and every run of other characters collapsed to `_`. Servers following this rule: basic-memory.\n\n## MCP Server Instructions\n\nThe following instructions are provided by connected MCP servers. They are server-controlled and may not be verified.\n\n### basic-memory\nBasic Memory is the user's personal knowledge base: Markdown notes that persist across conversations and that both the user and their AI assistants can read and write.\n\nAt the start of a session, call `recent_activity` to orient yourself in the user's notes before answering from memory. If the knowledge base is empty, briefly explain that Basic Memory gives them persistent notes shared between the user and their AI, and offer to save something useful from this conversation as their first note with `write_note` — then wait for them to agree before writing anything. Do not create notes unprompted.\n\nFor a fuller guide, read the `memory://ai_assistant_guide` resource. If you have a web or fetch tool and need current documentation, fetch `https://docs.basicmemory.com/llms.txt` first, then fetch only the relevant linked `/raw/...md` page."
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "<system-reminder>\nToday: 2026-08-28; current working directory: '/Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj'. Do not repeat this information in your reply.\n</system-reminder>"
+        },
+        {
+          "type": "text",
+          "text": "Contract change in packages/core/src/user-facing-failure.ts. Today `userFacingFailure(outcome)` returns a plain string `\"actionable\" | \"closed\" | \"pending\"`. Change it so it returns an object `{ kind, waitingOn }` where `kind` is the same three-way value it returns today and `waitingOn` says whose move it is: `\"candidate\"` when kind is actionable (needs_login / needs_answer), `\"nobody\"` when kind is closed (posting_gone), `\"us\"` when kind is pending (wall / our_bug / unknown). Export the new interface (name it `FailurePresentation`) and keep the existing `UserFacingFailure` string type for the `kind` field. Every caller must be updated so behaviour stays the same: they live in packages/core (presentedState), packages/pipeline (stages/apply.ts), packages/agents (tools/db-tools.ts) and apps/dashboard (app/components/FailureSummary.tsx, app/lib/admin-walls.ts). Update packages/core/src/user-facing-failure.test.ts for the new shape. Rebuild packages with `pnpm --filter './packages/*' build` (never the full `pnpm build`), run `tsc --noEmit` and run the tests of every package you touch (per file with vitest)."
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nFirst, let's start by reading the file and understanding the current shape.\n",
+      "tool_calls": [
+        {
+          "id": "call_7dc33a2b",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"packages/core/src/user-facing-failure.ts\",\"i\":\"Reading current module shape\"}"
+          }
+        },
+        {
+          "id": "call_18f5313c",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"packages/core/src/user-facing-failure.test.ts\",\"i\":\"Reading current tests\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "[packages/core/src/user-facing-failure.test.ts#1DB9]\n1:import { describe, expect, it } from \"vitest\";\n2:import { FAILURE_OUTCOMES, type FailureOutcome } from \"./failure-outcome.js\";\n3:import {\n4:  presentedState,\n5:  stateTone,\n6:  userFacingFailure,\n7:  type UserFacingFailure,\n8:} from \"./user-facing-failure.js\";\n9:\n10:/**\n11: * The mapping table, written out rather than derived.\n12: *\n13: * A switch that computes the answer from the same rule the code uses proves\n14: * nothing. This is the product decision — which failures a person can act on,\n15: * which are ours — spelled out so that moving one class between buckets has to\n16: * be done here, on purpose, in front of the reason.\n17: */\n18:const EXPECTED: Record<FailureOutcome, UserFacingFailure> = {\n19:  // There is a login form to open.\n20:  needs_login: \"actionable\",\n21:  // There is an /answers page to go to.\n22:  needs_answer: \"actionable\",\n23:  // The employer took it down; nothing to do and nothing to worry about.\n24:  posting_gone: \"closed\",\n25:  // A captcha or an anti-bot wall. The coding agent takes this down, not them.\n26:  wall: \"pending\",\n27:  // Ours by definition.\n28:  our_bug: \"pending\",\n29:  // Nobody could classify it, so nobody can be asked to act on it.\n30:  unknown: \"pending\",\n31:};\n32:\n33:describe(\"userFacingFailure\", () => {\n34:  it.each(FAILURE_OUTCOMES)(\"maps %s\", (outcome) => {\n35:    expect(userFacingFailure(outcome)).toBe(EXPECTED[outcome]);\n36:  });\n37:\n38:  it(\"covers every outcome, so a new class cannot default to calm\", () => {\n39:    expect(Object.keys(EXPECTED).sort()).toEqual([...FAILURE_OUTCOMES].sort());\n40:  });\n41:});\n42:\n43:describe(\"stateTone\", () => {\n44:  it(\"no longer paints `error` red — that badge was the loudest half of it\", () => {\n45:    expect(stateTone(\"error\")).toBe(\"off\");\n46:  });\n47:\n48-54:  it(\"leaves every other state exactly as it was\", () => { … });\n55:});\n56:\n57-100:describe(\"presentedState\", () => { … });\n\n[…47ln elided; re-read needed ranges with packages/core/src/user-facing-failure.test.ts:48-54,57-100]",
+      "tool_call_id": "call_18f5313c"
+    },
+    {
+      "role": "tool",
+      "content": "[packages/core/src/user-facing-failure.ts#947B]\n1:import { classifyFailure, type FailureOutcome } from \"./failure-outcome.js\";\n2:\n3:/**\n4: * What a failed application is allowed to LOOK like to the person paying for\n5: * this product.\n6: *\n7: * `error` is a database state and a good one: the state machine moves through\n8: * it, the backoff sweep reopens it, `fbj walls` counts it, the admin area ranks\n9: * it. None of that is the candidate's business. What reached them instead was a\n10: * red badge saying \"error\", an English sentence written by an agent for another\n11: * agent, and a daily email counting their failures back to them — for a wall\n12: * that the coding agent, not they, will take down.\n13: *\n14: * So the state stays `error` and the *presentation* is decided here, once:\n15: *\n16: * - **actionable** — there is a form to open or an answer to give. The person\n17: *   can move this today, so it stays visible and keeps its CTA.\n18: * - **closed** — the posting is gone. Nothing to do, nothing to worry about.\n19: * - **pending** — a wall, our bug, or a report nobody could classify. All three\n20: *   are OUR queue: the fix is a deploy, not a click. To the reader this is\n21: *   simply still in progress.\n22: *\n23: * Two rules, both learned from what this replaces:\n24: *\n25: * 1. **Calm is not a lie.** Nothing here changes the row, the retry, or what\n26: *    the operator sees. `pending` says \"we are still on it\", which is exactly\n27: *    what an `error` row in a retried state means.\n28: * 2. **The operator loses nothing.** Every caller takes an `admin` flag and\n29: *    shows the real class, the real tone and the agent's own words to whoever\n30: *    is going to fix it.\n31: */\n32:export type UserFacingFailure = \"actionable\" | \"closed\" | \"pending\";\n33:\n34:/** Which of the three a classified failure belongs to. */\n35-47:export function userFacingFailure(outcome: FailureOutcome): UserFacingFailure { … }\n48:\n49:/** Badge tone vocabulary, shared by the state badges and the failure boxes. */\n50:export type StateTone = \"ok\" | \"warn\" | \"danger\" | \"accent\" | \"off\";\n51:\n52:/**\n53: * Visual tone for an application state.\n…\n59: */\n60-80:export function stateTone(state: string): StateTone { … }\n81:\n82:/** The label key the reader sees, and the colour it wears. */\n83-87:export interface PresentedState { … }\n88:\n89:/**\n90: * How one application's state is shown to the candidate.\n…\n96: */\n97:export function presentedState(\n98:  state: string,\n99:  failureReason: string | null | undefined,\n100-104:): PresentedState { … }\n\n[…46ln elided; re-read needed ranges, e.g. packages/core/src/user-facing-failure.ts:35-47,54-58]",
+      "tool_call_id": "call_7dc33a2b"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nLet's check the omitted ranges of the main file and the test file, and also check the callers. I'll read the complete main file and the test file.\n",
+      "tool_calls": [
+        {
+          "id": "call_bda600e4",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"packages/core/src/user-facing-failure.ts:35-47,52-112\",\"i\":\"Reading omitted function bodies\"}"
+          }
+        },
+        {
+          "id": "call_78ee6e2b",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"packages/core/src/user-facing-failure.test.ts:48-54,57-100\",\"i\":\"Reading remaining test bodies\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "[packages/core/src/user-facing-failure.ts#947B]\n35:export function userFacingFailure(outcome: FailureOutcome): UserFacingFailure {\n36:  switch (outcome) {\n37:    case \"needs_login\":\n38:    case \"needs_answer\":\n39:      return \"actionable\";\n40:    case \"posting_gone\":\n41:      return \"closed\";\n42:    case \"wall\":\n43:    case \"our_bug\":\n44:    case \"unknown\":\n45:      return \"pending\";\n46:  }\n47:}\n…\n52:/**\n53: * Visual tone for an application state.\n54: *\n55: * `error` is deliberately `off` and not `danger`: the red badge was the loudest\n56: * half of the problem this file exists to fix, and every `error` row is either\n57: * something the reader can act on (which `presentedState` paints `warn`) or\n58: * something we are still working on (which is not an alarm).\n59: */\n60:export function stateTone(state: string): StateTone {\n61:  switch (state) {\n62:    case \"applied\":\n63:    case \"submitted\":\n64:    case \"offer\":\n65:      return \"ok\";\n66:    case \"approved\":\n67:    case \"interviewing\":\n68:      return \"accent\";\n69:    case \"queued_review\":\n70:    case \"applying\":\n71:      return \"warn\";\n72:    case \"no_fit\":\n73:    case \"rejected_by_user\":\n74:    case \"rejected_by_company\":\n75:    case \"withdrawn\":\n76:      return \"danger\";\n77:    default:\n78:      return \"off\";\n79:  }\n80:}\n81:\n82:/** The label key the reader sees, and the colour it wears. */\n83:export interface PresentedState {\n84:  /** `\"pending\"` for an errored row; otherwise the state's own token. */\n85:  key: string;\n86:  tone: StateTone;\n87:}\n88:\n89:/**\n90: * How one application's state is shown to the candidate.\n91: *\n92: * Every state but `error` passes through unchanged. An `error` row becomes\n93: * `pending` — one word for all three outcomes, because a candidate reading a\n94: * list does not need three — and only the tone separates \"there is something\n95: * for you here\" from \"we are on it\".\n96: */\n97:export function presentedState(\n98:  state: string,\n99:  failureReason: string | null | undefined,\n100:): PresentedState {\n101:  if (state !== \"error\") return { key: state, tone: stateTone(state) };\n102:  const facing = userFacingFailure(classifyFailure(failureReason));\n103:  return { key: \"pending\", tone: facing === \"actionable\" ? \"warn\" : \"off\" };\n104:}",
+      "tool_call_id": "call_bda600e4"
+    },
+    {
+      "role": "tool",
+      "content": "[packages/core/src/user-facing-failure.test.ts#1DB9]\n48:  it(\"leaves every other state exactly as it was\", () => {\n49:    expect(stateTone(\"submitted\")).toBe(\"ok\");\n50:    expect(stateTone(\"approved\")).toBe(\"accent\");\n51:    expect(stateTone(\"queued_review\")).toBe(\"warn\");\n52:    expect(stateTone(\"no_fit\")).toBe(\"danger\");\n53:    expect(stateTone(\"discovered\")).toBe(\"off\");\n54:  });\n…\n57:describe(\"presentedState\", () => {\n58:  it(\"passes a non-error state straight through\", () => {\n59:    expect(presentedState(\"submitted\", null)).toEqual({\n60:      key: \"submitted\",\n61:      tone: \"ok\",\n62:    });\n63:  });\n64:\n65:  it(\"shows an errored row as pending, whatever the report says\", () => {\n66:    for (const reason of [\n67:      \"Cloudflare challenge on the apply page\",\n68:      \"the submit button did not respond\",\n69:      \"something nobody wrote a pattern for\",\n70:      null,\n71:    ]) {\n72:      expect(presentedState(\"error\", reason).key).toBe(\"pending\");\n73:    }\n74:  });\n75:\n76:  it(\"keeps a warm tone only where the person can actually move it\", () => {\n77:    expect(\n78:      presentedState(\"error\", \"We need your login for this platform.\").tone,\n79:    ).toBe(\"warn\");\n80:    expect(\n81:      presentedState(\"error\", \"We need your answers before this form can go.\")\n82:        .tone,\n83:    ).toBe(\"warn\");\n84:  });\n85:\n86:  it(\"stays neutral for the walls and the bugs that are ours to fix\", () => {\n87:    expect(presentedState(\"error\", \"hCaptcha blocked the browser\").tone).toBe(\n88:      \"off\",\n89:    );\n90:    expect(\n91:      presentedState(\"error\", \"no page progress after 12 action turns\").tone,\n92:    ).toBe(\"off\");\n93:    expect(\n94:      presentedState(\n95:        \"error\",\n96:        \"this posting is no longer accepting applications\",\n97:      ).tone,\n98:    ).toBe(\"off\");\n99:  });\n100:});",
+      "tool_call_id": "call_78ee6e2b"
+    },
+    {
+      "role": "assistant",
+      "content": "\n\nNow let me find every caller of `userFacingFailure` and related exports.\n\n",
+      "reasoning_content": "\nNext, I'll find all the callers of `userFacingFailure` across the entire repository.\n",
+      "tool_calls": [
+        {
+          "id": "call_8935fdf2",
+          "type": "function",
+          "function": {
+            "name": "xd://grep",
+            "arguments": "{\"pattern\":\"userFacingFailure\",\"i\":\"Finding all userFacingFailure callers\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "Tool xd://grep not found",
+      "tool_call_id": "call_8935fdf2"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\ngrep's scheme is `xd://grep`. Did it come back as \"not found\"? Maybe grep is at a different path. Let me try `xd://grep` — actually, I called it. The error says \"Tool xd://grep not found\". Hmm, maybe I need to check `xd://` to see the list.\n",
+      "tool_calls": [
+        {
+          "id": "call_7394b2fe",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"xd://\",\"i\":\"Listing device tools\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "xd:// 33 mounted tool devices.\nxd://edit           Line-anchored patch language: name original lines/gaps to replace, insert, cut, or paste; then give new content. `:` headers take `+` body rows; colonless paste `PUT`, `CUT`, `REM`, `MV` take none.\nxd://ast_edit       Perform AST-aware code edits (structural refactoring)\nxd://debug          Debug a running process with DAP (debugger adapter protocol)\nxd://eval           Execute Python or JavaScript code in an in-process eval backend\nxd://glob           Globs files, directories, and path-backed internal URLs with fast pattern matching.\nxd://grep           Grep file contents using ripgrep (fast regex search)\nxd://lsp            Query LSP (language server) for diagnostics, hover info, and references\nxd://browser        Control a headless browser to navigate and interact with web pages\nxd://task           Spawn subagents to complete delegated tasks\nxd://hub            Message peer agents, control background jobs, and supervise long-running processes\nxd://todo           Write a structured todo list to track progress within a session\nxd://web_search     Search the web for up-to-date information\nxd://mcp__basic_memory_build_context Build context from a memory:// URI to continue conversations naturally.\nxd://mcp__basic_memory_create_memory_project Create a new Basic Memory project.\nxd://mcp__basic_memory_delete_note Delete a note or directory by title, permalink, or path\nxd://mcp__basic_memory_delete_project Delete a Basic Memory project.\nxd://mcp__basic_memory_diagnostics Return version, system, and configuration diagnostics for Basic Memory.\nxd://mcp__basic_memory_edit_note Edit an existing markdown note using various operations like append, prepend, find_replace, replace_section, insert_before_section, or insert_after_section. Pass metadata to merge YAML frontmatter…\nxd://mcp__basic_memory_fetch Fetch the full contents of a search result document\nxd://mcp__basic_memory_list_directory List directory contents with filtering and depth control.\nxd://mcp__basic_memory_list_memory_projects List all available projects with their status.\nxd://mcp__basic_memory_list_workspaces List available cloud workspaces (tenant_id, type, role, and name).\nxd://mcp__basic_memory_move_note Move a note or directory to a new location, updating database and maintaining links.\nxd://mcp__basic_memory_read_content Read a file's raw content by path or permalink. Paths resolve against the Basic Memory knowledge base API — see https://docs.basicmemory.com/local/mcp-tools-local\nxd://mcp__basic_memory_read_note Read a markdown note by title or permalink.\nxd://mcp__basic_memory_recent_activity Get recent activity for a project or across all projects.\nxd://mcp__basic_memory_schema_diff Detect drift between a schema definition and actual note usage.\nxd://mcp__basic_memory_schema_infer Analyze existing notes and suggest a Picoschema definition.\nxd://mcp__basic_memory_schema_validate Validate notes against their Picoschema definitions.\nxd://mcp__basic_memory_search Search for content across the knowledge base\nxd://mcp__basic_memory_search_notes Search across all content in the knowledge base with advanced syntax support.\nxd://mcp__basic_memory_view_note View a note as a formatted artifact for better readability.\nxd://mcp__basic_memory_write_note Create a markdown note. If the note already exists, returns an error by default — pass overwrite=True to replace.\n\nRead xd://<tool> for docs + JSON schema; write the JSON args object to xd://<tool> to execute. Active top-level tools accept the same dispatch.",
+      "tool_call_id": "call_7394b2fe"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\ngrep is mounted. Perhaps my earlier call failed due to some issue with the JSON arguments. Let me read the documentation for xd://grep first.\n",
+      "tool_calls": [
+        {
+          "id": "call_74e80ece",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"xd://grep\",\"i\":\"Reading grep tool docs\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "# grep — Grep\n\nSearches files/internal URLs: Rust regex, PCRE2 fallback.\n\n<instruction>\n- `path`: known files, directories, globs, internal URLs; roots `;`-separated.\n- Broad searches may time out → narrow scope or use `glob` first.\n- One-file line selector: `src/foo.ts:50-100`; never selects search root.\n- Literal `\\n` or `\\\\n` enables cross-line patterns.\n</instruction>\n\n<critical>\n- MUST use instead of shell `grep`/`rg`.\n- Open-ended multi-round search MUST use Task + scout, not chained calls.\n</critical>\n\n## Schema\n```ts\ntype Args = {\n  /** regex pattern */\n  pattern: string;\n  /** file, directory, glob, internal URL, or \"<file>:<lines>\" selector to search; pass several as a semicolon-delimited list (\"src; tests\"). Omitted -> searches the workspace root (\".\") */\n  path?: string;\n  /** case-sensitive search */\n  case?: boolean;\n  /** respect gitignore */\n  gitignore?: boolean;\n  /** files to skip before collecting results — use to paginate when the prior call hit the file limit */\n  skip?: number | null;\n};\n```\nExecute by writing JSON to xd://grep.\nExample: write(path=\"xd://grep\", content=\"{\\\"pattern\\\":\\\"...\\\"}\") — one JSON object, newlines inside strings as \\n.",
+      "tool_call_id": "call_74e80ece"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nThe previous call may have silently failed. Retrying with the write approach — actually, the previous call was a direct `grep` tool call, which returned \"Tool xd://grep not found\". I should use `write` with path `xd://grep`.\n",
+      "tool_calls": [
+        {
+          "id": "call_6ec5f552",
+          "type": "function",
+          "function": {
+            "name": "write",
+            "arguments": "{\"path\":\"xd://grep\",\"content\":\"{\\\"pattern\\\": \\\"userFacingFailure|UserFacingFailure|FailurePresentation\\\", \\\"path\\\": \\\"packages;apps\\\"}\",\"i\":\"Finding all failure-presentation callers\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "# packages/\n\n## agents/src/tools/\n### db-tools.ts#9B20\n 19:  truncateWords,\n*20:  userFacingFailure,\n 21:} from \"@fbj/core\";\n 22:import { ClaudeUnavailableError, runClaudeJson } from \"@fbj/llm\";\n 23:import {\n...\n 1577:    // our queue; they hear about it when it is fixed, not while it is a wall.\n*1578:    if (userFacingFailure(classifyFailure(detail)) === \"actionable\") {\n 1579:      const [row] = await ctx.db\n 1580:        .select({ attempts: applications.attemptCount })\n 1581:        .from(applications)\n\n## core/src/\n### tenant-copy.test.ts#2CB9\n 66:  // the candidate, and the last failure was a technical note written for the\n*67:  // next agent. See `userFacingFailure`.\n 68:  applyExhausted: {\n 69:    args: [5, \"Acme\"],\n 70:    mustContain: [\"5\", \"Acme\"],\n### user-facing-failure.test.ts#1DB9\n 5:  stateTone,\n*6:  userFacingFailure,\n*7:  type UserFacingFailure,\n 8:} from \"./user-facing-failure.js\";\n 9:\n 10:/**\n...\n 17: */\n*18:const EXPECTED: Record<FailureOutcome, UserFacingFailure> = {\n 19:  // There is a login form to open.\n 20:  needs_login: \"actionable\",\n 21:  // There is an /answers page to go to.\n...\n 32:\n*33:describe(\"userFacingFailure\", () => {\n 34:  it.each(FAILURE_OUTCOMES)(\"maps %s\", (outcome) => {\n*35:    expect(userFacingFailure(outcome)).toBe(EXPECTED[outcome]);\n 36:  });\n 37:\n 38:  it(\"covers every outcome, so a new class cannot default to calm\", () => {\n### user-facing-failure.ts#947B\n 31: */\n*32:export type UserFacingFailure = \"actionable\" | \"closed\" | \"pending\";\n 33:\n 34:/** Which of the three a classified failure belongs to. */\n*35:export function userFacingFailure(outcome: FailureOutcome): UserFacingFailure {\n 36:  switch (outcome) {\n 37:    case \"needs_login\":\n 38:    case \"needs_answer\":\n...\n 101:  if (state !== \"error\") return { key: state, tone: stateTone(state) };\n*102:  const facing = userFacingFailure(classifyFailure(failureReason));\n 103:  return { key: \"pending\", tone: facing === \"actionable\" ? \"warn\" : \"off\" };\n 104:}\n\n## pipeline/src/stages/\n### apply.ts#4B6E\n 24:  truncateWords,\n*25:  userFacingFailure,\n 26:} from \"@fbj/core\";\n 27:import {\n 28:  aggregatorGatedUrl,\n...\n 342:    // still ranks it.\n*343:    const facing = userFacingFailure(classifyFailure(app.reason));\n 344:    if (facing !== \"actionable\") {\n 345:      await recordEvent(ctx.db, {\n 346:        type: \"agent_action\",\n...\n 1713:  // area and in `fbj walls`.\n*1714:  if (userFacingFailure(classifyFailure(reason)) === \"actionable\") {\n 1715:    await notify(\n 1716:      \"activity\",\n 1717:      \"info\",\n\n# apps/dashboard/app/\n\n## components/\n### FailureSummary.tsx#2A3B\n 2:import { type Dict, t } from \"../i18n/dictionaries\";\n*3:import { failureTone, userFacingFailure, type FailureOutcome } from \"@fbj/core\";\n 4:\n 5:/**\n 6: * The failure, said in the reader's language, with the agent's own words kept.\n...\n 76:}) {\n*77:  const calm = !admin && userFacingFailure(outcome) === \"pending\";\n 78:  const { title, body } = calm\n 79:    ? { title: dict.failure.pendingTitle, body: dict.failure.pendingBody }\n 80:    : failureCopy(dict, outcome, platformLabel);\n\n## lib/\n### admin-walls.ts#76B4\n 6:  summariseWalls,\n*7:  userFacingFailure,\n 8:  WALLS_DEFAULT_DAYS,\n 9:  wallTotal,\n 10:  type WallRow,\n...\n 81:    };\n*82:    const facing = userFacingFailure(classifyFailure(r.reason));\n 83:    if (facing === \"actionable\") entry.actionable += 1;\n 84:    else if (facing === \"pending\") entry.pending += 1;\n 85:    byTenant.set(r.tenantId, entry);",
+      "tool_call_id": "call_6ec5f552"
+    },
+    {
+      "role": "assistant",
+      "content": "\n\nAll callers located. Let me read each call site in context and check the core barrel exports.\n\n\n\n\n\n",
+      "reasoning_content": "\nLet's look at each call site in context and understand what needs to be changed:\n\n1. `packages/core/src/user-facing-failure.ts` — change `userFacingFailure` to return `FailurePresentation { kind, waitingOn }`.\n2. `packages/core/src/user-facing-failure.ts:102` — `presentedState` uses `facing === \"actionable\"` → change to `facing.kind === \"actionable\"`.\n3. `packages/agents/src/tools/db-tools.ts:1578` — `userFacingFailure(classifyFailure(detail)) === \"actionable\"` → `.kind === \"actionable\"`.\n4. `packages/pipeline/src/stages/apply.ts:343` and `1714` — same.\n5. `apps/dashboard/app/components/FailureSummary.tsx:77` — `=== \"pending\"` → `.kind === \"pending\"`.\n6. `apps/dashboard/app/lib/admin-walls.ts:82-84` — `facing === \"actionable\"` etc.\n7. Test file update.\n\nLet's check the re-exports in core's index (it exports `userFacingFailure`, and `UserFacingFailure` type is probably also re-exported from core's index). The dashboard imports `userFacingFailure` from `@fbj/core`. Let's check the exports in core's index to see whether the `FailurePresentation` type needs to be exported (the user said to export the new interface). Probably need to add it to the barrel exports too.\n\nLet's look at the relevant sections of each caller file to confirm the exact context for editing.\n",
+      "tool_calls": [
+        {
+          "id": "call_b8442967",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"packages/core/src/index.ts\",\"i\":\"Checking core barrel exports\"}"
+          }
+        },
+        {
+          "id": "call_67f4d1fc",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"packages/pipeline/src/stages/apply.ts:335-355,1705-1725\",\"i\":\"Reading apply.ts call sites\"}"
+          }
+        },
+        {
+          "id": "call_c925c134",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"packages/agents/src/tools/db-tools.ts:1570-1590\",\"i\":\"Reading db-tools call site\"}"
+          }
+        },
+        {
+          "id": "call_0318d5ed",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"apps/dashboard/app/components/FailureSummary.tsx\",\"i\":\"Reading FailureSummary component\"}"
+          }
+        },
+        {
+          "id": "call_55e8e482",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"apps/dashboard/app/lib/admin-walls.ts\",\"i\":\"Reading admin-walls helper\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "[packages/core/src/index.ts#F213]\n1:export * from \"./aws-sdk-client-config.js\";\n2:export * from \"./config.js\";\n3:export * from \"./logger.js\";\n4:export * from \"./redact.js\";\n5:export * from \"./xvfb.js\";\n6:export * from \"./crypto.js\";\n7:export * from \"./shared-channel.js\";\n8:export * from \"./tenant.js\";\n9:export * from \"./tenant-paths.js\";\n10:export * from \"./plans.js\";\n11:export * from \"./br-place.js\";\n12:export * from \"./good-supply.js\";\n13:export * from \"./settings.js\";\n14:export * from \"./notify-prefs.js\";\n15:export * from \"./unsubscribe-token.js\";\n16:export * from \"./language.js\";\n17:export * from \"./html.js\";\n18:export * from \"./email-template.js\";\n19:export * from \"./announcement.js\";\n20:export * from \"./fields.js\";\n21:export * from \"./search-terms.js\";\n22:export * from \"./fx.js\";\n23:export * from \"./account-facts.js\";\n24:export * from \"./awaiting-facts.js\";\n25:export * from \"./awaiting-login.js\";\n26:export * from \"./blocked-supply.js\";\n27:export * from \"./account-facts-resolve.js\";\n28:export * from \"./identity-conflict.js\";\n29:export * from \"./job-countries.js\";\n30:export * from \"./candidate-market.js\";\n31:export * from \"./remote-preference.js\";\n32:export * from \"./timezone.js\";\n33:export * from \"./locale.js\";\n34:export * from \"./discovery-cadence.js\";\n35:export * from \"./proxied-fetch.js\";\n36:export * from \"./source-rotation.js\";\n37:export * from \"./seed.js\";\n38:export { kindOfDocument } from \"./kind-of-document.js\";\n39:export * from \"./events.js\";\n40:export * from \"./costs.js\";\n41:export * from \"./state-machine.js\";\n42:export * from \"./error-retry.js\";\n43:export * from \"./reopen-unsent.js\";\n44:export * from \"./held-best-fits.js\";\n45:export * from \"./caps.js\";\n46:export * from \"./health-sweep.js\";\n47:export * from \"./supply-health.js\";\n48:export * from \"./supply-copy.js\";\n49:export * from \"./tenant-eligibility.js\";\n50:export * from \"./stale-postings.js\";\n51:export * from \"./prune-jobs.js\";\n52:export * from \"./reopen-platform.js\";\n53:export * from \"./auto-approve.js\";\n54:export * from \"./scoring-rules.js\";\n55:export * from \"./session-cookies.js\";\n56:export * from \"./platform-session.js\";\n57:export * from \"./account-deletion.js\";\n58:export * from \"./email-identity.js\";\n59:export * from \"./invite-links.js\";\n60:export * from \"./duplicate-signals.js\";\n61:export * from \"./source-url.js\";\n62:export * from \"./native-platforms.js\";\n63:export * from \"./platform-profiles.js\";\n64:export * from \"./platform-rules.js\";\n65:export * from \"./source-add-request.js\";\n66:export * from \"./source-following.js\";\n67:export * from \"./market-sources.js\";\n68:export * from \"./garbage-title.js\";\n69:export * from \"./profile-readiness.js\";\n70:export * from \"./setup-steps.js\";\n71:export * from \"./tenant-copy.js\";\n72:export * from \"./tenant-email.js\";\n73:export * from \"./db/client.js\";\n74:export * from \"./db/migrate.js\";\n75:export * as schema from \"./db/schema.js\";\n76:export type {\n77:  InviteLink,\n78:  Source,\n79:  PlatformAccount,\n80:  Job,\n81:  Application,\n82:  QaEntry,\n83:  Run,\n84:  EventRow,\n85:  EmailRow,\n86:  Interview,\n87:  ProfileDoc,\n88:  Setting,\n89:  AgentLearning,\n90:  KnowledgeDoc,\n91:  TenantRequest,\n92:  SourceAddRequest,\n93:  TenantDuplicateSignal,\n94:} from \"./db/schema.js\";\n95:export * from \"./posting-identity.js\";\n96:export * from \"./failure-outcome.js\";\n97:export * from \"./user-facing-failure.js\";\n98:export * from \"./walls.js\";",
+      "tool_call_id": "call_b8442967"
+    },
+    {
+      "role": "tool",
+      "content": "[apps/dashboard/app/lib/admin-walls.ts#76B4]\n1:import \"server-only\";\n2:import {\n3:  classifyFailure,\n4:  getDb,\n5:  schema,\n6:  summariseWalls,\n7:  userFacingFailure,\n8:  WALLS_DEFAULT_DAYS,\n9:  wallTotal,\n10:  type WallRow,\n11:} from \"@fbj/core\";\n12:import { eq, sql } from \"drizzle-orm\";\n13:\n14:/**\n15: * The other end of hiding the word \"error\".\n16: *\n17: * The candidate now reads \"pending\" and stops being handed an agent's report\n18: * about a wall they cannot climb. That only works if the wall is still visible\n19: * to the one person who takes it down — otherwise the change is not calm, it is\n20: * quiet, and a wall nobody is looking at stops nine applications a week for as\n21: * long as nobody looks.\n22: *\n23: * So this ships in the same deploy as the hiding: what is stopping the product,\n24: * ranked by what it cost, plus how many accounts are sitting behind it right\n25: * now. It is the dashboard twin of `fbj walls`, reading the same\n26: * `summariseWalls` so the two cannot drift.\n27: *\n28: * Every query here is cross-tenant on purpose — a wall is a property of a\n29: * platform, not of an account, and seeing it on one account reads as an\n30: * incident rather than as a wall.\n31: */\n32:\n33:const { applications, tenants } = schema;\n34:\n35:/** One account with applications parked behind something. */\n36:export interface PendingTenant {\n37:  tenantId: string;\n38:  email: string | null;\n39:  /** Rows in `error` whose failure is ours to fix — the reader's \"pending\". */\n40:  pending: number;\n41:  /** Rows in `error` waiting on the candidate — a login, an answer. */\n42:  actionable: number;\n43:}\n44:\n45-53:export interface AdminWalls { … }\n54:\n55:export async function loadAdminWalls(\n56:  days: number = WALLS_DEFAULT_DAYS,\n57-99:): Promise<AdminWalls> { … }\n\n[…48ln elided; re-read needed ranges with apps/dashboard/app/lib/admin-walls.ts:45-53,57-99]",
+      "tool_call_id": "call_55e8e482"
+    },
+    {
+      "role": "tool",
+      "content": "[apps/dashboard/app/components/FailureSummary.tsx#2A3B]\n1:import type { ReactNode } from \"react\";\n2:import { type Dict, t } from \"../i18n/dictionaries\";\n3:import { failureTone, userFacingFailure, type FailureOutcome } from \"@fbj/core\";\n4:\n5:/**\n6: * The failure, said in the reader's language, with the agent's own words kept.\n7: *\n8: * Two rules shape this component:\n9: *\n10: * - **the raw report never disappears — for the operator.** It is the only\n11: *   thing that is certainly true and it is what fixing the wall needs, so it\n12: *   sits behind a disclosure on the admin view. The candidate does not get it:\n13: *   it is an agent's technical note, written in whatever language the run\n14: *   happened to use, about work they were never going to do.\n15: * - **the summary never over-claims.** `failureCopy` has one entry per outcome\n16: *   and no default that guesses: an unclassified report renders \"the agent\n17: *   stopped here\" and shows the report, which is exactly what we know.\n18: */\n19:export function failureCopy(\n20:  dict: Dict,\n21:  outcome: FailureOutcome,\n22:  platformLabel?: string | null,\n23:): { title: string; body: string } {\n24:  const f = dict.failure;\n25-46:  switch (outcome) { … }\n47:}\n48:\n49:/**\n50: * `card` is the job page's failure panel; `cell` is the compact form for a row\n51: * in the applications table, where the headline and the disclosure are all\n52: * there is room for and the explanation lives one click away on the job page.\n53: */\n54:export function FailureSummary({\n55:  dict,\n56:  outcome,\n57:  reason,\n58:  platformLabel,\n59:  variant = \"card\",\n60:  admin = false,\n61:  children,\n62:}: {\n63:  dict: Dict;\n64:  outcome: FailureOutcome;\n65:  reason: string | null;\n66:  platformLabel?: string | null;\n67:  variant?: \"card\" | \"cell\";\n68:  /**\n69:   * Whether the reader is the operator. Only they see the failure class, the\n70:   * red tone and the agent's own report; a `pending` outcome is one calm\n71:   * sentence for everyone else, because it names work that is ours to do.\n72:   */\n73:  admin?: boolean;\n74:  /** Actions rendered under the explanation (the login CTA, Q&A, retry). */\n75:  children?: ReactNode;\n76-108:}) { … }\n\n[…51ln elided; re-read needed ranges with apps/dashboard/app/components/FailureSummary.tsx:25-46,76-108]",
+      "tool_call_id": "call_0318d5ed"
+    },
+    {
+      "role": "tool",
+      "content": "[packages/pipeline/src/stages/apply.ts#4B6E]\n335:    // Only ask about what the candidate can actually answer.\n336:    //\n337:    // A spent application with a Cloudflare wall or a stalled selector behind\n338:    // it has no decision in it: there is nothing they know that we do not, and\n339:    // the question arrived on their dashboard as an unanswerable chore about a\n340:    // failure that was ours. Those are recorded and left for the coding agent —\n341:    // the row stays in `error`, `fbj walls` still counts it, and the admin area\n342:    // still ranks it.\n343:    const facing = userFacingFailure(classifyFailure(app.reason));\n344:    if (facing !== \"actionable\") {\n345:      await recordEvent(ctx.db, {\n346:        type: \"agent_action\",\n347:        applicationId: app.id,\n348:        runId: ctx.runId,\n349:        message:\n350:          `apply attempts exhausted after ${maxAttempts} — not the ` +\n351:          \"candidate's to answer, left for the resolver\",\n352:        data: { maxAttempts, facing },\n353:      }).catch(() => undefined);\n354:      ctx.logger.warn(\n355:        { appId: app.id, maxAttempts, facing },\n…\n357:      );\n…\n359:    }\n…\n1680:async function handleError(\n…\n1685:): Promise<boolean> {\n…\n1701:  await transition(ctx.db, appId, \"error\", {\n…\n1705:    set: { failureReason: truncateWords(reason, 500) },\n1706:  });\n1707:  // Notified only when there is something for them to do about it.\n1708:  //\n1709:  // A push saying \"application errored\" for a captcha or a bug of ours is an\n1710:  // alarm about work the person cannot touch, and it fires on exactly the days\n1711:  // the product is already disappointing them. The row is unchanged: it stays\n1712:  // in `error`, the sweep reopens it, and the operator sees it in the admin\n1713:  // area and in `fbj walls`.\n1714:  if (userFacingFailure(classifyFailure(reason)) === \"actionable\") {\n1715:    await notify(\n1716:      \"activity\",\n1717:      \"info\",\n1718:      tenantCopy().notifyAppErrored,\n1719:      tenantCopy().notifyAppErroredBody(attempts),\n1720:    ).catch(() => {});\n1721:  }\n1722:  return true;\n1723:}\n1724:\n1725:/**\n…\n1729: */",
+      "tool_call_id": "call_67f4d1fc"
+    },
+    {
+      "role": "tool",
+      "content": "[packages/agents/src/tools/db-tools.ts#9B20]\n1558:    const closed = await closeWith(\n…\n1569:    );\n1570:\n1571:    // Only when there is something the candidate can do about it, and never in\n1572:    // the agent's own words.\n1573:    //\n1574:    // `detail` is a technical report written for the next agent — a stalled\n1575:    // selector, a captcha rung, a turn budget — and it was going out as a push\n1576:    // notification to the person paying for this. A wall or a bug of ours is\n1577:    // our queue; they hear about it when it is fixed, not while it is a wall.\n1578:    if (userFacingFailure(classifyFailure(detail)) === \"actionable\") {\n1579:      const [row] = await ctx.db\n1580:        .select({ attempts: applications.attemptCount })\n1581:        .from(applications)\n1582:        .where(\n1583:          and(\n1584:            eq(applications.tenantId, requireTenantId()),\n1585:            eq(applications.id, appId),\n1586:          ),\n1587:        )\n1588:        .limit(1);\n1589:      await notify(\n1590:        \"activity\",\n1591:        \"info\",\n1592:        tenantCopy().notifyAppErrored,\n1593:        // The apply stage stamps the attempt before the agent drives, so this\n…\n1597:      ).catch(() => {});\n1598:    }\n\n[Showing lines 1569-1593 of 4932. Use :1594 to continue]",
+      "tool_call_id": "call_c925c134"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nCheck the call sites of admin-walls.ts (lines 76-99) and the FailureSummary body at 76-108.\n",
+      "tool_calls": [
+        {
+          "id": "call_9961eaa4",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"apps/dashboard/app/lib/admin-walls.ts:76-99\",\"i\":\"Reading admin-walls loop body\"}"
+          }
+        },
+        {
+          "id": "call_40e0f6be",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"apps/dashboard/app/components/FailureSummary.tsx:76-108\",\"i\":\"Reading FailureSummary body\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "[apps/dashboard/app/components/FailureSummary.tsx#2A3B]\n54:export function FailureSummary({\n…\n62:}: {\n…\n75:  children?: ReactNode;\n76:}) {\n77:  const calm = !admin && userFacingFailure(outcome) === \"pending\";\n78:  const { title, body } = calm\n79:    ? { title: dict.failure.pendingTitle, body: dict.failure.pendingBody }\n80:    : failureCopy(dict, outcome, platformLabel);\n81:  const tone = calm ? \"off\" : failureTone(outcome);\n82:  const details =\n83:    admin && reason?.trim() ? (\n84:      <details className=\"fail-details\">\n85:        <summary>{dict.failure.detailsToggle}</summary>\n86:        <span className=\"fail-raw\">{reason}</span>\n87:      </details>\n88:    ) : null;\n89:\n90:  if (variant === \"cell\") {\n91:    return (\n92:      <div className=\"fail-cell\">\n93:        <span className={`fail-headline tone-${tone}`}>{title}</span>\n94:        {details}\n95:      </div>\n96:    );\n97:  }\n98:\n99:  return (\n100:    <section className={`fail ${tone}`}>\n101:      <span className=\"fail-kicker\">{dict.failure.title}</span>\n102:      <p className=\"fail-headline\">{title}</p>\n103:      <p className=\"fail-body\">{body}</p>\n104:      {children ? <div className=\"fail-actions\">{children}</div> : null}\n105:      {details}\n106:    </section>\n107:  );\n108:}",
+      "tool_call_id": "call_40e0f6be"
+    },
+    {
+      "role": "tool",
+      "content": "[apps/dashboard/app/lib/admin-walls.ts#76B4]\n55:export async function loadAdminWalls(\n…\n57:): Promise<AdminWalls> {\n…\n75:  for (const r of rows) {\n76:    const entry = byTenant.get(r.tenantId) ?? {\n77:      tenantId: r.tenantId,\n78:      email: r.email,\n79:      pending: 0,\n80:      actionable: 0,\n81:    };\n82:    const facing = userFacingFailure(classifyFailure(r.reason));\n83:    if (facing === \"actionable\") entry.actionable += 1;\n84:    else if (facing === \"pending\") entry.pending += 1;\n85:    byTenant.set(r.tenantId, entry);\n86:  }\n87:\n88:  return {\n89:    walls,\n90:    total: wallTotal(walls),\n91:    tenants: [...byTenant.values()].sort(\n92:      (a, b) =>\n93:        b.pending - a.pending ||\n94:        b.actionable - a.actionable ||\n95:        a.tenantId.localeCompare(b.tenantId),\n96:    ),\n97:    days,\n98:  };\n99:}",
+      "tool_call_id": "call_9961eaa4"
+    },
+    {
+      "role": "assistant",
+      "content": "\n\nI have the full picture. Let me check for tests covering these callers and the typecheck setup.\n\n\n",
+      "reasoning_content": "\nI've got a grasp of the overall picture. Plan:\n\n1. **`packages/core/src/user-facing-failure.ts`**:\n   - Keep `UserFacingFailure = \"actionable\" | \"closed\" | \"pending\"` (the type of the kind field).\n   - Add `export interface FailurePresentation { kind: UserFacingFailure; waitingOn: \"candidate\" | \"nobody\" | \"us\" }`.\n   - Change `userFacingFailure` to return `FailurePresentation`:\n     - actionable → `{ kind: \"actionable\", waitingOn: \"candidate\" }`\n     - closed → `{ kind: \"closed\", waitingOn: \"nobody\" }`\n     - pending → `{ kind: \"pending\", waitingOn: \"us\" }`\n   - `presentedState`: `facing.kind === \"actionable\"`.\n\n   Should I type waitingOn as a union type? The user said `waitingOn` indicates \"whose turn it is\": \"candidate\" | \"nobody\" | \"us\". I'll define it as a union type `WaitingOn = \"candidate\" | \"nobody\" | \"us\"` — the simplest is to inline the union into the interface. Keep it simple.\n\n2. **`packages/agents/src/tools/db-tools.ts:1578`**: `userFacingFailure(classifyFailure(detail)) === \"actionable\"` → `.kind === \"actionable\"`.\n\n3. **`packages/pipeline/src/stages/apply.ts:343-344`**: `facing !== \"actionable\"` → `facing.kind !== \"actionable\"`; also `data: { maxAttempts, facing }` — currently facing is an object; `data` is event data. Previously it stored the string `facing`. Storing an object changes behavior (the event's data content). The instructions say \"behavior must remain the same.\" Hmm — the `data: { maxAttempts, facing }` in the event data is... the user said callers should be updated so behavior is preserved. Storing the new object in event data changes what's stored. To be safe and keep behavior the same, store `facing.kind`? That would preserve the event data exactly. Same for `ctx.logger.warn({ appId: app.id, maxAttempts, facing })` — a log field with an object vs a string. Changing the type of a log field is a behavior change (observable). Safer: use `facing.kind` for both data and the log. But wait — do I want to keep the variable `facing`? `const facing = userFacingFailure(...)` still returns an object, and at the usage sites I reference `facing.kind`. The log message changes from `facing: \"actionable\"` to `facing: { kind, waitingOn }` — that's a change in the observable log output. To \"keep behavior the same,\" store `facing.kind` in data and the log.\n\n   Actually, let me re-check lines 343-357 in full:\n   ```\n   const facing = userFacingFailure(classifyFailure(app.reason));\n   if (facing !== \"actionable\") {\n     await recordEvent(... data: { maxAttempts, facing } ...).catch(() => undefined);\n     ctx.logger.warn({ appId: app.id, maxAttempts, facing }, `...`);\n     return;  // probably\n   }\n   ```\n   I need lines 355-358 to see the rest. Let me read lines 353-360.\n\n   Change: `if (facing.kind !== \"actionable\")`, `data: { maxAttempts, facing: facing.kind }`, `ctx.logger.warn({ appId: app.id, maxAttempts, facing: facing.kind }, ...)`.\n\n   Hmm, but is that the cleanest? Alternative: `const facing = userFacingFailure(...).kind` — but then I lose waitingOn. The user explicitly wants callers to be updated; the semantics of kind is identical to the old string. In event data and logs, the old value was a kind string. Using `.kind` keeps everything identical.\n\n   For line 1714: `if (userFacingFailure(classifyFailure(reason)).kind === \"actionable\")`.\n\n4. **`apps/dashboard/app/components/FailureSummary.tsx:77`**: `!admin && userFacingFailure(outcome) === \"pending\"` → `.kind === \"pending\"`.\n\n5. **`apps/dashboard/app/lib/admin-walls.ts:82-84`**:\n   ```\n   const facing = userFacingFailure(classifyFailure(r.reason));\n   if (facing.kind === \"actionable\") entry.actionable += 1;\n   else if (facing.kind === \"pending\") entry.pending += 1;\n   ```\n\n6. **Test file**: Update EXPECTED to a Record of the new object shape:\n   ```\n   const EXPECTED: Record<FailureOutcome, FailurePresentation> = {\n     needs_login: { kind: \"actionable\", waitingOn: \"candidate\" },\n     needs_answer: { kind: \"actionable\", waitingOn: \"candidate\" },\n     posting_gone: { kind: \"closed\", waitingOn: \"nobody\" },\n     wall: { kind: \"pending\", waitingOn: \"us\" },\n     our_bug: { kind: \"pending\", waitingOn: \"us\" },\n     unknown: { kind: \"pending\", waitingOn: \"us\" },\n   };\n   ```\n   And `expect(userFacingFailure(outcome)).toEqual(EXPECTED[outcome])` — toBe does deep equality for objects? `toBe` is Object.is (reference identity) — for different objects it fails. So use `toEqual`.\n\n   Also, check other tests in the repo that use `userFacingFailure` — grep only found those. Also check tests in other packages that import user-facing-failure (e.g., pipeline/agents tests referencing the string result). Grep covered `userFacingFailure` across packages;apps. Only the files above. But maybe there's a test that tests apply.ts's behavior with an expectation on event data `facing`? Let me grep for `\"facing\"` in the repo.\n\n7. Rebuild: `pnpm --filter './packages/*' build`, then `tsc --noEmit` (where? probably the root has a typecheck script; the user said run `tsc --noEmit` — probably in the root, or per package? They said \"run `tsc --noEmit`\" — let me check package.json for the typecheck script). And run tests per file with vitest in each package I touched: core (user-facing-failure.test.ts), pipeline (tests in stages/apply?), agents (tests in db-tools?). \"Run tests for every package I touched (per file with vitest)\" — meaning run specific test files. Which test files? The test files that cover the changed code: core: user-facing-failure.test.ts. pipeline: look for apply stage tests. agents: look for db-tools tests. dashboard: look for FailureSummary / admin-walls tests. Let me glob for the test files.\n\nAlso check: are there other files that import the `UserFacingFailure` type? grep only found the test files. Good — but the barrel `export *` automatically exports the new `FailurePresentation` interface. Good.\n\nCheck whether the root package.json has a typecheck script and a per-package vitest config.\n",
+      "tool_calls": [
+        {
+          "id": "call_05c766a9",
+          "type": "function",
+          "function": {
+            "name": "write",
+            "arguments": "{\"content\":\"{\\\"pattern\\\": \\\"facing\\\", \\\"path\\\": \\\"packages;apps\\\", \\\"gitignore\\\": true}\",\"path\":\"xd://grep\",\"i\":\"Finding other facing references\"}"
+          }
+        },
+        {
+          "id": "call_5794c8f0",
+          "type": "function",
+          "function": {
+            "name": "bash",
+            "arguments": "{\"command\":\"cd /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj && jq '.scripts' package.json && ls packages/core/package.json packages/pipeline/package.json packages/agents/package.json apps/dashboard/package.json && jq '.scripts' apps/dashboard/package.json\",\"i\":\"Checking package scripts\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "# packages/\n\n## adapters/src/ats/\n### board.ts#08BE\n 363:\n*364:/** The human-facing board, for the source row's base_url. */\n 365:export function boardPageUrl(board: AtsBoard): string {\n 366:  switch (board.ats) {\n 367:    case \"greenhouse\":\n\n## agents/src/\n### candidate-language.ts#7D8A\n 25:    `Write report_error detail, request_from_user prompts, and any other ` +\n*26:    `candidate-facing explanation in ${name} — the language of this ` +\n 27:    `candidate's dashboard. Internal tool chatter may stay in English; the ` +\n 28:    `stored failure report the candidate reads must be in ${name}.`\n 29:  );\n### missing-fields.ts#1FC5\n 1:/**\n*2: * User-facing (and next-agent) copy when an apply run stops because required\n 3: * form fields are still empty and cannot be filled truthfully from profile/Q&A.\n 4: *\n 5: * Prefer this over a turn/cost/time-cap message: the cap is a backstop, not the\n### tenant-identity.test.ts#2FD4\n 264:\n*265:  it(\"tells the apply agent to write candidate-facing reports in the dashboard locale\", async () => {\n 266:    const { setSetting } = await import(\"@fbj/core\");\n 267:    await withTenant(ANA, async () => {\n 268:      await setSetting(\"dashboard_locale\", \"pt\");\n...\n 276:\n*277:  it(\"tells the register agent to write candidate-facing reports in the dashboard locale\", async () => {\n 278:    // The register path used to leave this generic, so its report_error text\n 279:    // arrived in English inside a Portuguese dashboard.\n 280:    const { setSetting } = await import(\"@fbj/core\");\n\n### prompts/\n#### apply-system.md#C281\n 326:what blocked you, everything you tried, and what to try next. Write the detail\n*327:in the candidate's dashboard language (see the task's \"Candidate-facing\n 328:language\" block) so they can read it in the UI. If the candidate left notes on\n 329:this application (see \"Notes from the candidate\" in the task), they are usually\n 330:answering exactly such a report — treat them as authoritative. Then stop.\n#### apply.md#F946\n 24:\n*25:# Candidate-facing language (dashboard)\n 26:{{CANDIDATE_FACING_LANGUAGE}}\n 27:\n 28:# Your task\n#### register.md#C245\n 11:{{PLATFORM_HINTS}}\n*12:# Candidate-facing language (dashboard)\n 13:{{CANDIDATE_FACING_LANGUAGE}}\n 14:\n 15:# Your task\n\n### tools/\n#### browser-tools.ts#A0A1\n 150: * The sidecar screens every navigation and click for a captcha or anti-bot wall\n*151: * and runs the solver ladder itself. Surfacing the outcome matters most when it\n 152: * FAILED: otherwise the agent snapshots a Cloudflare interstitial, finds no form\n 153: * fields on it, and concludes the posting is broken rather than blocked.\n 154: */\n#### dependent-select.ts#50FC\n 284:  name: string;\n*285:  /** Whatever the page calls it, for the agent-facing sentence. */\n 286:  label: string;\n 287:  /** Selectable option labels — prompts excluded. */\n 288:  options: string[];\n#### mail-tools.ts#09A6\n 93: * already trusts 45s for exactly this gate on the automatic path; this makes\n*94: * the agent-facing tool agree with it, and buys the run back four minutes.\n 95: */\n 96:const APPLY_POLL_MS = 45_000;\n 97:\n\n## core/src/\n### account-facts.ts#4515\n 52:  normalize: (raw: string) => string | null;\n*53:  /** Stable id for tenant-facing copy. Never English text in this file. */\n 54:  copyKey: string;\n 55:}\n 56:\n### failure-outcome.ts#6871\n 204:/**\n*205: * Classify one `failure_reason` into a user-facing outcome.\n 206: *\n 207: * Order is precedence, and it is load-bearing:\n 208: *\n### index.ts#F213\n 96:export * from \"./failure-outcome.js\";\n*97:export * from \"./user-facing-failure.js\";\n 98:export * from \"./walls.js\";\n### tenant-copy.test.ts#2CB9\n 184:\n*185:describe(\"the pipeline's candidate-facing copy\", () => {\n 186:  it(\"has the same keys in every language\", () => {\n 187:    for (const locale of PIPELINE_LOCALES) {\n 188:      expect(\n### tenant-copy.ts#6B97\n 6:/**\n*7: * The pipeline's tenant-facing sentences, in the tenant's own language.\n 8: *\n 9: * Everything here is read by the candidate — the status line under \"Add job by\n 10: * URL\" and the `failure_reason` on a job page. The apply/register agents\n...\n 244:   * language a Brazilian candidate may not read, wrapped around the message\n*245:   * that matters most. Every other user-facing string in the product went\n 246:   * through this dictionary first; this one was missed because it lives in a\n 247:   * Lambda that never loaded a tenant.\n 248:   */\n...\n 350:   * written in a language a Brazilian candidate may not read, while every other\n*351:   * candidate-facing sentence went through this file first. They were missed\n 352:   * for the same reason the forward's chrome was: a string literal in a stage\n 353:   * looks like plumbing.\n 354:   */\n### user-facing-failure.test.ts#1DB9\n 7:  type UserFacingFailure,\n*8:} from \"./user-facing-failure.js\";\n 9:\n 10:/**\n 11: * The mapping table, written out rather than derived.\n### user-facing-failure.ts#947B\n 101:  if (state !== \"error\") return { key: state, tone: stateTone(state) };\n*102:  const facing = userFacingFailure(classifyFailure(failureReason));\n*103:  return { key: \"pending\", tone: facing === \"actionable\" ? \"warn\" : \"off\" };\n 104:}\n\n## llm/src/\n### score-job.gates.test.ts#F9CA\n 423:    );\n*424:    // Unstated currency on a US-facing board: treated as USD, which is what the\n 425:    // adapters that leave it null mean.\n 426:    expect(monthlyUsdMax(job({ salaryMax: 9_000 }))).toBe(9_000);\n 427:  });\n\n## mail/src/\n### mailbox.ts#AC60\n 53:/**\n*54: * The product's own return address on tenant-facing mail.\n 55: *\n 56: * The identity is the PRODUCT's — a fixed local part on the brand domain —\n 57: * never a user's personal address. That is one of the three conditions\n*58: * design.md set for tenant-facing mail like the weekly digest (the first digest\n 59: * shipped from the founder's own Gmail, and was deleted from his own inbox by\n 60: * hand until the feature was removed).\n 61: *\n\n## pipeline/src/\n### intake.ts#D143\n 159:\n*160:/** Tenant-facing description of why the page read as hollow. */\n 161:function hollowDetail(kind: HollowReason): string {\n 162:  return tenantCopy().hollowDetail(kind, MIN_SCORABLE_DESCRIPTION);\n 163:}\n\nShowing files 1-20 of 29. Use skip=20 for the next page, or narrow paths/pattern.",
+      "tool_call_id": "call_05c766a9"
+    },
+    {
+      "role": "tool",
+      "content": "{\n  \"prepare\": \"git config core.hooksPath .githooks && git config core.sshCommand 'ssh -o ServerAliveInterval=30 -o ServerAliveCountMax=40' || true\",\n  \"gate\": \"node scripts/gate.mjs\",\n  \"build\": \"turbo run build\",\n  \"typecheck\": \"turbo run typecheck\",\n  \"test\": \"turbo run test\",\n  \"lint\": \"eslint --max-warnings 0 --cache --cache-location .eslintcache --cache-strategy content .\",\n  \"format\": \"prettier --write .\",\n  \"format:check\": \"prettier --check --cache --cache-strategy content .\",\n  \"dashboard\": \"pnpm --filter dashboard dev\",\n  \"run\": \"pnpm --filter @fbj/cli exec fbj run\",\n  \"fbj\": \"pnpm --filter @fbj/cli exec fbj\",\n  \"landing\": \"pnpm --filter landing dev\",\n  \"bench\": \"pnpm --filter @fbj/bench exec node run.mjs\",\n  \"bench:pipeline\": \"pnpm --filter @fbj/bench exec node pipeline.mjs\"\n}\napps/dashboard/package.json\npackages/agents/package.json\npackages/core/package.json\npackages/pipeline/package.json\n{\n  \"dev\": \"node launch.mjs dev\",\n  \"dev:next-only\": \"NEXT_DIST_DIR=.next-dev next dev -p 3210\",\n  \"build\": \"next build\",\n  \"typecheck\": \"tsc --noEmit\",\n  \"start\": \"node launch.mjs start\",\n  \"start:next-only\": \"next start -p 3210\",\n  \"clean\": \"rm -rf .next .next-dev .next-build\",\n  \"test\": \"vitest run\"\n}\n\n\nWall time: 0.01 seconds",
+      "tool_call_id": "call_5794c8f0"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "\nThe only actual usage of the `facing` variable is inside `apply.ts`. No other tests reference it.\n\nPer-package typecheck: dashboard has `tsc --noEmit`. I'll check the scripts in core/pipeline/agents' package.json. The root has `turbo run typecheck`. The user said \"run `tsc --noEmit`\" — probably it's the per-package typecheck. To be safe, I can run `pnpm --filter <pkg> typecheck` for each package I touched, but... the user explicitly said `tsc --noEmit`. Let me check what's included in the other packages' scripts.\n",
+      "tool_calls": [
+        {
+          "id": "call_5c0ae771",
+          "type": "function",
+          "function": {
+            "name": "bash",
+            "arguments": "{\"command\":\"cd /Users/vinicius91carvalho/tools/qwen3.8-27b/eval/agentic/real/fbj && for p in core pipeline agents; do echo \\\"== $p\\\"; jq -r '.scripts | to_entries[] | \\\"\\\\(.key): \\\\(.value)\\\"' packages/$p/package.json; done\",\"i\":\"Checking package scripts\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "== core\nbuild: tsc -b\ntest: vitest run\ndb:generate: drizzle-kit generate\nclean: rm -rf dist *.tsbuildinfo\n== pipeline\nbuild: tsc -b\nclean: rm -rf dist *.tsbuildinfo\ntypecheck: tsc --noEmit\ntest: vitest run\n== agents\nbuild: tsc -b && mkdir -p dist/prompts && cp src/prompts/*.md dist/prompts/\ntest: vitest run\nclean: rm -rf dist *.tsbuildinfo\ntypecheck: tsc --noEmit\n\n\nWall time: 0.01 seconds",
+      "tool_call_id": "call_5c0ae771"
+    },
+    {
+      "role": "assistant",
+      "content": "\n\nNow I'll make the changes. First the core module:\n\n",
+      "reasoning_content": "\nNow I'll do the edits. Starting from the core module.\n\nEditing `packages/core/src/user-facing-failure.ts`:\n- Line 32: keep `UserFacingFailure`.\n- After line 32: add a `WaitingOn`-style union type + `FailurePresentation` interface. The user said \"keep the existing `UserFacingFailure` string type for the `kind` field\" — so `FailurePresentation { kind: UserFacingFailure; waitingOn: \"candidate\" | \"nobody\" | \"us\" }`.\n- Update the function:\n\n```ts\n/** Who is holding the next move, expressed in the reader's words. */\nexport type WaitingOn = \"candidate\" | \"nobody\" | \"us\";\n\nexport interface FailurePresentation {\n  kind: UserFacingFailure;\n  waitingOn: WaitingOn;\n}\n```\n\nShould I name the waitingOn union type `WaitingOn`? The user only asked for the `FailurePresentation` interface. Simpler to inline the union inside the interface — one less export. Keep it simple:\n\n```ts\n/**\n * A classified failure, plus who is holding the next move.\n *\n * `kind` is the three-way split; `waitingOn` is who is blocking it:\n * `candidate` when there's a login or answer to hand over, `us` when the\n * fix is on our side (wall, bug, unclassified), `nobody` when there is\n * no move at all (posting is gone).\n */\nexport interface FailurePresentation {\n  kind: UserFacingFailure;\n  /** `candidate` when actionable, `us` when pending, `nobody` when closed. */\n  waitingOn: \"candidate\" | \"nobody\" | \"us\";\n}\n\n/** Classify a failure into a presentation. */\nexport function userFacingFailure(outcome: FailureOutcome): FailurePresentation {\n  switch (outcome) {\n    case \"needs_login\":\n    case \"needs_answer\":\n      return { kind: \"actionable\", waitingOn: \"candidate\" };\n    case \"posting_gone\":\n      return { kind: \"closed\", waitingOn: \"nobody\" };\n    case \"wall\":\n    case \"our_bug\":\n    case \"unknown\":\n      return { kind: \"pending\", waitingOn: \"us\" };\n  }\n}\n```\n\nAnd `presentedState`: `const facing = userFacingFailure(...); return { key: \"pending\", tone: facing.kind === \"actionable\" ? \"warn\" : \"off\" };`\n\nAlso, should I update the doc comment on the module? The comments explain the three kinds, so I could add a note about waitingOn. Keep it light.\n\nEdit via xd://edit. I'll write the edits now.\n\nAfter that, test file: update EXPECTED to objects, use toEqual. The \"covers all outcomes\" test stays.\n\nFor the test, maybe I should also test waitingOn individually — the EXPECTED table is already written out including waitingOn. Good, the product decision is explicit.\n\nNext, the caller edits:\n- agents db-tools.ts:1578 → `if (userFacingFailure(classifyFailure(detail)).kind === \"actionable\") {`\n- apply.ts:343-355:\n  ```\n  const facing = userFacingFailure(classifyFailure(app.reason));\n  if (facing.kind !== \"actionable\") {\n    ...\n      data: { maxAttempts, facing: facing.kind },\n    ctx.logger.warn(\n      { appId: app.id, maxAttempts, facing: facing.kind },\n  ```\n  Wait — I need to verify the exact text of lines 354-357. From what I read:\n  ```\n  354:      ctx.logger.warn(\n  355:        { appId: app.id, maxAttempts, facing },\n  …357:      );\n  ```\n  I need to read the raw lines 343-358 to get the exact text for the edit. The summary showed the ellipsis. Let me read apply.ts:343-360 raw.\n\n- apply.ts:1714 → `if (userFacingFailure(classifyFailure(reason)).kind === \"actionable\") {`\n- FailureSummary.tsx:77 → `const calm = !admin && userFacingFailure(outcome).kind === \"pending\";`\n- admin-walls.ts:82-84 → `facing.kind === \"actionable\"` / `facing.kind === \"pending\"`.\n\nFirst, read apply.ts:343-360 exactly.\n",
+      "tool_calls": [
+        {
+          "id": "call_dcc3da7a",
+          "type": "function",
+          "function": {
+            "name": "read",
+            "arguments": "{\"path\":\"packages/pipeline/src/stages/apply.ts:343-360:raw\",\"i\":\"Reading exact apply.ts lines\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "content": "    const facing = userFacingFailure(classifyFailure(app.reason));\n    if (facing !== \"actionable\") {\n      await recordEvent(ctx.db, {\n        type: \"agent_action\",\n        applicationId: app.id,\n        runId: ctx.runId,\n        message:\n          `apply attempts exhausted after ${maxAttempts} — not the ` +\n          \"candidate's to answer, left for the resolver\",\n        data: { maxAttempts, facing },\n      }).catch(() => undefined);\n      ctx.logger.warn(\n        { appId: app.id, maxAttempts, facing },\n        \"apply: attempts exhausted — nothing to ask the candidate\",\n      );\n      continue;\n    }\n    await openTenantRequest({\n\n[Showing lines 343-360 of 1978. Use :361 to continue]",
+      "tool_call_id": "call_dcc3da7a"
+    }
+  ],
+  "stream": true,
+  "stream_options": {
+    "include_usage": true
+  },
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "read",
+        "description": "Read files, directories, archives, SQLite, images, documents, internal resources, and web URLs via `path`.\n\n<instruction>\n- SHOULD parallelize independent reads.\n- SHOULD use `read` (not browser) for web content; browser only when `read` can't deliver.\n</instruction>\n\n## Selectors — append `:<sel>` to `path` (e.g. `src/foo.ts:50-200`, `src/foo.ts:raw`, `db.sqlite:users:42`)\n- `:50` / `:50-` — from line 50 | `:50-200` — inclusive | `:50+150` — 150 lines from 50 | `:5-16,960-973` — multiple ranges\n- `:raw` — verbatim, no anchors/prefixes | `:2-4:raw` / `:raw:2-4` — range + verbatim\n- `:conflicts` — one line per unresolved git merge conflict block\n- `:img` — rasterize a local `.svg`/`.svgz` as a PNG image; use when visual layout matters\n\n## Source kinds\n- Parseable code, no selector → structural summary (declarations only, body elided). Footer names recovery selector — re-issue ONLY those ranges.\n- File + selector → `[foo.ts#1A2B]` snapshot header + numbered lines. Copy `[FILENAME#TAG]` for anchored edits; NEVER fabricate the tag.\n- Directory → depth-limited dirent listing.\n- SQLite (`.sqlite`, `.sqlite3`, `.db`, `.db3`): `file.db` (tables), `file.db:table` (schema+rows), `file.db:table:key` (by PK), `?limit=`/`?where=`/`?q=SELECT`.\n- Archives (`.zip` family incl. `.jar`/`.apk`/`.whl`, `.tar` incl. `.tar.{gz,bz2,xz,zst}`, `.rar`, `.7z`, `.iso`, `.cab`, `.deb`/`.rpm`/`.cpio`/`.ar`/`.a`, `.lzh`/`.arj`, `.asar`; single-stream `.gz`/`.bz2`/`.xz`/`.zst`): `archive.ext:path/inside/archive` reads a member.\n- Documents → extracted text. Notebooks → editable cells. Images → decoded inline. SVGs read as text unless `:img` is specified. `:raw` bypasses converters.\n- URLs → reader-mode clean text/markdown; `:raw` → untouched HTML. Bare `host:port` needs trailing slash.\n- Internal URIs — all schemes take selectors. `artifact://<id>` recovers spilled output; page with `:N-M`/`:raw:N-M`.\n- `ssh://host/<path>` reads remote file/dir (UTF-8, ≤1 MiB); bare `ssh://` lists hosts; writable with `write` and searchable with `grep`.\n  Literal `:`, `?`, `#` → percent-encode (`%3A`/`%3F`/`%23`). Requires a verified POSIX shell on the remote host. For Windows or other unsupported hosts, use `bash` with a remote SSH command or mount with `sshfs`.\n\n<critical>\nSummary footer names elided ranges? Re-issue ONLY those ranges. NEVER guess `..`/`…` content.\n</critical>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "path": {
+              "type": "string",
+              "description": "Local path, internal URI (e.g. skill://), or URL. Inline selectors are supported."
+            }
+          },
+          "required": [
+            "path",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "bash",
+        "description": "Runs commands in a persistent shell.\n\nUse ONLY for one binary or a short pipeline that computes a fact (`wc -l`, `sort | uniq -c`, `diff`).\nInline scripts, heredocs, `$(…)`, and complex control flow → a purpose-built tool or checked-in script.\n\n<instruction>\n- Set `cwd` instead of `cd`; use `env: { NAME: \"…\" }` for multiline/quote-heavy values.\n- `pty: true` only for terminal interaction (`sudo`, `ssh`).\n- Order-dependent commands use `&&` in one call; independent calls may run concurrently.\n- Internal URIs (`skill://`, `agent://`, …) auto-resolve to paths.\n- aux utils available: mkdir, wc, sort, comm, diff, uniq, base64, cmp, md5sum, sha{1,224,256,384,512}sum, b2sum, basename, dirname, readlink, realpath, touch, stat, date, mktemp, seq, yes, printenv, truncate, tac, nproc, uname, whoami, hostname, which, ps, pgrep, pkill, pidwait, top, cut, tee, tr, paste, sed, xargs, jq, rm, mv, ln, ts, sponge, ifne, isutf8, combine, errno\n- `async: true` defers a finite command's result; it does not extend `timeout`.\n</instruction>\n\n<critical>\n- Avoid `head`, `tail`, and redirection: output is captured, truncated, and linked as `artifact://<id>`.\n</critical>\n\nLong foreground calls may auto-background by the configured threshold and deliver later.\n`timeout: 0` disables the job deadline; otherwise `timeout` sets it without extending foreground waiting.\nNo truncation footer means the displayed output is complete.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "command": {
+              "type": "string"
+            },
+            "env": {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "timeout": {
+              "type": "number",
+              "description": "timeout in seconds; 0 disables the command deadline; nonzero values are clamped to 1-3600"
+            },
+            "cwd": {
+              "type": "string"
+            },
+            "pty": {
+              "type": "boolean"
+            },
+            "async": {
+              "type": "boolean",
+              "description": "run in background"
+            }
+          },
+          "required": [
+            "command",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "write",
+        "description": "Creates or overwrites file at specified path.\n\n<conditions>\n- Creating new files explicitly required by task\n- Replacing entire file contents when editing would be more complex\n- Supports `.zip` (and ZIP-based `.jar`/`.war`/`.ear`/`.apk`), `.tar`, `.tar.gz`/`.tgz`, `.tar.zst`, and `.asar` archive entries via `archive.ext:path/inside/archive`; other archive formats (`.rar`, `.7z`, `.iso`, …) are read-only\n- Supports SQLite row operations via `db.sqlite:table` (insert), `db.sqlite:table:key` (update with JSON content, delete with empty content)\n</conditions>\n\n<critical>\n- You SHOULD use Edit tool for modifying existing files\n- You NEVER create documentation files (*.md, README) unless explicitly requested\n- You NEVER use emojis unless requested\n</critical>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "i": {
+              "type": "string",
+              "description": "concise intent"
+            },
+            "path": {
+              "type": "string",
+              "description": "file path"
+            },
+            "content": {
+              "type": "string",
+              "description": "file content"
+            }
+          },
+          "required": [
+            "path",
+            "content",
+            "i"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  ],
+  "max_completion_tokens": 4096,
+  "preserve_thinking": true,
+  "chat_template_kwargs": {
+    "preserve_thinking": true,
+    "reasoning_effort": "medium"
+  },
+  "enable_thinking": true,
+  "reasoning_effort": "medium"
+}

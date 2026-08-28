@@ -1,0 +1,20 @@
+diff --git a/packages/profile/src/conservative-default.ts b/packages/profile/src/conservative-default.ts
+index ff11fd4..0339d04 100644
+--- a/packages/profile/src/conservative-default.ts
++++ b/packages/profile/src/conservative-default.ts
+@@ -135,11 +135,13 @@ export interface JobReach {
+  *
+  * So: a named country decides; only a posting that names none falls back to
+  * "hires anywhere", which means the candidate works from home and is
+- * authorized there.
++ * authorized there. A candidate with no work country on file proves neither:
++ * with nothing on file there is no country a positive could name, so that
++ * reads "unknown" and the answer is the negative, which claims nothing.
+  */
+ function whereTheWorkIs(job: JobReach): "yes" | "no" | "unknown" {
+   const places = namedPlaces(job.location, job.remoteScope);
+-  if (!job.workCountries.length) return "yes";
++  if (!job.workCountries.length) return "unknown";
+   if (places.countries.length) {
+     return places.countries.some((c) => job.workCountries.includes(c))
+       ? "yes"

@@ -1,0 +1,6 @@
+omlx restarted for redo 06:12
+{"id": "ts-easy", "level": "easy", "pass": true, "tests_ok": true, "touched_tests": 0, "seconds": 373.8, "requests": 16, "max_prompt_tokens": 12762, "aborted": 0}
+./run-real.sh: line 47:  5528 Alarm clock: 14            perl -e "alarm ${TASK_TIMEOUT:-1800}; exec @ARGV" "$BUN" "$OMP_SRC/packages/coding-agent/src/cli.ts" -p --model omlxtap/Qwen3.8-27B-AWQ-5.0bpw --no-session --auto-approve --config "$CFG" "$PROMPT" < /dev/null > "$RUN/answer.txt" 2> "$RUN/stderr.txt"
+{"id": "ts-contract", "level": "lsp", "pass": true, "tests_ok": true, "touched_tests": 1, "seconds": 1800.1, "requests": 33, "max_prompt_tokens": 27071, "aborted": 0}
+{"id": "ts-rename", "level": "lsp", "pass": true, "tests_ok": true, "touched_tests": 2, "seconds": 1305.5, "requests": 27, "max_prompt_tokens": 30041, "aborted": 4}
+{"id": "ts-contract", "level": "lsp", "pass": false, "tests_ok": false, "touched_tests": 0, "seconds": 943.0, "requests": 23, "max_prompt_tokens": 28324, "aborted": 3}

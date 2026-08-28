@@ -1,0 +1,8 @@
+
+
+Done. Line 6 of `docs/decisions.md` now reads "currency conversion goes through USD as the anchor" — the word "pivot" is gone, everything else untouched.
+
+**Summary**
+- What I did: replaced "pivot" with "anchor" on line 6 using the edit tool.
+- Why it was "broken": nothing was; you just wanted a word swap.
+- What it means: the file now says USD is the conversion anchor.
