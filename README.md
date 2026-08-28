@@ -2,7 +2,7 @@
 
 Everything behind the numbers in the `compact-prompt-for-local-models` PR: profiles, runners, the logging proxy, every captured request, and the write-ups.
 
-- `eval/deliverables/` - benchmark.md, modes.md, and the public texts
+- `eval/deliverables/` - the PR body (full benchmark inside), issue comment, Reddit post, README
 - `eval/profiles/` - the four modes as `--config` files (`p7k`, `p5k`, `p3k`, `base`, plus `*-long`)
 - `eval/run-real.sh`, `eval/run-long.sh`, `eval/table-compare.py`, `eval/tools-used.py`, `eval/tap.py`
 - `eval/results-real*/`, `eval/results-long*/` - per-run `req-NNN.json` (exact wire request), `usage-NNN.json` (server usage), `agent.diff`, `test.log`, `scores.jsonl`
